@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Mathe-Duell</title>
+<style>
+  :root {
+    --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0; --text: #0f172a; --muted: #64748b;
+    --accent: #2563eb; --accent-dark: #1d4ed8; --danger: #dc2626; --success: #16a34a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  .hidden { display: none !important; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .view { max-width: 900px; margin: 0 auto; padding: 16px; padding-bottom: 60px; }
+  h1 { font-size: 1.4rem; text-align: center; margin: 6px 0 18px; }
+  h2.sub { font-size: 1.05rem; text-align: center; margin: -8px 0 18px; color: var(--muted); }
+  .btn { border: none; border-radius: 10px; padding: 12px 18px; font-size: 1rem; font-weight: 700; cursor: pointer; color: white; background: var(--accent); }
+  .btn:active { transform: scale(0.97); }
+  .btn-secondary { background: #64748b; }
+  .btn-danger { background: var(--danger); }
+  .btn-outline { background: white; color: var(--accent); border: 2px solid var(--accent); }
+  .btn-big { width: 100%; padding: 22px; font-size: 1.3rem; border-radius: 16px; margin-bottom: 12px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .back-row { margin-bottom: 14px; }
+
+  /* Home: 4 Kategorie-Boxen */
+  .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cat-tile { border: none; border-radius: 16px; padding: 30px 12px; cursor: pointer; color: white; font-weight: 800; font-size: 1.1rem; text-align: center; }
+  .cat-basiswissen { background: linear-gradient(135deg, #16a34a, #14532d); }
+  .cat-jahr1 { background: linear-gradient(135deg, #2563eb, #1e3a8a); }
+  .cat-jahr2 { background: linear-gradient(135deg, #7c3aed, #4c1d95); }
+  .cat-jahr3 { background: linear-gradient(135deg, #dc2626, #7f1d1d); }
+  .cat-tile .ti { font-size: 2rem; display: block; margin-bottom: 6px; }
+
+  .chapter-list { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .chapter-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .chapter-row:last-child { border-bottom: none; }
+  .chapter-row.locked { color: var(--muted); cursor: default; }
+  .chapter-row.mixed { background: #fffbeb; font-weight: 700; }
+  .chapter-id { font-weight: 800; min-width: 28px; color: var(--accent); }
+  .chapter-row.locked .chapter-id { color: var(--muted); }
+  .chapter-title { flex: 1; }
+  .chapter-status { font-size: 0.85rem; }
+  .section-label { font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin: 18px 2px 8px; }
+  .empty-hint { color: var(--muted); text-align: center; padding: 24px; }
+
+  /* Modus-Wahl */
+  .mode-choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; }
+  .btn-solo { background: linear-gradient(135deg, #16a34a, #14532d); }
+  .btn-duell { background: linear-gradient(135deg, #dc2626, #7f1d1d); }
+
+  /* Duell-Setup */
+  .setup-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .field-label { font-size: 0.85rem; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; }
+  input[type="text"], input[type="number"] { border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 1rem; width: 100%; }
+  .choice-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .choice-btn { flex: 1; min-width: 100px; border: 2px solid var(--border); background: white; border-radius: 10px; padding: 10px; font-weight: 700; cursor: pointer; }
+  .choice-btn.active { border-color: var(--accent); background: #eff6ff; color: var(--accent); }
+  .toggle-line { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .switch { position: relative; width: 50px; height: 28px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 28px; cursor: pointer; transition: 0.2s; }
+  .slider:before { content: ""; position: absolute; width: 22px; height: 22px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+  input:checked + .slider { background: var(--success); }
+  input:checked + .slider:before { transform: translateX(22px); }
+
+  /* Solo play */
+  .solo-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 16px; }
+  .solo-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .solo-score { font-weight: 700; color: var(--success); }
+  .help-btn { border: none; background: #fef3c7; color: #92400e; border-radius: 20px; padding: 6px 14px; font-weight: 700; font-size: 0.85rem; }
+  .mt-shape { width: 160px; height: 160px; margin: 0 auto 10px; display: block; }
+  .task-prompt { font-size: 1.3rem; font-weight: 700; margin-bottom: 14px; }
+  .answer-display { font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; background: var(--bg); border-radius: 10px; padding: 12px; min-height: 54px; margin-bottom: 14px; }
+  .keypad-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .keypad-row button { flex: 1; padding: 16px 0; font-size: 1.3rem; font-weight: 700; border: none; border-radius: 10px; background: #e2e8f0; color: var(--text); }
+  .keypad-row button.ok-key { background: var(--success); color: white; }
+  .wrong-flash { animation: wrongFlash 0.35s; }
+  @keyframes wrongFlash { 0%,100% { background: var(--bg); } 40% { background: #fecaca; } }
+  .correct-flash { animation: correctFlash 0.35s; }
+  @keyframes correctFlash { 0%,100% { background: var(--bg); } 40% { background: #bbf7d0; } }
+  .bool-wrap { display: flex; gap: 12px; margin-bottom: 8px; }
+  .bool-btn { flex: 1; padding: 26px 0; font-size: 1.3rem; font-weight: 800; border: none; border-radius: 12px; color: white; }
+  .bool-btn.true-btn { background: var(--success); }
+  .bool-btn.false-btn { background: var(--danger); }
+  .text-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
+  .text-wrap input { flex: 1; }
+  .text-wrap button { background: var(--success); color: white; border: none; border-radius: 8px; padding: 0 20px; font-weight: 700; }
+
+  /* Bruch-/Koordinaten-Kästchen und Variablen-Tastatur */
+  .pair-wrap { margin-bottom: 10px; display: flex; justify-content: center; }
+  .pair-boxes { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .pair-boxes.style-coord { flex-direction: row; }
+  .pair-boxes.style-fraction { flex-direction: column; gap: 6px; }
+  .pair-box {
+    min-width: 74px; min-height: 54px; font-size: 1.5rem; font-weight: 800;
+    border: 2px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text);
+    padding: 8px 14px; cursor: pointer;
+  }
+  .pair-box.active-box { border-color: var(--accent); background: #eff6ff; }
+  .pair-sep { font-size: 1.5rem; font-weight: 800; color: var(--muted); }
+  .style-fraction .pair-sep { width: 74px; height: 3px; background: var(--muted); border-radius: 2px; }
+  .var-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .var-row button { flex: 1; padding: 12px 0; font-size: 1.1rem; font-weight: 800; border: none; border-radius: 8px; background: #ede9fe; color: #5b21b6; font-style: italic; }
+
+  /* Duell play: geteilter Bildschirm, oben 180° gedreht */
+  .duell-play { max-width: none; padding: 0; margin: 0; }
+  .duell-half { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; overflow: hidden; }
+  .duell-top { transform: rotate(180deg); background: #fef2f2; }
+  .duell-bottom { background: #eff6ff; }
+  .duell-inner { width: 100%; max-width: 480px; text-align: center; }
+  .duell-name { font-weight: 800; font-size: 1.1rem; margin-bottom: 4px; }
+  .duell-score { font-weight: 700; color: var(--success); margin-bottom: 8px; }
+  .duell-prompt { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; }
+  .duell-input { font-size: 1.5rem; font-weight: 800; background: white; border-radius: 10px; padding: 10px; min-height: 48px; margin-bottom: 8px; border: 1px solid var(--border); }
+  .duell-divider { height: 56px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; gap: 20px; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.2rem; }
+  .duell-divider button { background: #ef4444; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-weight: 700; }
+  #duellPlayView { display: flex; flex-direction: column; height: 100vh; }
+  .duell-bool-wrap { display: flex; gap: 10px; margin-bottom: 8px; }
+  .duell-bool-wrap button { flex: 1; padding: 18px 0; font-size: 1.05rem; font-weight: 800; border: none; border-radius: 10px; color: white; }
+  .duell-text-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
+  .duell-text-wrap input { flex: 1; }
+  .duell-text-wrap button { background: var(--success); color: white; border: none; border-radius: 8px; padding: 0 16px; font-weight: 700; }
+
+  /* Result */
+  .result-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 26px; text-align: center; margin-bottom: 16px; }
+  .result-winner { font-size: 1.6rem; font-weight: 800; color: var(--accent); margin-bottom: 10px; }
+  .result-scores { font-size: 1.1rem; color: var(--muted); }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+  .modal-box { background: var(--card); border-radius: 14px; padding: 20px; max-width: 420px; width: 100%; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME: 4 Kategorien -->
+  <div id="homeView" class="view">
+    <h1>➗ Mathe-Duell</h1>
+    <div class="cat-grid">
+      <button class="cat-tile cat-basiswissen" data-cat="basiswissen"><span class="ti">🧮</span>Basiswissen</button>
+      <button class="cat-tile cat-jahr1" data-cat="jahr1"><span class="ti">1️⃣</span>Mathematik 1. Jahr</button>
+      <button class="cat-tile cat-jahr2" data-cat="jahr2"><span class="ti">2️⃣</span>Mathematik 2. Jahr</button>
+      <button class="cat-tile cat-jahr3" data-cat="jahr3"><span class="ti">3️⃣</span>Mathematik 3. Jahr</button>
+    </div>
+  </div>
+
+  <!-- KATEGORIE: Kapitel-Liste -->
+  <div id="categoryView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1 id="category_title"></h1>
+    <div class="chapter-list" id="categoryChapterList"></div>
+  </div>
+
+  <!-- KAPITEL: Übungs-Liste -->
+  <div id="chapterView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-category>← Zurück</button></div>
+    <h1 id="chapter_title"></h1>
+    <div class="chapter-list" id="exerciseList"></div>
+  </div>
+
+  <!-- MODUS-WAHL -->
+  <div id="modeChoiceView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-chapter>← Zurück</button></div>
+    <h1 id="mode_exercise_title"></h1>
+    <h2 class="sub">Wie möchtest du üben?</h2>
+    <div class="mode-choice-grid">
+      <button class="btn btn-big btn-solo" id="goSoloBtn">🧠 Solo üben</button>
+      <button class="btn btn-big btn-duell" id="goDuellSetupBtn">⚔️ Duell starten</button>
+    </div>
+  </div>
+
+  <!-- SOLO SETUP -->
+  <div id="soloSetupView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-mode>← Zurück</button></div>
+    <h1 id="solo_setup_title">🧠 Solo üben</h1>
+    <div class="setup-card">
+      <label class="field-label">Zeitlimit</label>
+      <div class="choice-row">
+        <button class="choice-btn active" data-solo-duration="0">Kein Limit</button>
+        <button class="choice-btn" data-solo-duration="60">1 Min.</button>
+        <button class="choice-btn" data-solo-duration="120">2 Min.</button>
+        <button class="choice-btn" data-solo-duration="180">3 Min.</button>
+        <button class="choice-btn" data-solo-duration="300">5 Min.</button>
+        <button class="choice-btn" data-solo-duration="600">10 Min.</button>
+      </div>
+    </div>
+    <button class="btn btn-big btn-solo" id="startSoloBtn">Start</button>
+  </div>
+
+  <!-- SOLO PLAY -->
+  <div id="soloPlayView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="soloStopBtn">Beenden</button></div>
+    <div class="solo-card">
+      <div class="solo-top-row">
+        <div class="solo-score" id="solo_score">Richtig: 0</div>
+        <div class="solo-score" id="solo_timerDisplay">00:00</div>
+        <button class="help-btn" id="solo_helpBtn">❓ Hilfe</button>
+      </div>
+      <div id="solo_visual"></div>
+      <div class="task-prompt" id="solo_prompt"></div>
+      <div class="answer-display" id="solo_input">&nbsp;</div>
+      <div id="solo_pairWrap" class="pair-wrap hidden">
+        <div class="pair-boxes style-coord" id="solo_pairBoxes">
+          <button class="pair-box" data-side="solo" data-part="a" id="solo_pairA">?</button>
+          <div class="pair-sep" id="solo_pairSep">|</div>
+          <button class="pair-box" data-side="solo" data-part="b" id="solo_pairB">?</button>
+        </div>
+      </div>
+      <div id="solo_varRow" class="var-row hidden">
+        <button data-side="solo" data-key="x">x</button>
+        <button data-side="solo" data-key="y">y</button>
+        <button data-side="solo" data-key="a">a</button>
+        <button data-side="solo" data-key="n">n</button>
+      </div>
+      <div id="solo_keypadWrap"><div class="keypad" data-side="solo"></div></div>
+      <div id="solo_boolWrap" class="bool-wrap hidden">
+        <button class="bool-btn true-btn" data-side="solo" data-bool="1">Wahr / Ja</button>
+        <button class="bool-btn false-btn" data-side="solo" data-bool="0">Falsch / Nein</button>
+      </div>
+      <div id="solo_textWrap" class="text-wrap hidden">
+        <input type="text" id="solo_textInput">
+        <button data-side="solo" data-textsubmit="1">✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOLO RESULT -->
+  <div id="soloResultView" class="view hidden">
+    <h1>📊 Trainingsergebnis</h1>
+    <div class="result-card">
+      <div class="result-winner" id="solo_result_score"></div>
+      <div class="result-scores" id="solo_result_detail"></div>
+    </div>
+    <div class="row">
+      <button class="btn btn-solo" style="flex:1;" id="solo_camBtn">📷 Als Foto sichern</button>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <button class="btn btn-duell" style="flex:1;" id="solo_result_againBtn">Nochmals üben</button>
+      <button class="btn btn-secondary" style="flex:1;" data-back-home>Zur Startseite</button>
+    </div>
+  </div>
+
+  <!-- DUELL SETUP -->
+  <div id="duellSetupView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-mode>← Zurück</button></div>
+    <h1 id="duell_exercise_title">⚔️ Duell einrichten</h1>
+
+    <div class="setup-card">
+      <label class="field-label">Aufgaben</label>
+      <div class="choice-row">
+        <button class="choice-btn active" data-sametask="1">Gleiche Aufgaben für beide</button>
+        <button class="choice-btn" data-sametask="0">Unterschiedliche Aufgaben</button>
+      </div>
+
+      <div class="toggle-line">
+        <label class="field-label" style="margin:0;">Zeitlimit</label>
+        <label class="switch"><input type="checkbox" id="sw_timeLimit" checked><span class="slider"></span></label>
+      </div>
+      <div class="choice-row" id="durationRow">
+        <button class="choice-btn" data-duration="60">1 Min.</button>
+        <button class="choice-btn active" data-duration="120">2 Min.</button>
+        <button class="choice-btn" data-duration="180">3 Min.</button>
+        <button class="choice-btn" data-duration="300">5 Min.</button>
+      </div>
+
+      <div class="toggle-line">
+        <label class="field-label" style="margin:0;">Punktelimit</label>
+        <label class="switch"><input type="checkbox" id="sw_scoreLimit"><span class="slider"></span></label>
+      </div>
+      <div id="scoreLimitRow" class="hidden" style="margin-bottom:14px;">
+        <input type="number" id="scoreLimitInput" value="10" min="1">
+      </div>
+
+      <div class="toggle-line">
+        <label class="field-label" style="margin:0;">Punkt für Gegner bei falscher Antwort</label>
+        <label class="switch"><input type="checkbox" id="sw_penalize"><span class="slider"></span></label>
+      </div>
+    </div>
+
+    <div class="setup-card">
+      <div class="toggle-line">
+        <label class="field-label" style="margin:0;">Handicap (Verzögerung für stärkeren Spieler)</label>
+        <label class="switch"><input type="checkbox" id="sw_handicap"><span class="slider"></span></label>
+      </div>
+      <div id="handicapOptions" class="hidden">
+        <label class="field-label">Welche Seite wird verzögert?</label>
+        <div class="choice-row">
+          <button class="choice-btn active" data-handicapside="bottom">Team Blau (unten)</button>
+          <button class="choice-btn" data-handicapside="top">Team Rot (oben)</button>
+        </div>
+        <label class="field-label">Verzögerung</label>
+        <div class="choice-row">
+          <button class="choice-btn" data-handicapms="500">0.5 Sek.</button>
+          <button class="choice-btn active" data-handicapms="1000">1 Sek.</button>
+          <button class="choice-btn" data-handicapms="1500">1.5 Sek.</button>
+          <button class="choice-btn" data-handicapms="2000">2 Sek.</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-card">
+      <label class="field-label">Name Spieler unten (normale Ausrichtung, Team Blau)</label>
+      <input type="text" id="dn_bottom" placeholder="Team Blau" maxlength="16">
+      <div style="height:10px;"></div>
+      <label class="field-label">Name Spieler oben (gegenübersitzend, gespiegelt, Team Rot)</label>
+      <input type="text" id="dn_top" placeholder="Team Rot" maxlength="16">
+    </div>
+
+    <button class="btn btn-big btn-duell" id="startDuellBtn">Duell starten</button>
+  </div>
+
+  <!-- DUELL PLAY -->
+  <div id="duellPlayView" class="view hidden duell-play">
+    <div class="duell-half duell-top">
+      <div class="duell-inner">
+        <div class="duell-name" id="duell_top_name">Team Rot</div>
+        <div class="duell-score" id="duell_top_score">0 Punkte</div>
+        <div id="duell_top_visual"></div>
+        <div class="duell-prompt" id="duell_top_prompt"></div>
+        <div class="duell-input" id="duell_top_input">&nbsp;</div>
+        <div id="duell_top_pairWrap" class="pair-wrap hidden">
+          <div class="pair-boxes style-coord" id="duell_top_pairBoxes">
+            <button class="pair-box" data-side="top" data-part="a" id="duell_top_pairA">?</button>
+            <div class="pair-sep" id="duell_top_pairSep">|</div>
+            <button class="pair-box" data-side="top" data-part="b" id="duell_top_pairB">?</button>
+          </div>
+        </div>
+        <div id="duell_top_varRow" class="var-row hidden">
+          <button data-side="top" data-key="x">x</button>
+          <button data-side="top" data-key="y">y</button>
+          <button data-side="top" data-key="a">a</button>
+          <button data-side="top" data-key="n">n</button>
+        </div>
+        <div id="duell_top_keypadWrap"><div class="keypad" data-side="top"></div></div>
+        <div id="duell_top_boolWrap" class="duell-bool-wrap hidden">
+          <button style="background:var(--success);" data-side="top" data-bool="1">Wahr</button>
+          <button style="background:var(--danger);" data-side="top" data-bool="0">Falsch</button>
+        </div>
+        <div id="duell_top_textWrap" class="duell-text-wrap hidden">
+          <input type="text" id="duell_top_textInput">
+          <button data-side="top" data-textsubmit="1">✓</button>
+        </div>
+      </div>
+    </div>
+    <div class="duell-divider">
+      <span id="duell_timer">02:00</span>
+      <button id="duell_stopBtn">Beenden</button>
+    </div>
+    <div class="duell-half duell-bottom">
+      <div class="duell-inner">
+        <div class="duell-name" id="duell_bottom_name">Team Blau</div>
+        <div class="duell-score" id="duell_bottom_score">0 Punkte</div>
+        <div id="duell_bottom_visual"></div>
+        <div class="duell-prompt" id="duell_bottom_prompt"></div>
+        <div class="duell-input" id="duell_bottom_input">&nbsp;</div>
+        <div id="duell_bottom_pairWrap" class="pair-wrap hidden">
+          <div class="pair-boxes style-coord" id="duell_bottom_pairBoxes">
+            <button class="pair-box" data-side="bottom" data-part="a" id="duell_bottom_pairA">?</button>
+            <div class="pair-sep" id="duell_bottom_pairSep">|</div>
+            <button class="pair-box" data-side="bottom" data-part="b" id="duell_bottom_pairB">?</button>
+          </div>
+        </div>
+        <div id="duell_bottom_varRow" class="var-row hidden">
+          <button data-side="bottom" data-key="x">x</button>
+          <button data-side="bottom" data-key="y">y</button>
+          <button data-side="bottom" data-key="a">a</button>
+          <button data-side="bottom" data-key="n">n</button>
+        </div>
+        <div id="duell_bottom_keypadWrap"><div class="keypad" data-side="bottom"></div></div>
+        <div id="duell_bottom_boolWrap" class="duell-bool-wrap hidden">
+          <button style="background:var(--success);" data-side="bottom" data-bool="1">Wahr</button>
+          <button style="background:var(--danger);" data-side="bottom" data-bool="0">Falsch</button>
+        </div>
+        <div id="duell_bottom_textWrap" class="duell-text-wrap hidden">
+          <input type="text" id="duell_bottom_textInput">
+          <button data-side="bottom" data-textsubmit="1">✓</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DUELL RESULT -->
+  <div id="duellResultView" class="view hidden">
+    <h1>🏆 Ergebnis</h1>
+    <div class="result-card">
+      <div class="result-winner" id="result_winner"></div>
+      <div class="result-scores" id="result_scores"></div>
+    </div>
+    <div class="row">
+      <button class="btn btn-duell" style="flex:1;" id="result_replayBtn">Nochmals spielen</button>
+      <button class="btn btn-secondary" style="flex:1;" data-back-home>Zur Startseite</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay hidden" id="confirmOverlay">
+  <div class="modal-box">
+    <p id="confirmMessage" style="font-size:1.05rem; margin:0 0 16px;"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="confirmCancel">Abbrechen</button>
+      <button class="btn btn-danger" id="confirmOk">Bestätigen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="helpOverlay">
+  <div class="modal-box">
+    <h2 style="margin-top:0;">💡 Lösungsweg</h2>
+    <p id="helpText" style="font-size:1.05rem; line-height:1.5;"></p>
+    <div class="modal-actions"><button class="btn" id="helpClose">Schliessen</button></div>
+  </div>
+</div>
+
+<script>
+/* ================= Utils ================= */
+function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function rndNonZero(min, max) { let n; do { n = rnd(min, max); } while (n === 0); return n; }
+function escapeHtml(str) { const d = document.createElement("div"); d.textContent = str == null ? "" : String(str); return d.innerHTML; }
+function formatTime(sec) { const m = Math.floor(sec / 60), s = Math.max(0, sec) % 60; return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0"); }
+function gcdFn(a, b) { return b === 0 ? a : gcdFn(b, a % b); }
+function lcmFn(a, b) { return (a * b) / gcdFn(a, b); }
+function isPrime(n) { if (n < 2) return false; for (let i = 2; i * i <= n; i++) if (n % i === 0) return false; return true; }
+function countDivisors(n) { let c = 0; for (let i = 1; i <= n; i++) if (n % i === 0) c++; return c; }
+
+/* ================= Confirm & Help Modals ================= */
+let confirmCb = null;
+function openConfirm(message, onConfirm, confirmLabel) {
+  document.getElementById("confirmMessage").textContent = message;
+  document.getElementById("confirmOk").textContent = confirmLabel || "Bestätigen";
+  confirmCb = onConfirm || null;
+  document.getElementById("confirmOverlay").classList.remove("hidden");
+}
+document.getElementById("confirmOk").addEventListener("click", () => { const cb = confirmCb; document.getElementById("confirmOverlay").classList.add("hidden"); confirmCb = null; if (cb) cb(); });
+document.getElementById("confirmCancel").addEventListener("click", () => { document.getElementById("confirmOverlay").classList.add("hidden"); confirmCb = null; });
+document.getElementById("helpClose").addEventListener("click", () => document.getElementById("helpOverlay").classList.add("hidden"));
+document.getElementById("solo_helpBtn").addEventListener("click", () => {
+  const text = (soloCurrent && soloCurrent.sourceHelp) || soloExercise.help || "Für diese Aufgabe ist noch kein Lösungsweg hinterlegt.";
+  document.getElementById("helpText").textContent = text;
+  document.getElementById("helpOverlay").classList.remove("hidden");
+});
+
+/* ================= Navigation ================= */
+function showView(name) {
+  document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
+  document.getElementById(name + "View").classList.remove("hidden");
+}
+document.querySelectorAll("[data-back-home]").forEach(b => b.addEventListener("click", () => { stopDuellTimerIfRunning(); showView("home"); }));
+document.getElementById("categoryView").querySelector("[data-back-home]");
+document.querySelectorAll("[data-back-category]").forEach(b => b.addEventListener("click", () => showView("category")));
+document.querySelectorAll("[data-back-chapter]").forEach(b => b.addEventListener("click", () => showView("chapter")));
+document.querySelectorAll("[data-back-mode]").forEach(b => b.addEventListener("click", () => { stopDuellTimerIfRunning(); showView("modeChoice"); }));
+
+/* =========================================================================
+   AUFGABEN-GENERATOREN (eigene Umsetzung, angelehnt an den Aufgabentyp
+   der Lehrmittel-Kapitel – keine übernommenen Inhalte)
+   ========================================================================= */
+function regPoly(n, cx, cy, r, rotDeg) {
+  const pts = [];
+  for (let i = 0; i < n; i++) { const a = (rotDeg + i * 360 / n) * Math.PI / 180; pts.push(`${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`); }
+  return pts.join(" ");
+}
+const SHAPES = [
+  { name: "Quadrat", axis: 4, rot: 4, points: regPoly(4, 100, 100, 70, -45) },
+  { name: "Rechteck", axis: 2, rot: 2, points: "40,70 160,70 160,130 40,130" },
+  { name: "gleichseitiges Dreieck", axis: 3, rot: 3, points: regPoly(3, 100, 105, 78, -90) },
+  { name: "gleichschenkliges Dreieck", axis: 1, rot: 1, points: "100,40 50,160 150,160" },
+  { name: "unregelmässiges Dreieck", axis: 0, rot: 1, points: "60,40 165,85 90,170" },
+  { name: "Raute (Rhombus)", axis: 2, rot: 2, points: "100,30 140,100 100,170 60,100" },
+  { name: "Parallelogramm", axis: 0, rot: 2, points: "60,50 170,50 140,150 30,150" },
+  { name: "regelmässiges Fünfeck", axis: 5, rot: 5, points: regPoly(5, 100, 105, 78, -90) },
+  { name: "regelmässiges Sechseck", axis: 6, rot: 6, points: regPoly(6, 100, 100, 78, 0) }
+];
+function shapeSVG(shape) { return `<svg viewBox="0 0 200 200" class="mt-shape"><polygon points="${shape.points}" fill="#dbeafe" stroke="#2563eb" stroke-width="4"/></svg>`; }
+function coordinateGridSVG(x, y) {
+  const scale = 13, cx = 100, cy = 100;
+  const px = cx + x * scale, py = cy - y * scale;
+  let lines = "";
+  for (let i = -7; i <= 7; i++) {
+    lines += `<line x1="${cx + i * scale}" y1="8" x2="${cx + i * scale}" y2="192" stroke="#e2e8f0"/>`;
+    lines += `<line x1="8" y1="${cy - i * scale}" x2="192" y2="${cy - i * scale}" stroke="#e2e8f0"/>`;
+  }
+  return `<svg viewBox="0 0 200 200" class="mt-shape">${lines}
+    <line x1="8" y1="${cy}" x2="192" y2="${cy}" stroke="#334155" stroke-width="2"/>
+    <line x1="${cx}" y1="8" x2="${cx}" y2="192" stroke="#334155" stroke-width="2"/>
+    <circle cx="${px}" cy="${py}" r="6" fill="#dc2626"/></svg>`;
+}
+
+/* ---- Mathematik 1. Jahr: Generatoren ---- */
+function generateAxisSymmetry() { const s = SHAPES[rnd(0, SHAPES.length - 1)]; return { visual: shapeSVG(s), prompt: `Wie viele Symmetrieachsen hat diese Figur (${s.name})?`, answerType: "number", correct: s.axis }; }
+function generateRotSymmetry() { const s = SHAPES[rnd(0, SHAPES.length - 1)]; return { visual: shapeSVG(s), prompt: `Welche Drehsymmetrie-Ordnung hat diese Figur (${s.name})? (1 = keine ausser der vollen Drehung)`, answerType: "number", correct: s.rot }; }
+function generateAxisReflectionX() { const x = rndNonZero(-10, 10), y = rndNonZero(-10, 10); return { visual: null, prompt: `Spiegle P(${x}|${y}) an der x-Achse. Wie lautet die y-Koordinate des Bildpunkts P'?`, answerType: "number", correct: -y }; }
+function generateAxisReflectionY() { const x = rndNonZero(-10, 10), y = rndNonZero(-10, 10); return { visual: null, prompt: `Spiegle P(${x}|${y}) an der y-Achse. Wie lautet die x-Koordinate des Bildpunkts P'?`, answerType: "number", correct: -x }; }
+function generatePointReflection() { const x = rndNonZero(-10, 10), y = rndNonZero(-10, 10); return { visual: null, prompt: `Spiegle P(${x}|${y}) am Ursprung O. Wie lautet der Bildpunkt P'?`, answerType: "pair", pairStyle: "coordinate", correct: [-x, -y] }; }
+function generatePowerCalc() { const base = rnd(2, 9), exp = rnd(2, 3); return { visual: null, prompt: `Berechne: ${base}^${exp} =`, answerType: "number", correct: Math.pow(base, exp) }; }
+function generatePowerRule() { const base = rnd(2, 9), e1 = rnd(2, 4), e2 = rnd(2, 4); return { visual: null, prompt: `Vereinfache: ${base}^${e1} · ${base}^${e2} = ${base}^?`, answerType: "number", correct: e1 + e2 }; }
+function generateVariables() { const a = rnd(2, 9), b = rnd(0, 20), x = rnd(-5, 10); const sign = b >= 0 ? "+" : "−"; return { visual: null, prompt: `Berechne den Wert des Terms ${a}x ${sign} ${Math.abs(b)} für x = ${x}.`, answerType: "number", correct: a * x + b }; }
+function generateIsPrime() { const n = rnd(2, 100); return { visual: null, prompt: `Ist ${n} eine Primzahl?`, answerType: "boolean", correct: isPrime(n) ? 1 : 0 }; }
+function generateDivisorCount() { const n = rnd(4, 60); return { visual: null, prompt: `Wie viele Teiler hat die Zahl ${n}?`, answerType: "number", correct: countDivisors(n) }; }
+function generateLcm() { const a = rnd(2, 12), b = rnd(2, 12); return { visual: null, prompt: `Wie lautet das kleinste gemeinsame Vielfache (kgV) von ${a} und ${b}?`, answerType: "number", correct: lcmFn(a, b) }; }
+
+/* ---- Basiswissen: Generatoren ---- */
+function generateKopf(max) {
+  const op = rnd(0, 2);
+  if (op === 0) { const a = rnd(1, max - 1), b = rnd(1, max - a); return { visual: null, prompt: `${a} + ${b} =`, answerType: "number", correct: a + b }; }
+  if (op === 1) { const a = rnd(1, max), b = rnd(1, a); return { visual: null, prompt: `${a} − ${b} =`, answerType: "number", correct: a - b }; }
+  const limit = Math.min(20, Math.max(3, Math.floor(Math.sqrt(max)))); const a = rnd(2, limit), b = rnd(2, limit);
+  return { visual: null, prompt: `${a} × ${b} =`, answerType: "number", correct: a * b };
+}
+function generateFractionExpand() { const bn = rnd(1, 8), bd = rnd(bn + 1, 9); const f = rnd(2, 5); return { visual: null, prompt: `Erweitere ${bn}/${bd} mit ${f}.`, answerType: "pair", pairStyle: "fraction", correct: [bn * f, bd * f] }; }
+function generateFractionReduce() {
+  let bn = rnd(1, 6), bd = rnd(2, 7); if (bn === bd) bd++;
+  const g = gcdFn(bn, bd); bn = bn / g; bd = bd / g;
+  const f = rnd(2, 4);
+  return { visual: null, prompt: `Kürze ${bn * f}/${bd * f} vollständig.`, answerType: "pair", pairStyle: "fraction", correct: [bn, bd] };
+}
+function generatePercentToDecimal() { const p = rnd(1, 99); return { visual: null, prompt: `Wandle ${p}% in eine Dezimalzahl um.`, answerType: "number", correct: Math.round((p / 100) * 1000) / 1000 }; }
+function generateDecimalToPercent() { const d = rnd(1, 99) / 100; return { visual: null, prompt: `Wandle ${d} in Prozent um (nur Zahl, ohne %).`, answerType: "number", correct: Math.round(d * 100 * 100) / 100 }; }
+function generateFractionToDecimal() { const dens = [2, 4, 5, 8, 10, 20, 25, 50, 100]; const den = dens[rnd(0, dens.length - 1)]; const num = rnd(1, den - 1); return { visual: null, prompt: `Wandle den Bruch ${num}/${den} in eine Dezimalzahl um.`, answerType: "number", correct: Math.round((num / den) * 1000) / 1000 }; }
+function generateDecimalToFraction() { const den = [10, 100][rnd(0, 1)]; const num = rnd(1, den - 1); return { visual: null, prompt: `Wandle ${num / den} in einen Bruch um (nicht kürzen).`, answerType: "pair", pairStyle: "fraction", correct: [num, den] }; }
+function generateCoordinateRead() { const x = rnd(-6, 6), y = rnd(-6, 6); return { visual: coordinateGridSVG(x, y), prompt: `Welche Koordinaten hat der markierte Punkt?`, answerType: "pair", pairStyle: "coordinate", correct: [x, y] }; }
+const UNIT_SETS = [
+  { from: "cm", to: "m", factor: 0.01 }, { from: "m", to: "cm", factor: 100 },
+  { from: "m", to: "km", factor: 0.001 }, { from: "km", to: "m", factor: 1000 },
+  { from: "g", to: "kg", factor: 0.001 }, { from: "kg", to: "g", factor: 1000 },
+  { from: "ml", to: "l", factor: 0.001 }, { from: "l", to: "ml", factor: 1000 },
+  { from: "min", to: "h", factor: 1 / 60 }, { from: "h", to: "min", factor: 60 }
+];
+function generateUnitConversion() { const s = UNIT_SETS[rnd(0, UNIT_SETS.length - 1)]; const val = rnd(1, 50); return { visual: null, prompt: `Wandle um: ${val} ${s.from} = ? ${s.to}`, answerType: "number", correct: Math.round(val * s.factor * 1000) / 1000 }; }
+function generateGgt() { const a = rnd(4, 60), b = rnd(4, 60); return { visual: null, prompt: `Wie lautet der grösste gemeinsame Teiler (ggT) von ${a} und ${b}?`, answerType: "number", correct: gcdFn(a, b) }; }
+function generateKgvBW() { const a = rnd(2, 15), b = rnd(2, 15); return { visual: null, prompt: `Wie lautet das kleinste gemeinsame Vielfache (kgV) von ${a} und ${b}?`, answerType: "number", correct: lcmFn(a, b) }; }
+function generateAdd() { const a = rnd(10, 999), b = rnd(10, 999); return { visual: null, prompt: `${a} + ${b} =`, answerType: "number", correct: a + b }; }
+function generateSub() { const a = rnd(10, 999); const b = rnd(10, a); return { visual: null, prompt: `${a} − ${b} =`, answerType: "number", correct: a - b }; }
+function generateMul() { const a = rnd(2, 20), b = rnd(2, 20); return { visual: null, prompt: `${a} × ${b} =`, answerType: "number", correct: a * b }; }
+function generateDiv() { const b = rnd(2, 12), r = rnd(2, 12); const a = b * r; return { visual: null, prompt: `${a} : ${b} =`, answerType: "number", correct: r }; }
+function generateRounding() {
+  const targets = [10, 100, 1000]; const t = targets[rnd(0, targets.length - 1)]; const n = rnd(t, t * 10);
+  const label = t === 10 ? "Zehner" : t === 100 ? "Hunderter" : "Tausender";
+  return { visual: null, prompt: `Runde ${n} auf ${label}.`, answerType: "number", correct: Math.round(n / t) * t };
+}
+function generateAngle() {
+  if (Math.random() < 0.5) { const a = rnd(10, 80); return { visual: null, prompt: `Zwei Winkel ergänzen sich zu 90°. Der eine misst ${a}°. Wie gross ist der andere?`, answerType: "number", correct: 90 - a }; }
+  const a = rnd(10, 170); return { visual: null, prompt: `Zwei Winkel ergänzen sich zu 180°. Der eine misst ${a}°. Wie gross ist der andere?`, answerType: "number", correct: 180 - a };
+}
+
+/* ---- Mathematik 1. Jahr: weitere Generatoren (Kapitel 3a–9b) ---- */
+function generateMean() { const n = rnd(4, 6); const vals = Array.from({ length: n }, () => rnd(1, 20)); const sum = vals.reduce((a, b) => a + b, 0); return { visual: null, prompt: `Berechne den Mittelwert dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: Math.round((sum / n) * 100) / 100 }; }
+function generateMedian() { const n = rnd(2, 3) * 2 + 1; const vals = Array.from({ length: n }, () => rnd(1, 30)); const sorted = [...vals].sort((a, b) => a - b); return { visual: null, prompt: `Bestimme den Median dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: sorted[Math.floor(n / 2)] }; }
+function generateRange() { const n = 5; const vals = Array.from({ length: n }, () => rnd(1, 40)); return { visual: null, prompt: `Bestimme die Spannweite (Maximum − Minimum) dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: Math.max(...vals) - Math.min(...vals) }; }
+
+function generatePercentValue() { const grund = rnd(20, 400), satz = rnd(5, 90); return { visual: null, prompt: `Wie viel sind ${satz}% von ${grund}?`, answerType: "number", correct: Math.round(grund * satz / 100 * 100) / 100 }; }
+function generatePercentBase() { const satz = rnd(5, 80); const grund = rnd(20, 300); const wert = Math.round(grund * satz / 100); return { visual: null, prompt: `${wert} ist ${satz}% von welcher Zahl?`, answerType: "number", correct: Math.round((wert / (satz / 100)) * 100) / 100 }; }
+function generatePercentRate() { const grund = rnd(20, 300); const satzZiel = rnd(5, 90); const wert = Math.round(grund * satzZiel / 100); return { visual: null, prompt: `Wie viel Prozent ist ${wert} von ${grund}? (nur Zahl, ohne %)`, answerType: "number", correct: Math.round((wert / grund) * 100 * 100) / 100 }; }
+
+function generateRectArea() { const l = rnd(3, 20), b = rnd(3, 20); return { visual: null, prompt: `Berechne die Fläche eines Rechtecks mit Länge ${l} cm und Breite ${b} cm (in cm²).`, answerType: "number", correct: l * b }; }
+function generateTriArea() { const g = rnd(4, 20), h = rnd(2, 16); return { visual: null, prompt: `Berechne die Fläche eines Dreiecks mit Grundseite ${g} cm und Höhe ${h} cm (in cm²).`, answerType: "number", correct: Math.round(g * h / 2 * 100) / 100 }; }
+function generateBoxVolume() { const l = rnd(2, 12), b = rnd(2, 12), h = rnd(2, 12); return { visual: null, prompt: `Berechne das Volumen eines Quaders mit den Kanten ${l} cm, ${b} cm und ${h} cm (in cm³).`, answerType: "number", correct: l * b * h }; }
+
+const SOLIDS_4A = [
+  { name: "Würfel", faces: 6, edges: 12, vertices: 8 },
+  { name: "Quader", faces: 6, edges: 12, vertices: 8 },
+  { name: "Dreiecksprisma", faces: 5, edges: 9, vertices: 6 },
+  { name: "quadratische Pyramide", faces: 5, edges: 8, vertices: 5 },
+  { name: "Tetraeder (Dreieckspyramide)", faces: 4, edges: 6, vertices: 4 }
+];
+function generateSolidFaces() { const s = SOLIDS_4A[rnd(0, SOLIDS_4A.length - 1)]; return { visual: null, prompt: `Wie viele Flächen hat ein ${s.name}?`, answerType: "number", correct: s.faces }; }
+function generateSolidEdges() { const s = SOLIDS_4A[rnd(0, SOLIDS_4A.length - 1)]; return { visual: null, prompt: `Wie viele Kanten hat ein ${s.name}?`, answerType: "number", correct: s.edges }; }
+function generateSolidVertices() { const s = SOLIDS_4A[rnd(0, SOLIDS_4A.length - 1)]; return { visual: null, prompt: `Wie viele Ecken hat ein ${s.name}?`, answerType: "number", correct: s.vertices }; }
+
+function generateDiceProb() { const target = rnd(0, 1) === 0 ? "eine gerade Zahl" : "eine ungerade Zahl"; return { visual: null, prompt: `Du wirfst einen Würfel. Wie gross ist die Wahrscheinlichkeit für ${target}? (nicht kürzen)`, answerType: "pair", pairStyle: "fraction", correct: [3, 6] }; }
+function generateBagProb() {
+  const rot = rnd(1, 6), blau = rnd(1, 6);
+  const total = rot + blau;
+  const askRot = Math.random() < 0.5;
+  return { visual: null, prompt: `In einem Beutel sind ${rot} rote und ${blau} blaue Kugeln. Wie gross ist die Wahrscheinlichkeit, eine ${askRot ? "rote" : "blaue"} Kugel zu ziehen? (nicht kürzen)`, answerType: "pair", pairStyle: "fraction", correct: [askRot ? rot : blau, total] };
+}
+
+function generateNegativeCompare() { let a = rnd(-20, -1), b = rnd(-20, -1); if (a === b) b--; return { visual: null, prompt: `Stimmt die Aussage: ${a} < ${b} ?`, answerType: "boolean", correct: a < b ? 1 : 0 }; }
+function generateNegativeOrder() { const a = rndNonZero(-20, 20), b = rndNonZero(-20, 20); return { visual: null, prompt: `Welche Zahl ist grösser? Stimmt: ${a} > ${b} ?`, answerType: "boolean", correct: a > b ? 1 : 0 }; }
+
+function generateQuadrant() {
+  const x = rndNonZero(-6, 6), y = rndNonZero(-6, 6);
+  const q = x > 0 && y > 0 ? 1 : x < 0 && y > 0 ? 2 : x < 0 && y < 0 ? 3 : 4;
+  return { visual: coordinateGridSVG(x, y), prompt: `In welchem Quadranten (I=1, II=2, III=3, IV=4) liegt der markierte Punkt?`, answerType: "number", correct: q };
+}
+
+function generateNegOpMul() { const a = rndNonZero(-12, 12), b = rndNonZero(-12, 12); return { visual: null, prompt: `${a} × (${b}) =`, answerType: "number", correct: a * b }; }
+function generateNegOpDiv() { const b = rndNonZero(-12, 12); const r = rndNonZero(-12, 12); const a = b * r; return { visual: null, prompt: `${a} : (${b}) =`, answerType: "number", correct: r }; }
+function generateNegOpAddSub() {
+  const a = rndNonZero(-20, 20), b = rndNonZero(-20, 20);
+  if (Math.random() < 0.5) return { visual: null, prompt: `${a} + (${b}) =`, answerType: "number", correct: a + b };
+  return { visual: null, prompt: `${a} − (${b}) =`, answerType: "number", correct: a - b };
+}
+
+function generateRectPerimeter() { const l = rnd(3, 25), b = rnd(3, 25); return { visual: null, prompt: `Berechne den Umfang eines Rechtecks mit Länge ${l} cm und Breite ${b} cm.`, answerType: "number", correct: 2 * (l + b) }; }
+function generateRectArea7a() { const l = rnd(3, 25), b = rnd(3, 25); return { visual: null, prompt: `Berechne die Fläche eines Rechtecks mit Länge ${l} cm und Breite ${b} cm (in cm²).`, answerType: "number", correct: l * b }; }
+
+const QUAD_FACTS = [
+  { name: "Quadrat", rightAngles: 4 }, { name: "Rechteck", rightAngles: 4 },
+  { name: "Parallelogramm", rightAngles: 0 }, { name: "Raute", rightAngles: 0 }, { name: "Trapez", rightAngles: 0 }
+];
+function generateQuadRightAngles() { const q = QUAD_FACTS[rnd(0, QUAD_FACTS.length - 1)]; return { visual: null, prompt: `Wie viele rechte Winkel hat ein ${q.name} (im Allgemeinen)?`, answerType: "number", correct: q.rightAngles }; }
+
+function generateTriangleAngleSum() { const a = rnd(20, 120), b = rnd(20, 150 - a > 20 ? 150 - a : 20); const c = 180 - a - b; return { visual: null, prompt: `In einem Dreieck sind zwei Winkel ${a}° und ${b}° gross. Wie gross ist der dritte Winkel?`, answerType: "number", correct: c }; }
+
+function generateSimplifyTerms() {
+  const a = rnd(2, 15), b = rnd(2, 15);
+  if (Math.random() < 0.5) return { visual: null, prompt: `Fasse zusammen: ${a}x + ${b}x =`, answerType: "term", correct: `${a + b}x` };
+  let big = Math.max(a, b), small = Math.min(a, b);
+  if (big === small) big++;
+  return { visual: null, prompt: `Fasse zusammen: ${big}x − ${small}x =`, answerType: "term", correct: `${big - small}x` };
+}
+function generateLinearEquation() {
+  const a = rnd(2, 9), x = rnd(-10, 10), b = rnd(-20, 20);
+  const c = a * x + b;
+  const sign = b >= 0 ? "+" : "−";
+  return { visual: null, prompt: `Löse die Gleichung: ${a}x ${sign} ${Math.abs(b)} = ${c}. Wie gross ist x?`, answerType: "number", correct: x };
+}
+
+function generatePolyhedronParts() {
+  const n = rnd(3, 8);
+  const isPyramid = Math.random() < 0.5;
+  if (isPyramid) {
+    const which = rnd(0, 2);
+    if (which === 0) return { visual: null, prompt: `Eine Pyramide hat eine ${n}-eckige Grundfläche. Wie viele Ecken hat sie?`, answerType: "number", correct: n + 1 };
+    if (which === 1) return { visual: null, prompt: `Eine Pyramide hat eine ${n}-eckige Grundfläche. Wie viele Kanten hat sie?`, answerType: "number", correct: 2 * n };
+    return { visual: null, prompt: `Eine Pyramide hat eine ${n}-eckige Grundfläche. Wie viele Flächen hat sie?`, answerType: "number", correct: n + 1 };
+  }
+  const which = rnd(0, 2);
+  if (which === 0) return { visual: null, prompt: `Ein Prisma hat eine ${n}-eckige Grundfläche. Wie viele Ecken hat es?`, answerType: "number", correct: 2 * n };
+  if (which === 1) return { visual: null, prompt: `Ein Prisma hat eine ${n}-eckige Grundfläche. Wie viele Kanten hat es?`, answerType: "number", correct: 3 * n };
+  return { visual: null, prompt: `Ein Prisma hat eine ${n}-eckige Grundfläche. Wie viele Flächen hat es?`, answerType: "number", correct: n + 2 };
+}
+
+function generateCubeVolume() { const a = rnd(2, 15); return { visual: null, prompt: `Berechne das Volumen eines Würfels mit Kantenlänge ${a} cm (in cm³).`, answerType: "number", correct: a * a * a }; }
+function generateCubeSurface() { const a = rnd(2, 15); return { visual: null, prompt: `Berechne den Oberflächeninhalt eines Würfels mit Kantenlänge ${a} cm (in cm²).`, answerType: "number", correct: 6 * a * a }; }
+
+/* ---- Mathematik 2. Jahr: Generatoren ---- */
+function simplifyFraction(n, d) { const g = gcdFn(Math.abs(n), Math.abs(d)); return [n / g, d / g]; }
+function generateFractionCompare() {
+  const an = rnd(1, 9), ad = rnd(2, 10), bn = rnd(1, 9), bd = rnd(2, 10);
+  return { visual: null, prompt: `Stimmt die Aussage: ${an}/${ad} > ${bn}/${bd} ?`, answerType: "boolean", correct: (an / ad) > (bn / bd) ? 1 : 0 };
+}
+function generateMixedToImproper() { const w = rnd(1, 8), n = rnd(1, 6), d = rnd(n + 1, 9); return { visual: null, prompt: `Wandle die gemischte Zahl ${w} ${n}/${d} in einen unechten Bruch um.`, answerType: "pair", pairStyle: "fraction", correct: [w * d + n, d] }; }
+function generateFractionAdd() {
+  const ad = rnd(2, 8), bd = rnd(2, 8), an = rnd(1, ad - 1), bn = rnd(1, bd - 1);
+  const commonD = ad * bd, num = an * bd + bn * ad;
+  return { visual: null, prompt: `Berechne: ${an}/${ad} + ${bn}/${bd} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(num, commonD) };
+}
+function generateFractionMul() {
+  const an = rnd(1, 8), ad = rnd(an + 1, 9), bn = rnd(1, 8), bd = rnd(bn + 1, 9);
+  return { visual: null, prompt: `Berechne: ${an}/${ad} × ${bn}/${bd} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(an * bn, ad * bd) };
+}
+function generateFractionDiv() {
+  const an = rnd(1, 8), ad = rnd(an + 1, 9), bn = rnd(1, 8), bd = rnd(bn + 1, 9);
+  return { visual: null, prompt: `Berechne: ${an}/${ad} : ${bn}/${bd} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(an * bd, ad * bn) };
+}
+
+function generateEquation2Step() {
+  const a = rnd(2, 9), x = rnd(-12, 12), b = rnd(-25, 25);
+  const c = a * x + b; const sign = b >= 0 ? "+" : "−";
+  return { visual: null, prompt: `Löse: ${a}x ${sign} ${Math.abs(b)} = ${c}. x = ?`, answerType: "number", correct: x };
+}
+function generateSequence() {
+  const start = rnd(1, 10), diff = rnd(2, 8) * (Math.random() < 0.5 ? 1 : -1);
+  const terms = [start, start + diff, start + 2 * diff, start + 3 * diff];
+  return { visual: null, prompt: `Wie lautet das nächste Glied der Zahlenfolge: ${terms.join(", ")}, ?`, answerType: "number", correct: start + 4 * diff };
+}
+function generateSquareRoot() { const roots = [2,3,4,5,6,7,8,9,10,11,12,13,14,15]; const r = roots[rnd(0, roots.length - 1)]; return { visual: null, prompt: `Berechne: √${r * r} =`, answerType: "number", correct: r }; }
+
+function generatePythagorasHyp() { const a = rnd(3, 20), b = rnd(3, 20); return { visual: null, prompt: `Ein rechtwinkliges Dreieck hat die Katheten ${a} cm und ${b} cm. Wie lang ist die Hypotenuse? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.sqrt(a * a + b * b) * 10) / 10 }; }
+function generatePythagorasLeg() {
+  const a = rnd(3, 15), bReal = rnd(3, 15);
+  const cRounded = Math.round(Math.sqrt(a * a + bReal * bReal) * 10) / 10;
+  const correctB = Math.round(Math.sqrt(Math.max(0, cRounded * cRounded - a * a)) * 10) / 10;
+  return { visual: null, prompt: `Ein rechtwinkliges Dreieck hat die Hypotenuse ${cRounded} cm und eine Kathete ${a} cm. Wie lang ist die andere Kathete? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: correctB };
+}
+function generatePythagorasLadder() { const wall = rnd(3, 12), ground = rnd(2, 8); return { visual: null, prompt: `Eine Leiter lehnt an einer Wand. Sie berührt die Wand auf ${wall} m Höhe, der Fuss steht ${ground} m von der Wand entfernt. Wie lang ist die Leiter? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.sqrt(wall * wall + ground * ground) * 10) / 10 }; }
+function generatePythagorasDiagonal() { const l = rnd(4, 20), b = rnd(4, 20); return { visual: null, prompt: `Berechne die Diagonale eines Rechtecks mit den Seiten ${l} cm und ${b} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.sqrt(l * l + b * b) * 10) / 10 }; }
+
+function generateProportionalCheck() {
+  const k = rnd(2, 6); const x1 = rnd(1, 8), x2 = rnd(1, 8);
+  const isProportional = Math.random() < 0.5;
+  const y1 = x1 * k, y2 = isProportional ? x2 * k : x2 * k + rnd(1, 5);
+  return { visual: null, prompt: `Wertepaare: (${x1}|${y1}) und (${x2}|${y2}). Ist y direkt proportional zu x?`, answerType: "boolean", correct: (y1 / x1 === y2 / x2) ? 1 : 0 };
+}
+function generateDirectProportion() { const menge1 = rnd(2, 8), preis1 = rnd(1, 5) * menge1 + rnd(0, 3); const menge2 = rnd(2, 15); return { visual: null, prompt: `${menge1} Stück kosten ${preis1} Fr. Wie viel kosten ${menge2} Stück? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round((preis1 / menge1) * menge2 * 100) / 100 }; }
+function generateInverseProportion() { const arbeiter1 = rnd(2, 10), tage1 = rnd(2, 12); const arbeiter2 = rnd(2, 10); return { visual: null, prompt: `${arbeiter1} Arbeiter brauchen ${tage1} Tage für eine Arbeit. Wie viele Tage brauchen ${arbeiter2} Arbeiter (gleiches Tempo)? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round((arbeiter1 * tage1 / arbeiter2) * 100) / 100 }; }
+
+function generatePrismVolume() { const g = rnd(10, 80), h = rnd(3, 20); return { visual: null, prompt: `Ein gerades Prisma hat die Grundfläche ${g} cm² und die Höhe ${h} cm. Berechne das Volumen (in cm³).`, answerType: "number", correct: g * h }; }
+function generatePrismSurface() { const g = rnd(10, 60), u = rnd(10, 40), h = rnd(3, 15); return { visual: null, prompt: `Ein gerades Prisma hat die Grundfläche ${g} cm², den Grundflächen-Umfang ${u} cm und die Höhe ${h} cm. Berechne den Oberflächeninhalt (in cm²): O = 2×Grundfläche + Umfang×Höhe.`, answerType: "number", correct: 2 * g + u * h }; }
+function generatePyramidVolume() { const g = rnd(10, 80), h = rnd(3, 20); return { visual: null, prompt: `Eine Pyramide hat die Grundfläche ${g} cm² und die Höhe ${h} cm. Berechne das Volumen (in cm³, auf 1 Nachkommastelle runden).`, answerType: "number", correct: Math.round((g * h / 3) * 10) / 10 }; }
+
+function generateDiscount() { const preis = rnd(20, 300), rabatt = rnd(5, 60); return { visual: null, prompt: `Ein Artikel kostet ${preis} Fr. Bei ${rabatt}% Rabatt: Wie viel kostet er noch? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(preis * (1 - rabatt / 100) * 100) / 100 }; }
+function generateVAT() { const preisExkl = rnd(20, 300), mwst = [2.6, 3.8, 8.1][rnd(0, 2)]; return { visual: null, prompt: `Ein Artikel kostet ${preisExkl} Fr. exkl. MWST. Der MWST-Satz beträgt ${mwst}%. Wie viel kostet er inkl. MWST? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(preisExkl * (1 + mwst / 100) * 100) / 100 }; }
+function generateCurrency() { const betrag = rnd(10, 500), kurs = (rnd(85, 110) / 100); return { visual: null, prompt: `Wie viel Euro erhältst du für ${betrag} CHF bei einem Kurs von 1 CHF = ${kurs} EUR? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(betrag * kurs * 100) / 100 }; }
+
+function generateCircleCircumference() { const r = rnd(2, 20); return { visual: null, prompt: `Berechne den Umfang eines Kreises mit Radius ${r} cm. (auf 1 Nachkommastelle runden, π ≈ 3.14159)`, answerType: "number", correct: Math.round(2 * Math.PI * r * 10) / 10 }; }
+function generateCircleArea() { const r = rnd(2, 20); return { visual: null, prompt: `Berechne die Fläche eines Kreises mit Radius ${r} cm. (auf 1 Nachkommastelle runden, π ≈ 3.14159)`, answerType: "number", correct: Math.round(Math.PI * r * r * 10) / 10 }; }
+function generateCircleSector() { const r = rnd(3, 20), winkel = rnd(20, 340); return { visual: null, prompt: `Berechne die Fläche eines Kreissektors mit Radius ${r} cm und Mittelpunktswinkel ${winkel}°. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((winkel / 360) * Math.PI * r * r * 10) / 10 }; }
+
+function generateTreeCount() { const n = rnd(2, 4), k = rnd(2, 6); return { visual: null, prompt: `Du triffst ${n} unabhängige Entscheidungen mit je ${k} Möglichkeiten. Wie viele verschiedene Kombinationen gibt es insgesamt?`, answerType: "number", correct: Math.pow(k, n) }; }
+function generateMode() { const pool = [rnd(1,10), rnd(1,10), rnd(1,10)]; const vals = []; const modeVal = pool[0]; for (let i=0;i<3;i++) vals.push(modeVal); for (let i=0;i<3;i++) vals.push(rnd(1,10)); for (let j = vals.length - 1; j > 0; j--) { const k = rnd(0, j); [vals[j], vals[k]] = [vals[k], vals[j]]; } const counts = {}; vals.forEach(v => counts[v] = (counts[v]||0)+1); let best = vals[0]; Object.keys(counts).forEach(k => { if (counts[k] > counts[best]) best = Number(k); }); return { visual: null, prompt: `Bestimme den Modus (häufigster Wert) dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: Number(best) }; }
+function generateRelativeFrequency() { const total = rnd(20, 200); const abs = rnd(1, total); return { visual: null, prompt: `Bei ${total} Versuchen trat ein Ereignis ${abs} Mal auf. Wie gross ist die relative Häufigkeit in %? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((abs / total) * 100 * 10) / 10 }; }
+
+function generateCylinderVolume() { const r = rnd(2, 15), h = rnd(3, 25); return { visual: null, prompt: `Berechne das Volumen eines Zylinders mit Radius ${r} cm und Höhe ${h} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.PI * r * r * h * 10) / 10 }; }
+function generateCylinderSurface() { const r = rnd(2, 15), h = rnd(3, 25); return { visual: null, prompt: `Berechne die Oberfläche eines Zylinders mit Radius ${r} cm und Höhe ${h} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((2 * Math.PI * r * r + 2 * Math.PI * r * h) * 10) / 10 }; }
+
+function generateSpeed() { const s = rnd(20, 400), t = rnd(1, 10); return { visual: null, prompt: `Eine Strecke von ${s} km wird in ${t} h zurückgelegt. Wie gross ist die Geschwindigkeit in km/h? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((s / t) * 10) / 10 }; }
+function generateDistance() { const v = rnd(10, 120), t = rnd(1, 8); return { visual: null, prompt: `Ein Fahrzeug fährt mit ${v} km/h während ${t} h. Welche Strecke legt es zurück (in km)?`, answerType: "number", correct: v * t }; }
+function generateSlope() { const hoehe = rnd(1, 30), strecke = rnd(20, 200); return { visual: null, prompt: `Eine Strasse steigt auf ${strecke} m horizontaler Strecke um ${hoehe} m an. Wie gross ist die Steigung in %? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((hoehe / strecke) * 100 * 10) / 10 }; }
+
+/* =========================================================================
+   KAPITEL- UND KATEGORIE-STRUKTUR
+   ========================================================================= */
+function ex(id, title, generate, help) { return { id, title, generate, help: help || "" }; }
+function chapter(id, title, exercises) { return { id, title, exercises }; }
+function lockedChapter(id, title) { return { id, title, exercises: [] }; }
+
+const BASISWISSEN_CHAPTERS = [
+  chapter("bw-kopf", "Kopfrechnen", [
+    ex("kopf-100", "Kopfrechnen bis 100", () => generateKopf(100), "Rechne in Schritten: zuerst die Zehner, dann die Einer addieren/subtrahieren."),
+    ex("kopf-200", "Kopfrechnen bis 200", () => generateKopf(200), "Zerlege die Zahlen in Zehner und Einer und rechne getrennt."),
+    ex("kopf-500", "Kopfrechnen bis 500", () => generateKopf(500), "Runde zuerst auf glatte Zehner/Hunderter, rechne dann die Differenz dazu.")
+  ]),
+  chapter("bw-brueche", "Brüche erweitern und kürzen", [
+    ex("bw-erw", "Bruch erweitern", generateFractionExpand, "Multipliziere Zähler UND Nenner mit derselben Zahl."),
+    ex("bw-kuerz", "Bruch kürzen", generateFractionReduce, "Suche eine Zahl, durch die Zähler UND Nenner ohne Rest teilbar sind, und teile beide dadurch.")
+  ]),
+  chapter("bw-prozent", "Prozent und Dezimalzahl", [
+    ex("bw-p2d", "Prozent → Dezimalzahl", generatePercentToDecimal, "Teile die Prozentzahl durch 100 (Komma zwei Stellen nach links verschieben)."),
+    ex("bw-d2p", "Dezimalzahl → Prozent", generateDecimalToPercent, "Multipliziere mit 100 (Komma zwei Stellen nach rechts verschieben).")
+  ]),
+  chapter("bw-bruchdez", "Bruch und Dezimalzahl", [
+    ex("bw-b2d", "Bruch → Dezimalzahl", generateFractionToDecimal, "Teile den Zähler durch den Nenner (schriftliche Division oder Taschenrechner)."),
+    ex("bw-d2b", "Dezimalzahl → Bruch", generateDecimalToFraction, "Zähle die Nachkommastellen: 1 Stelle = Zehntel (/10), 2 Stellen = Hundertstel (/100).")
+  ]),
+  chapter("bw-koord", "Koordinatensystem", [
+    ex("bw-koord-1", "Punkte ablesen", generateCoordinateRead, "Die erste Zahl (x) ist der Wert auf der waagrechten Achse, die zweite (y) auf der senkrechten Achse.")
+  ]),
+  chapter("bw-mass", "Masseinheiten umrechnen", [
+    ex("bw-mass-1", "Masseinheiten umrechnen", generateUnitConversion, "Überlege, ob die neue Einheit grösser oder kleiner ist: bei einer grösseren Einheit wird die Zahl kleiner, bei einer kleineren Einheit wird die Zahl grösser.")
+  ]),
+  chapter("bw-ggtkgv", "ggT und kgV", [
+    ex("bw-ggt", "ggT bestimmen", generateGgt, "Liste die Teiler beider Zahlen auf und suche den grössten gemeinsamen."),
+    ex("bw-kgv", "kgV bestimmen", generateKgvBW, "Liste die Vielfachen beider Zahlen auf und suche das kleinste gemeinsame.")
+  ]),
+  chapter("bw-grund", "Grundrechenarten", [
+    ex("bw-add", "Addition", generateAdd, "Addiere stellenweise von rechts nach links, denke an den Übertrag."),
+    ex("bw-sub", "Subtraktion", generateSub, "Subtrahiere stellenweise von rechts nach links, denke ans Entlehnen."),
+    ex("bw-mul", "Multiplikation", generateMul, "Nutze das kleine Einmaleins oder zerlege in einfachere Teilaufgaben."),
+    ex("bw-div", "Division", generateDiv, "Überlege: wie oft passt der Divisor in die Zahl?")
+  ]),
+  chapter("bw-runden", "Runden", [
+    ex("bw-runden-1", "Zahlen runden", generateRounding, "Schau auf die Ziffer rechts von der Rundungsstelle: ab 5 wird aufgerundet, sonst abgerundet.")
+  ]),
+  chapter("bw-winkel", "Winkel bestimmen", [
+    ex("bw-winkel-1", "Ergänzungswinkel", generateAngle, "Ergänzungswinkel zu 90° (Komplementärwinkel) bzw. zu 180° (Supplementärwinkel): ziehe den gegebenen Winkel von 90° bzw. 180° ab.")
+  ])
+];
+
+const JAHR1_CHAPTERS = [
+  chapter("1a", "Die Achsensymmetrie", [ex("1a-1", "Symmetrieachsen zählen", generateAxisSymmetry, "Falte die Figur gedanklich entlang einer Linie. Liegen beide Hälften genau aufeinander, ist es eine Symmetrieachse.")]),
+  chapter("1b", "Die Drehsymmetrie", [ex("1b-1", "Drehsymmetrie-Ordnung bestimmen", generateRotSymmetry, "Drehe die Figur gedanklich um ihren Mittelpunkt und zähle, bei wie vielen Drehungen (inkl. der vollen 360°) sie wieder gleich aussieht.")]),
+  chapter("1c", "Die Achsenspiegelung", [
+    ex("1c-x", "Spiegelung an der x-Achse", generateAxisReflectionX, "An der x-Achse bleibt x gleich, y wechselt das Vorzeichen."),
+    ex("1c-y", "Spiegelung an der y-Achse", generateAxisReflectionY, "An der y-Achse bleibt y gleich, x wechselt das Vorzeichen.")
+  ]),
+  chapter("1d", "Die Punktspiegelung", [ex("1d-1", "Punktspiegelung am Ursprung", generatePointReflection, "Bei der Punktspiegelung am Ursprung wechseln beide Koordinaten das Vorzeichen.")]),
+  chapter("2a", "Potenzen/Regeln und Gesetze", [
+    ex("2a-berechnen", "Potenz berechnen", generatePowerCalc, "a^n heisst: a wird n-mal mit sich selbst multipliziert."),
+    ex("2a-gesetz", "Potenzgesetz: Multiplikation", generatePowerRule, "Bei gleicher Basis: Exponenten addieren (a^m · a^n = a^(m+n)).")
+  ]),
+  chapter("2b", "Variablen", [ex("2b-1", "Term auswerten", generateVariables, "Setze den gegebenen Wert für die Variable ein und rechne aus.")]),
+  chapter("2c", "Teiler, Vielfache und Primzahlen", [
+    ex("2c-prim", "Ist es eine Primzahl?", generateIsPrime, "Eine Primzahl ist nur durch 1 und sich selbst teilbar. Prüfe die Teilbarkeit durch 2, 3, 5, 7 ..."),
+    ex("2c-teiler", "Teiler zählen", generateDivisorCount, "Prüfe für jede Zahl von 1 bis zur Zahl selbst, ob sie ohne Rest teilt, und zähle die Treffer."),
+    ex("2c-kgv", "kgV berechnen", generateLcm, "Liste die Vielfachen beider Zahlen auf und suche das kleinste gemeinsame.")
+  ]),
+  chapter("3a", "Daten darstellen", [
+    ex("3a-mean", "Mittelwert berechnen", generateMean, "Addiere alle Zahlen und teile die Summe durch die Anzahl der Zahlen."),
+    ex("3a-median", "Median bestimmen", generateMedian, "Sortiere die Zahlen der Grösse nach. Der Median ist die Zahl genau in der Mitte."),
+    ex("3a-range", "Spannweite bestimmen", generateRange, "Spannweite = grösste Zahl minus kleinste Zahl.")
+  ]),
+  chapter("3b", "Grössen und Prozente", [
+    ex("3b-wert", "Prozentwert berechnen", generatePercentValue, "Prozentwert = Grundwert × Prozentsatz ÷ 100."),
+    ex("3b-grund", "Grundwert berechnen", generatePercentBase, "Grundwert = Prozentwert ÷ Prozentsatz × 100."),
+    ex("3b-satz", "Prozentsatz berechnen", generatePercentRate, "Prozentsatz = Prozentwert ÷ Grundwert × 100.")
+  ]),
+  chapter("3c", "Flächen und Volumen", [
+    ex("3c-rect", "Fläche Rechteck", generateRectArea, "Fläche des Rechtecks = Länge × Breite."),
+    ex("3c-tri", "Fläche Dreieck", generateTriArea, "Fläche des Dreiecks = Grundseite × Höhe ÷ 2."),
+    ex("3c-box", "Volumen Quader", generateBoxVolume, "Volumen des Quaders = Länge × Breite × Höhe.")
+  ]),
+  chapter("4a", "Geometrische Körper und ihre Netze", [
+    ex("4a-faces", "Flächen zählen", generateSolidFaces, "Zähle alle ebenen Begrenzungsflächen des Körpers."),
+    ex("4a-edges", "Kanten zählen", generateSolidEdges, "Zähle alle Linien, an denen zwei Flächen zusammentreffen."),
+    ex("4a-vertices", "Ecken zählen", generateSolidVertices, "Zähle alle Punkte, an denen mehrere Kanten zusammentreffen.")
+  ]),
+  lockedChapter("4b", "Körper und ihre Ansichten"),
+  chapter("5", "Regelmässigkeiten des Zufalls", [
+    ex("5-dice", "Wahrscheinlichkeit Würfel", generateDiceProb, "Zähle die günstigen Ergebnisse (z.B. gerade Zahlen) und teile durch die Gesamtzahl der möglichen Ergebnisse (6)."),
+    ex("5-bag", "Wahrscheinlichkeit Beutel", generateBagProb, "Wahrscheinlichkeit = Anzahl der gesuchten Kugeln ÷ Gesamtzahl aller Kugeln.")
+  ]),
+  chapter("6a", "Negative Zahlen", [
+    ex("6a-compare", "Negative Zahlen vergleichen", generateNegativeCompare, "Auf dem Zahlenstrahl ist eine Zahl grösser, wenn sie weiter rechts liegt. -3 ist grösser als -8."),
+    ex("6a-order", "Zahlen ordnen", generateNegativeOrder, "Je näher eine negative Zahl bei 0 ist, desto grösser ist sie.")
+  ]),
+  chapter("6b", "Koordinaten", [
+    ex("6b-read", "Punkte ablesen", generateCoordinateRead, "Die erste Zahl (x) ist der Wert auf der waagrechten Achse, die zweite (y) auf der senkrechten Achse."),
+    ex("6b-quad", "Quadranten bestimmen", generateQuadrant, "I: x>0,y>0 · II: x<0,y>0 · III: x<0,y<0 · IV: x>0,y<0.")
+  ]),
+  chapter("6c", "Grundoperationen", [
+    ex("6c-addsub", "Addition/Subtraktion mit Vorzeichen", generateNegOpAddSub, "Zwei gleiche Vorzeichen hintereinander werden zu einem Pluszeichen, unterschiedliche zu einem Minuszeichen."),
+    ex("6c-mul", "Multiplikation mit Vorzeichen", generateNegOpMul, "Gleiche Vorzeichen ergeben ein positives Ergebnis, unterschiedliche ein negatives."),
+    ex("6c-div", "Division mit Vorzeichen", generateNegOpDiv, "Gleiche Vorzeichen ergeben ein positives Ergebnis, unterschiedliche ein negatives.")
+  ]),
+  chapter("7a", "Umfang und Flächeninhalt von Rechtecken", [
+    ex("7a-umfang", "Umfang berechnen", generateRectPerimeter, "Umfang = 2 × (Länge + Breite)."),
+    ex("7a-flaeche", "Fläche berechnen", generateRectArea7a, "Fläche = Länge × Breite.")
+  ]),
+  chapter("7b", "Vielfalt der Vierecksformen", [
+    ex("7b-1", "Rechte Winkel zählen", generateQuadRightAngles, "Überlege dir die typische Form: Quadrat und Rechteck haben 4 rechte Winkel, die anderen Vierecke im Allgemeinen keine.")
+  ]),
+  chapter("7c", "Dreiecke", [
+    ex("7c-1", "Winkelsumme im Dreieck", generateTriangleAngleSum, "Die Winkelsumme im Dreieck ist immer 180°. Ziehe die beiden bekannten Winkel von 180° ab.")
+  ]),
+  chapter("8a", "Terme und Termumformungen", [
+    ex("8a-1", "Terme zusammenfassen", generateSimplifyTerms, "Gleichartige Terme (gleiche Variable) werden addiert/subtrahiert, indem man ihre Zahlen (Koeffizienten) verrechnet.")
+  ]),
+  chapter("8b", "Gleichungen", [
+    ex("8b-1", "Lineare Gleichung lösen", generateLinearEquation, "Bringe zuerst die Zahl ohne x auf die andere Seite, dann teile durch die Zahl vor dem x.")
+  ]),
+  chapter("9a", "Körper untersuchen und skizzieren", [
+    ex("9a-1", "Ecken, Kanten, Flächen bei Prismen/Pyramiden", generatePolyhedronParts, "Pyramide mit n-eckiger Grundfläche: Ecken=n+1, Kanten=2n, Flächen=n+1. Prisma mit n-eckiger Grundfläche: Ecken=2n, Kanten=3n, Flächen=n+2.")
+  ]),
+  chapter("9b", "Volumen und Oberflächeninhalt", [
+    ex("9b-vol", "Volumen Würfel", generateCubeVolume, "Volumen des Würfels = Kantenlänge × Kantenlänge × Kantenlänge."),
+    ex("9b-surf", "Oberfläche Würfel", generateCubeSurface, "Oberfläche des Würfels = 6 × Kantenlänge².")
+  ])
+];
+
+const JAHR2_CHAPTERS = [
+  chapter("1a", "Brüche", [
+    ex("m2-1a-comp", "Brüche vergleichen", generateFractionCompare, "Bringe beide Brüche gedanklich auf den gleichen Nenner oder rechne sie in Dezimalzahlen um, dann vergleiche."),
+    ex("m2-1a-mixed", "Gemischte Zahl → unechter Bruch", generateMixedToImproper, "Multipliziere die ganze Zahl mit dem Nenner und addiere den Zähler. Der Nenner bleibt gleich.")
+  ]),
+  chapter("1b", "Grundoperationen mit Brüchen", [
+    ex("m2-1b-add", "Brüche addieren", generateFractionAdd, "Bringe beide Brüche auf einen gemeinsamen Nenner (z.B. das Produkt der Nenner), addiere die Zähler, kürze am Schluss."),
+    ex("m2-1b-mul", "Brüche multiplizieren", generateFractionMul, "Multipliziere Zähler mit Zähler und Nenner mit Nenner, kürze am Schluss."),
+    ex("m2-1b-div", "Brüche dividieren", generateFractionDiv, "Multipliziere mit dem Kehrwert des zweiten Bruchs (Zähler und Nenner vertauschen), dann wie bei der Multiplikation rechnen.")
+  ]),
+  chapter("1c", "Gleichungen, Folgen und Wurzeln", [
+    ex("m2-1c-eq", "Gleichung lösen", generateEquation2Step, "Bringe zuerst die Zahl ohne x auf die andere Seite, dann teile durch die Zahl vor dem x."),
+    ex("m2-1c-seq", "Zahlenfolge fortsetzen", generateSequence, "Berechne die Differenz zwischen den ersten Gliedern und wende sie auf das letzte Glied an."),
+    ex("m2-1c-root", "Quadratwurzel berechnen", generateSquareRoot, "Überlege, welche Zahl mit sich selbst multipliziert die gegebene Zahl ergibt.")
+  ]),
+  chapter("2a", "Sätze von Thales und Pythagoras", [ex("m2-2a-1", "Hypotenuse berechnen", generatePythagorasHyp, "Satz des Pythagoras: c = √(a² + b²).")]),
+  chapter("2b", "Der Satz von Pythagoras unter der Lupe", [ex("m2-2b-1", "Kathete berechnen", generatePythagorasLeg, "Satz des Pythagoras umgestellt: b = √(c² − a²).")]),
+  chapter("2c", "Pythagoras praktisch", [ex("m2-2c-1", "Leiter-Problem", generatePythagorasLadder, "Wand, Boden und Leiter bilden ein rechtwinkliges Dreieck. Die Leiter ist die Hypotenuse: c = √(a² + b²).")]),
+  chapter("2d", "Anwendungen des Pythagoras", [ex("m2-2d-1", "Rechteck-Diagonale", generatePythagorasDiagonal, "Die Diagonale eines Rechtecks ist die Hypotenuse eines rechtwinkligen Dreiecks aus den beiden Seiten: d = √(l² + b²).")]),
+  chapter("3a", "Zuordnungen und Abhängigkeiten", [ex("m2-3a-1", "Proportional oder nicht?", generateProportionalCheck, "Bei direkter Proportionalität ist der Quotient y÷x bei allen Wertepaaren immer gleich gross.")]),
+  chapter("3b", "Proportionalität", [ex("m2-3b-1", "Dreisatz (direkt)", generateDirectProportion, "Berechne zuerst den Preis für 1 Stück (÷ Menge), dann multipliziere mit der gesuchten Menge.")]),
+  chapter("3c", "Umgekehrte Proportionalität", [ex("m2-3c-1", "Dreisatz (umgekehrt)", generateInverseProportion, "Bei umgekehrter Proportionalität bleibt das Produkt gleich: Arbeiter × Tage = konstant.")]),
+  chapter("4a", "Das gerade Prisma", [ex("m2-4a-1", "Volumen Prisma", generatePrismVolume, "Volumen = Grundfläche × Höhe.")]),
+  chapter("4b", "Volumen und Oberflächeninhalt beim geraden Prisma", [ex("m2-4b-1", "Oberfläche Prisma", generatePrismSurface, "Oberfläche = 2 × Grundfläche + Umfang der Grundfläche × Höhe (Mantelfläche).")]),
+  chapter("4c", "Die Pyramide", [ex("m2-4c-1", "Volumen Pyramide", generatePyramidVolume, "Volumen = ⅓ × Grundfläche × Höhe.")]),
+  chapter("5a", "Preise – Aktionen – Mehrwertsteuer", [
+    ex("m2-5a-rabatt", "Rabatt berechnen", generateDiscount, "Ziehe den Rabatt-Prozentsatz vom ursprünglichen Preis ab: neuer Preis = Preis × (1 − Rabatt/100)."),
+    ex("m2-5a-mwst", "MWST berechnen", generateVAT, "Preis inkl. MWST = Preis exkl. MWST × (1 + Satz/100).")
+  ]),
+  chapter("5b", "Währungen und Budget", [ex("m2-5b-1", "Währung umrechnen", generateCurrency, "Multipliziere den Betrag mit dem Wechselkurs.")]),
+  chapter("6a", "Der Kreisumfang und die Kreisfläche", [
+    ex("m2-6a-u", "Kreisumfang berechnen", generateCircleCircumference, "Umfang = 2 × π × Radius."),
+    ex("m2-6a-a", "Kreisfläche berechnen", generateCircleArea, "Fläche = π × Radius².")
+  ]),
+  chapter("6b", "Der Kreissektor/Geraden und Kreise", [ex("m2-6b-1", "Kreissektor-Fläche", generateCircleSector, "Fläche des Sektors = (Mittelpunktswinkel ÷ 360°) × π × Radius².")]),
+  chapter("7a", "Baumdarstellungen, Wiederholung und Vertiefung", [ex("m2-7a-1", "Kombinationen zählen", generateTreeCount, "Bei einem Baumdiagramm multiplizierst du die Anzahl Möglichkeiten auf jeder Stufe: Möglichkeiten^Entscheidungen.")]),
+  chapter("7b", "Statistische Kennwerte", [ex("m2-7b-1", "Modus bestimmen", generateMode, "Der Modus ist der Wert, der in der Liste am häufigsten vorkommt.")]),
+  chapter("7c", "Simulationen/Statistik praktisch", [ex("m2-7c-1", "Relative Häufigkeit", generateRelativeFrequency, "Relative Häufigkeit = absolute Häufigkeit ÷ Gesamtzahl der Versuche × 100%.")]),
+  chapter("8", "Zylinder", [
+    ex("m2-8-vol", "Volumen Zylinder", generateCylinderVolume, "Volumen = π × Radius² × Höhe."),
+    ex("m2-8-surf", "Oberfläche Zylinder", generateCylinderSurface, "Oberfläche = 2 × π × Radius² (Deckel+Boden) + 2 × π × Radius × Höhe (Mantel).")
+  ]),
+  chapter("9a", "Weg – Zeit – Geschwindigkeit", [
+    ex("m2-9a-v", "Geschwindigkeit berechnen", generateSpeed, "Geschwindigkeit = Strecke ÷ Zeit."),
+    ex("m2-9a-s", "Strecke berechnen", generateDistance, "Strecke = Geschwindigkeit × Zeit.")
+  ]),
+  chapter("9b", "Steigung und Gefälle", [ex("m2-9b-1", "Steigung berechnen", generateSlope, "Steigung in % = (Höhenunterschied ÷ horizontale Strecke) × 100.")])
+];
+
+const CATEGORIES = [
+  { id: "basiswissen", title: "Basiswissen", chapters: BASISWISSEN_CHAPTERS },
+  { id: "jahr1", title: "Mathematik 1. Jahr", chapters: JAHR1_CHAPTERS },
+  { id: "jahr2", title: "Mathematik 2. Jahr", chapters: JAHR2_CHAPTERS },
+  { id: "jahr3", title: "Mathematik 3. Jahr", chapters: [] }
+];
+
+function makeMixedExercise(ch) {
+  return {
+    id: ch.id + "-mixed",
+    title: `Kapitel ${ch.id} gemischte Aufgaben`,
+    isMixed: true,
+    generate: () => { const sub = ch.exercises[rnd(0, ch.exercises.length - 1)]; const t = sub.generate(); t.sourceHelp = sub.help; return t; },
+    help: "Diese Übung mischt die verschiedenen Aufgabentypen dieses Kapitels. Der Hilfe-Button zeigt jeweils den Lösungsweg zur aktuellen Aufgabe."
+  };
+}
+
+/* ================= Home / Kategorie / Kapitel Navigation ================= */
+let navCategory = null, navChapter = null, currentExercise = null;
+document.querySelectorAll(".cat-tile").forEach(btn => btn.addEventListener("click", () => openCategory(btn.dataset.cat)));
+function openCategory(id) {
+  navCategory = CATEGORIES.find(c => c.id === id);
+  document.getElementById("category_title").textContent = navCategory.title;
+  const el = document.getElementById("categoryChapterList");
+  if (navCategory.chapters.length === 0) {
+    el.innerHTML = '<div class="empty-hint">Noch keine Kapitel – bald verfügbar.</div>';
+  } else {
+    el.innerHTML = navCategory.chapters.map(c => `
+      <div class="chapter-row ${c.exercises.length === 0 ? "locked" : ""}" data-id="${c.id}">
+        <span class="chapter-id">${c.id}</span><span class="chapter-title">${escapeHtml(c.title)}</span>
+        <span class="chapter-status">${c.exercises.length ? "✅" : "🔒 bald"}</span>
+      </div>`).join("");
+  }
+  el.onclick = (e) => {
+    const row = e.target.closest(".chapter-row");
+    if (!row || row.classList.contains("locked")) return;
+    openChapter(row.dataset.id);
+  };
+  showView("category");
+}
+function openChapter(id) {
+  navChapter = navCategory.chapters.find(c => c.id === id);
+  document.getElementById("chapter_title").textContent = `${navChapter.id} – ${navChapter.title}`;
+  const el = document.getElementById("exerciseList");
+  let rows = navChapter.exercises.map(e => `<div class="chapter-row" data-id="${e.id}"><span class="chapter-title">${escapeHtml(e.title)}</span><span class="chapter-status">▶</span></div>`).join("");
+  if (navChapter.exercises.length > 1) {
+    rows = `<div class="chapter-row mixed" data-id="mixed"><span class="chapter-title">Kapitel ${navChapter.id} gemischte Aufgaben</span><span class="chapter-status">🔀</span></div>` + rows;
+  }
+  el.innerHTML = rows;
+  el.onclick = (e) => {
+    const row = e.target.closest(".chapter-row");
+    if (!row) return;
+    const exercise = row.dataset.id === "mixed" ? makeMixedExercise(navChapter) : navChapter.exercises.find(x => x.id === row.dataset.id);
+    selectExercise(exercise);
+  };
+  showView("chapter");
+}
+function selectExercise(exercise) {
+  currentExercise = exercise;
+  document.getElementById("mode_exercise_title").textContent = exercise.title;
+  document.getElementById("duell_exercise_title").textContent = "⚔️ " + exercise.title;
+  showView("modeChoice");
+}
+
+/* =========================================================================
+   KEYPAD / EINGABE-WIDGETS (gemeinsam für Solo & Duell)
+   ========================================================================= */
+let inputBuffers = { solo: "", top: "", bottom: "" };
+let activePart = { solo: "a", top: "a", bottom: "a" };
+function keypadHTML(side) {
+  const k = (key, label, cls) => `<button data-side="${side}" data-key="${key}" class="${cls || ""}">${label}</button>`;
+  return `
+    <div class="keypad-row">${k("7","7")}${k("8","8")}${k("9","9")}</div>
+    <div class="keypad-row">${k("4","4")}${k("5","5")}${k("6","6")}</div>
+    <div class="keypad-row">${k("1","1")}${k("2","2")}${k("3","3")}</div>
+    <div class="keypad-row">${k("-","±")}${k("0","0")}${k(".",".")}</div>
+    <div class="keypad-row">${k("back","⌫")}${k("ok","✓","ok-key")}</div>`;
+}
+document.querySelectorAll(".keypad").forEach(el => { el.innerHTML = keypadHTML(el.dataset.side); });
+function currentTaskFor(side) { return side === "solo" ? soloCurrent : duellTasks[side]; }
+document.addEventListener("click", (e) => {
+  const pb = e.target.closest(".pair-box");
+  if (pb) { activePart[pb.dataset.side] = pb.dataset.part; renderPairBuffer(pb.dataset.side); return; }
+  const kb = e.target.closest("button[data-side][data-key]");
+  if (kb) { handleKey(kb.dataset.side, kb.dataset.key); return; }
+  const bb = e.target.closest("button[data-side][data-bool]");
+  if (bb) { inputBuffers[bb.dataset.side] = bb.dataset.bool; submitAnswer(bb.dataset.side); return; }
+  const tb = e.target.closest("button[data-side][data-textsubmit]");
+  if (tb) {
+    const side = tb.dataset.side;
+    const inputEl = document.getElementById(side === "solo" ? "solo_textInput" : `duell_${side}_textInput`);
+    inputBuffers[side] = inputEl.value;
+    submitAnswer(side);
+  }
+});
+function pairParts(side) { const parts = (inputBuffers[side] || "").split(","); return { a: parts[0] || "", b: parts[1] || "" }; }
+function setPairPart(side, which, value) { const p = pairParts(side); if (which === "a") p.a = value; else p.b = value; inputBuffers[side] = p.a + "," + p.b; }
+function renderPairBuffer(side) {
+  const prefix = side === "solo" ? "solo" : `duell_${side}`;
+  const boxA = document.getElementById(`${prefix}_pairA`), boxB = document.getElementById(`${prefix}_pairB`);
+  if (!boxA) return;
+  const p = pairParts(side);
+  boxA.textContent = p.a || "?";
+  boxB.textContent = p.b || "?";
+  boxA.classList.toggle("active-box", activePart[side] === "a");
+  boxB.classList.toggle("active-box", activePart[side] === "b");
+}
+function handlePairKey(side, key) {
+  if (key === "ok") { submitAnswer(side); return; }
+  const which = activePart[side];
+  let val = pairParts(side)[which];
+  if (key === "back") val = val.slice(0, -1);
+  else if (key === "-") val = val.startsWith("-") ? val.slice(1) : "-" + val;
+  else if (key === ".") { /* Brüche/Koordinaten sind ganzzahlig */ }
+  else val += key;
+  setPairPart(side, which, val);
+  renderPairBuffer(side);
+}
+function handleKey(side, key) {
+  const task = currentTaskFor(side);
+  if (task && task.answerType === "pair") { handlePairKey(side, key); return; }
+  let buf = inputBuffers[side];
+  if (key === "ok") { submitAnswer(side); return; }
+  if (key === "back") buf = buf.slice(0, -1);
+  else if (key === "-") buf = buf.startsWith("-") ? buf.slice(1) : "-" + buf;
+  else if (key === ".") { if (!buf.includes(".")) buf += "."; }
+  else buf += key;
+  inputBuffers[side] = buf;
+  renderBuffer(side);
+}
+function renderBuffer(side) {
+  const el = document.getElementById(side === "solo" ? "solo_input" : `duell_${side}_input`);
+  if (el) el.textContent = inputBuffers[side] || " ";
+}
+function checkAnswer(task, bufferStr) {
+  if (!task || bufferStr === "" || bufferStr == null) return false;
+  if (task.answerType === "pair") {
+    const parts = String(bufferStr).split(",");
+    if (parts.length !== 2) return false;
+    const a = parseFloat(parts[0]), b = parseFloat(parts[1]);
+    return !isNaN(a) && !isNaN(b) && Math.abs(a - task.correct[0]) < 0.01 && Math.abs(b - task.correct[1]) < 0.01;
+  }
+  if (task.answerType === "text") return String(bufferStr).trim().toLowerCase() === String(task.correct).trim().toLowerCase();
+  if (task.answerType === "term") return String(bufferStr).replace(/\s+/g, "").toLowerCase() === String(task.correct).replace(/\s+/g, "").toLowerCase();
+  const val = parseFloat(bufferStr);
+  return !isNaN(val) && Math.abs(val - task.correct) < 0.01;
+}
+function flash(elId, cls) { const el = document.getElementById(elId); if (!el) return; el.classList.remove("wrong-flash", "correct-flash"); void el.offsetWidth; el.classList.add(cls); }
+function setWidgetMode(prefix, answerType, pairStyle) {
+  const kp = document.getElementById(`${prefix}_keypadWrap`), bw = document.getElementById(`${prefix}_boolWrap`), tw = document.getElementById(`${prefix}_textWrap`);
+  const pw = document.getElementById(`${prefix}_pairWrap`), vr = document.getElementById(`${prefix}_varRow`);
+  const disp = document.getElementById(`${prefix}_input`);
+  [kp, bw, tw, pw, vr].forEach(el => el.classList.add("hidden"));
+  if (disp) disp.classList.add("hidden");
+  if (answerType === "none") return;
+  if (answerType === "boolean") { bw.classList.remove("hidden"); return; }
+  if (answerType === "text") { tw.classList.remove("hidden"); return; }
+  if (answerType === "pair") {
+    pw.classList.remove("hidden"); kp.classList.remove("hidden");
+    const boxesEl = document.getElementById(`${prefix}_pairBoxes`), sepEl = document.getElementById(`${prefix}_pairSep`);
+    if (pairStyle === "fraction") { boxesEl.className = "pair-boxes style-fraction"; sepEl.textContent = ""; }
+    else { boxesEl.className = "pair-boxes style-coord"; sepEl.textContent = "|"; }
+    return;
+  }
+  if (answerType === "term") { disp.classList.remove("hidden"); kp.classList.remove("hidden"); vr.classList.remove("hidden"); return; }
+  disp.classList.remove("hidden"); kp.classList.remove("hidden");
+}
+
+/* =========================================================================
+   SOLO-MODUS
+   ========================================================================= */
+let soloExercise = null, soloScore = 0, soloCurrent = null;
+let soloDuration = 0, soloTimeRemaining = 0, soloInterval = null, soloRunning = false, soloStartedAt = 0;
+
+document.getElementById("goSoloBtn").addEventListener("click", () => {
+  soloExercise = currentExercise;
+  document.getElementById("solo_setup_title").textContent = "🧠 " + currentExercise.title;
+  showView("soloSetup");
+});
+document.querySelectorAll(".choice-btn[data-solo-duration]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    soloDuration = Number(btn.dataset.soloDuration);
+    document.querySelectorAll(".choice-btn[data-solo-duration]").forEach(b => b.classList.toggle("active", b === btn));
+  });
+});
+document.getElementById("startSoloBtn").addEventListener("click", () => startSoloSession());
+document.getElementById("solo_result_againBtn").addEventListener("click", () => showView("soloSetup"));
+
+function startSoloSession() {
+  soloScore = 0;
+  soloRunning = true;
+  soloStartedAt = Date.now();
+  soloTimeRemaining = soloDuration > 0 ? soloDuration : 0;
+  updateSoloTimerDisplay();
+  clearInterval(soloInterval);
+  soloInterval = setInterval(() => {
+    if (soloDuration > 0) {
+      soloTimeRemaining--;
+      updateSoloTimerDisplay();
+      if (soloTimeRemaining <= 0) finishSolo();
+    } else {
+      soloTimeRemaining++;
+      updateSoloTimerDisplay();
+    }
+  }, 1000);
+  nextSoloTask();
+  showView("soloPlay");
+}
+function updateSoloTimerDisplay() { document.getElementById("solo_timerDisplay").textContent = formatTime(Math.max(0, soloTimeRemaining)); }
+document.getElementById("soloStopBtn").addEventListener("click", () => {
+  if (!soloRunning) { stopDuellTimerIfRunning(); showView("modeChoice"); return; }
+  openConfirm("Training beenden und Ergebnis anzeigen?", () => finishSolo(), "Beenden");
+});
+function nextSoloTask() {
+  soloCurrent = soloExercise.generate();
+  inputBuffers.solo = "";
+  activePart.solo = "a";
+  document.getElementById("solo_visual").innerHTML = soloCurrent.visual || "";
+  document.getElementById("solo_prompt").textContent = soloCurrent.prompt;
+  setWidgetMode("solo", soloCurrent.answerType, soloCurrent.pairStyle);
+  document.getElementById("solo_textInput").value = "";
+  renderBuffer("solo");
+  renderPairBuffer("solo");
+  document.getElementById("solo_score").textContent = `Richtig: ${soloScore}`;
+}
+function submitSolo() {
+  if (!soloRunning) return;
+  const ok = checkAnswer(soloCurrent, inputBuffers.solo);
+  if (ok) { soloScore++; document.getElementById("solo_score").textContent = `Richtig: ${soloScore}`; flash("solo_input", "correct-flash"); setTimeout(nextSoloTask, 250); }
+  else { flash("solo_input", "wrong-flash"); inputBuffers.solo = ""; renderBuffer("solo"); }
+}
+function finishSolo() {
+  clearInterval(soloInterval);
+  soloRunning = false;
+  const elapsedSec = Math.max(1, Math.round((Date.now() - soloStartedAt) / 1000));
+  const avg = soloScore > 0 ? elapsedSec / soloScore : null;
+  document.getElementById("solo_result_score").textContent = `${soloScore} Aufgaben richtig gelöst`;
+  document.getElementById("solo_result_detail").textContent =
+    `Trainingszeit: ${formatTime(elapsedSec)} · Schnitt pro richtige Aufgabe: ${avg ? avg.toFixed(1) + " s" : "–"}`;
+  showView("soloResult");
+}
+
+/* Kamera-Funktion: Ergebnis als Bild sichern (Solo-Training) */
+function drawResultsCanvas(title, lines) {
+  const lineHeight = 32, padding = 24, headerHeight = 76, width = 700;
+  const safeLines = lines.length ? lines : ["(keine Daten)"];
+  const height = headerHeight + safeLines.length * lineHeight + padding * 1.5;
+  const canvas = document.createElement("canvas");
+  canvas.width = width; canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = "#2563eb"; ctx.fillRect(0, 0, width, headerHeight);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 24px -apple-system, Helvetica, Arial, sans-serif";
+  ctx.fillText(title, padding, 34);
+  ctx.font = "14px -apple-system, Helvetica, Arial, sans-serif";
+  ctx.fillText(new Date().toLocaleDateString("de-CH"), padding, 58);
+  ctx.fillStyle = "#0f172a";
+  ctx.font = "18px -apple-system, Helvetica, Arial, sans-serif";
+  safeLines.forEach((line, i) => ctx.fillText(line, padding, headerHeight + padding + i * lineHeight + 14));
+  return canvas;
+}
+function shareCanvasAsImage(canvas, filename) {
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const file = new File([blob], filename, { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: filename }).catch(() => {});
+    } else {
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+    }
+  }, "image/png");
+}
+document.getElementById("solo_camBtn").addEventListener("click", () => {
+  const lines = [
+    soloExercise.title,
+    document.getElementById("solo_result_score").textContent,
+    document.getElementById("solo_result_detail").textContent
+  ];
+  shareCanvasAsImage(drawResultsCanvas("Trainingsergebnis", lines), "training-ergebnis.png");
+});
+
+/* =========================================================================
+   DUELL-MODUS
+   ========================================================================= */
+let duellSettings = { sameTask: true, timeLimitOn: true, duration: 120, scoreLimitOn: false, scoreLimit: 10, penalizeMistakes: false, handicapOn: false, handicapSide: "bottom", handicapMs: 1000 };
+let handicapTimers = { top: null, bottom: null };
+let duellTasks = { top: null, bottom: null };
+let duellScores = { top: 0, bottom: 0 };
+let duellTimeRemaining = 0, duellInterval = null, duellRunning = false;
+
+document.getElementById("goDuellSetupBtn").addEventListener("click", () => showView("duellSetup"));
+document.querySelectorAll('.choice-btn[data-sametask]').forEach(btn => btn.addEventListener("click", () => {
+  duellSettings.sameTask = btn.dataset.sametask === "1";
+  document.querySelectorAll('.choice-btn[data-sametask]').forEach(b => b.classList.toggle("active", b === btn));
+}));
+document.querySelectorAll('.choice-btn[data-duration]').forEach(btn => btn.addEventListener("click", () => {
+  duellSettings.duration = Number(btn.dataset.duration);
+  document.querySelectorAll('.choice-btn[data-duration]').forEach(b => b.classList.toggle("active", b === btn));
+}));
+document.getElementById("sw_timeLimit").addEventListener("change", (e) => { duellSettings.timeLimitOn = e.target.checked; document.getElementById("durationRow").classList.toggle("hidden", !e.target.checked); });
+document.getElementById("sw_scoreLimit").addEventListener("change", (e) => { duellSettings.scoreLimitOn = e.target.checked; document.getElementById("scoreLimitRow").classList.toggle("hidden", !e.target.checked); });
+document.getElementById("scoreLimitInput").addEventListener("input", (e) => { duellSettings.scoreLimit = Number(e.target.value) || 10; });
+document.getElementById("sw_penalize").addEventListener("change", (e) => { duellSettings.penalizeMistakes = e.target.checked; });
+document.getElementById("sw_handicap").addEventListener("change", (e) => { duellSettings.handicapOn = e.target.checked; document.getElementById("handicapOptions").classList.toggle("hidden", !e.target.checked); });
+document.querySelectorAll('.choice-btn[data-handicapside]').forEach(btn => btn.addEventListener("click", () => {
+  duellSettings.handicapSide = btn.dataset.handicapside;
+  document.querySelectorAll('.choice-btn[data-handicapside]').forEach(b => b.classList.toggle("active", b === btn));
+}));
+document.querySelectorAll('.choice-btn[data-handicapms]').forEach(btn => btn.addEventListener("click", () => {
+  duellSettings.handicapMs = Number(btn.dataset.handicapms);
+  document.querySelectorAll('.choice-btn[data-handicapms]').forEach(b => b.classList.toggle("active", b === btn));
+}));
+
+document.getElementById("startDuellBtn").addEventListener("click", () => {
+  if (!duellSettings.timeLimitOn && !duellSettings.scoreLimitOn) { openConfirm("Bitte mindestens Zeitlimit oder Punktelimit aktivieren.", null, "OK"); return; }
+  startDuell();
+});
+document.getElementById("result_replayBtn").addEventListener("click", () => startDuell());
+
+function startDuell() {
+  duellScores = { top: 0, bottom: 0 };
+  duellTimeRemaining = duellSettings.timeLimitOn ? duellSettings.duration : 0;
+  duellRunning = true;
+  document.getElementById("duell_top_name").textContent = document.getElementById("dn_top").value.trim() || "Team Rot";
+  document.getElementById("duell_bottom_name").textContent = document.getElementById("dn_bottom").value.trim() || "Team Blau";
+  const t1 = currentExercise.generate();
+  if (duellSettings.sameTask) { duellTasks.top = t1; duellTasks.bottom = t1; }
+  else { duellTasks.top = t1; duellTasks.bottom = currentExercise.generate(); }
+  inputBuffers.top = ""; inputBuffers.bottom = "";
+  renderDuell();
+  document.getElementById("duell_timer").textContent = formatTime(duellTimeRemaining);
+  showView("duellPlay");
+  clearInterval(duellInterval);
+  duellInterval = setInterval(() => {
+    if (duellSettings.timeLimitOn) {
+      duellTimeRemaining--;
+      document.getElementById("duell_timer").textContent = formatTime(duellTimeRemaining);
+      if (duellTimeRemaining <= 0) { finishDuell(); return; }
+    } else {
+      duellTimeRemaining++;
+      document.getElementById("duell_timer").textContent = formatTime(duellTimeRemaining);
+    }
+  }, 1000);
+}
+function revealDuellSide(side) {
+  const task = duellTasks[side];
+  document.getElementById(`duell_${side}_visual`).innerHTML = task.visual || "";
+  document.getElementById(`duell_${side}_prompt`).textContent = task.prompt;
+  activePart[side] = "a";
+  setWidgetMode(`duell_${side}`, task.answerType, task.pairStyle);
+  const ti = document.getElementById(`duell_${side}_textInput`); if (ti) ti.value = "";
+  renderBuffer(side);
+  renderPairBuffer(side);
+}
+function renderDuell() {
+  ["top", "bottom"].forEach(side => {
+    clearTimeout(handicapTimers[side]);
+    document.getElementById(`duell_${side}_score`).textContent = `${duellScores[side]} Punkte`;
+    const delayed = duellSettings.handicapOn && duellSettings.handicapSide === side;
+    if (delayed) {
+      document.getElementById(`duell_${side}_visual`).innerHTML = "";
+      document.getElementById(`duell_${side}_prompt`).textContent = "⏳ …";
+      setWidgetMode(`duell_${side}`, "none");
+      handicapTimers[side] = setTimeout(() => { if (duellRunning) revealDuellSide(side); }, duellSettings.handicapMs);
+    } else {
+      revealDuellSide(side);
+    }
+  });
+}
+function nextRound(side) {
+  if (duellSettings.sameTask) {
+    const nt = currentExercise.generate();
+    duellTasks.top = nt; duellTasks.bottom = nt;
+    inputBuffers.top = ""; inputBuffers.bottom = "";
+  } else {
+    duellTasks[side] = currentExercise.generate();
+    inputBuffers[side] = "";
+  }
+}
+function submitAnswer(side) {
+  if (side === "solo") { submitSolo(); return; }
+  if (!duellRunning) return;
+  const task = duellTasks[side];
+  const ok = checkAnswer(task, inputBuffers[side]);
+  const inputElId = `duell_${side}_input`;
+  if (ok) {
+    duellScores[side]++;
+    flash(inputElId, "correct-flash");
+    nextRound(side);
+    renderDuell();
+  } else {
+    flash(inputElId, "wrong-flash");
+    if (duellSettings.penalizeMistakes) {
+      const other = side === "top" ? "bottom" : "top";
+      duellScores[other]++;
+      nextRound(side === "top" ? "bottom" : "top");
+      renderDuell();
+    } else {
+      inputBuffers[side] = "";
+      renderBuffer(side);
+    }
+  }
+  checkScoreLimit();
+}
+function checkScoreLimit() {
+  if (duellSettings.scoreLimitOn && (duellScores.top >= duellSettings.scoreLimit || duellScores.bottom >= duellSettings.scoreLimit)) finishDuell();
+}
+function stopDuellTimerIfRunning() { if (duellRunning) { clearInterval(duellInterval); duellRunning = false; } clearTimeout(handicapTimers.top); clearTimeout(handicapTimers.bottom); }
+document.getElementById("duell_stopBtn").addEventListener("click", () => { openConfirm("Duell wirklich vorzeitig beenden?", () => finishDuell(), "Beenden"); });
+function finishDuell() {
+  clearInterval(duellInterval);
+  duellRunning = false;
+  clearTimeout(handicapTimers.top); clearTimeout(handicapTimers.bottom);
+  const topName = document.getElementById("duell_top_name").textContent, bottomName = document.getElementById("duell_bottom_name").textContent;
+  let winnerText;
+  if (duellScores.top === duellScores.bottom) winnerText = "Unentschieden!";
+  else winnerText = duellScores.top > duellScores.bottom ? `${topName} gewinnt! 🎉` : `${bottomName} gewinnt! 🎉`;
+  document.getElementById("result_winner").textContent = winnerText;
+  document.getElementById("result_scores").textContent = `${bottomName}: ${duellScores.bottom} Punkte · ${topName}: ${duellScores.top} Punkte`;
+  showView("duellResult");
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
+}
+</script>
+</body>
+</html>

@@ -48,9 +48,13 @@
   .empty-hint { color: var(--muted); text-align: center; padding: 24px; }
 
   /* Modus-Wahl */
+  .ex-desc-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin: -6px 0 18px; }
+  .ex-desc-text { font-size: 0.95rem; margin: 0 0 8px; }
+  .ex-desc-goal { font-size: 0.85rem; color: var(--muted); margin: 0; font-style: italic; }
   .mode-choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; }
   .btn-solo { background: linear-gradient(135deg, #16a34a, #14532d); }
   .btn-duell { background: linear-gradient(135deg, #dc2626, #7f1d1d); }
+  .btn-vk { background: linear-gradient(135deg, #f59e0b, #b45309); color: white; grid-column: 1 / -1; }
 
   /* Duell-Setup */
   .setup-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
@@ -59,6 +63,9 @@
   .choice-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
   .choice-btn { flex: 1; min-width: 100px; border: 2px solid var(--border); background: white; border-radius: 10px; padding: 10px; font-weight: 700; cursor: pointer; }
   .choice-btn.active { border-color: var(--accent); background: #eff6ff; color: var(--accent); }
+  .range-slider { width: 100%; accent-color: var(--accent); height: 28px; margin-bottom: 4px; }
+  .range-scale { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-bottom: 14px; }
+  .calc-badge { font-size: 0.75em; font-weight: 600; color: var(--muted); }
   .toggle-line { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .switch { position: relative; width: 50px; height: 28px; }
   .switch input { opacity: 0; width: 0; height: 0; }
@@ -125,6 +132,36 @@
   .duell-text-wrap input { flex: 1; }
   .duell-text-wrap button { background: var(--success); color: white; border: none; border-radius: 8px; padding: 0 16px; font-weight: 700; }
 
+  /* Vierkampf (Pilot): 2x2-Raster, obere Reihe 180° gedreht */
+  #vkPlayView { display: flex; flex-direction: column; height: 100vh; padding: 0; margin: 0; max-width: none; }
+  .vk-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 3px; background: #0f172a; overflow: hidden; }
+  .vk-quad { display: flex; align-items: center; justify-content: center; padding: 6px; overflow: hidden; }
+  .vk-quad.vk-flip { transform: rotate(180deg); }
+  .vk-quad.vk-p0 { background: #eff6ff; }
+  .vk-quad.vk-p1 { background: #fef2f2; }
+  .vk-quad.vk-p2 { background: #f0fdf4; }
+  .vk-quad.vk-p3 { background: #fefce8; }
+  .vk-inner { width: 100%; max-width: 260px; text-align: center; }
+  .vk-name { font-weight: 800; font-size: 0.95rem; margin-bottom: 2px; }
+  .vk-score { font-weight: 700; color: var(--success); font-size: 0.85rem; margin-bottom: 6px; }
+  .vk-prompt { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; min-height: 2.4em; }
+  .vk-input { font-size: 1.2rem; font-weight: 800; background: white; border-radius: 8px; padding: 6px; min-height: 34px; margin-bottom: 6px; border: 1px solid var(--border); }
+  .vk-quad .keypad-row { display: flex; gap: 4px; margin-bottom: 4px; }
+  .vk-quad .keypad-row button { flex: 1; padding: 8px 0; font-size: 0.95rem; font-weight: 700; border: none; border-radius: 6px; background: #e2e8f0; color: var(--text); }
+  .vk-quad .pair-box { min-width: 46px; min-height: 36px; font-size: 1rem; padding: 4px 8px; }
+  .vk-quad .pair-sep { font-size: 1rem; }
+  .vk-quad .style-fraction .pair-sep { width: 46px; height: 2px; }
+  .vk-quad .var-row { gap: 4px; margin-bottom: 4px; }
+  .vk-quad .var-row button { padding: 6px 0; font-size: 0.85rem; }
+  .vk-quad .duell-bool-wrap { gap: 6px; margin-bottom: 4px; }
+  .vk-quad .duell-bool-wrap button { padding: 8px 0; font-size: 0.8rem; }
+  .vk-quad .duell-text-wrap { gap: 4px; margin-bottom: 4px; }
+  .vk-quad .duell-text-wrap input { min-width: 0; }
+  .vk-quad .duell-text-wrap button { padding: 0 10px; }
+  .vk-divider { height: 44px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; gap: 20px; font-weight: 700; font-size: 1rem; }
+  .vk-divider button { background: #ef4444; color: white; border: none; border-radius: 8px; padding: 6px 12px; font-weight: 700; }
+  .vk-name-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+
   /* Result */
   .result-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 26px; text-align: center; margin-bottom: 16px; }
   .result-winner { font-size: 1.6rem; font-weight: 800; color: var(--accent); margin-bottom: 10px; }
@@ -168,10 +205,12 @@
   <div id="modeChoiceView" class="view hidden">
     <div class="row back-row"><button class="btn btn-secondary" data-back-chapter>← Zurück</button></div>
     <h1 id="mode_exercise_title"></h1>
+    <div class="ex-desc-card" id="mode_exercise_desc"></div>
     <h2 class="sub">Wie möchtest du üben?</h2>
     <div class="mode-choice-grid">
       <button class="btn btn-big btn-solo" id="goSoloBtn">🧠 Solo üben</button>
       <button class="btn btn-big btn-duell" id="goDuellSetupBtn">⚔️ Duell starten</button>
+      <button class="btn btn-big btn-vk" id="goVkSetupBtn">🏁 Vierkampf starten</button>
     </div>
   </div>
 
@@ -294,13 +333,9 @@
           <button class="choice-btn active" data-handicapside="bottom">Team Blau (unten)</button>
           <button class="choice-btn" data-handicapside="top">Team Rot (oben)</button>
         </div>
-        <label class="field-label">Verzögerung</label>
-        <div class="choice-row">
-          <button class="choice-btn" data-handicapms="500">0.5 Sek.</button>
-          <button class="choice-btn active" data-handicapms="1000">1 Sek.</button>
-          <button class="choice-btn" data-handicapms="1500">1.5 Sek.</button>
-          <button class="choice-btn" data-handicapms="2000">2 Sek.</button>
-        </div>
+        <label class="field-label">Verzögerung: <span id="handicapMsLabel">1 Sek.</span></label>
+        <input type="range" id="handicapSlider" class="range-slider" min="1000" max="10000" step="500" value="1000">
+        <div class="range-scale"><span>1 Sek.</span><span>10 Sek.</span></div>
       </div>
     </div>
 
@@ -394,6 +429,170 @@
     </div>
     <div class="row">
       <button class="btn btn-duell" style="flex:1;" id="result_replayBtn">Nochmals spielen</button>
+      <button class="btn btn-secondary" style="flex:1;" data-back-home>Zur Startseite</button>
+    </div>
+  </div>
+
+  <!-- VIERKAMPF SETUP (Pilot) -->
+  <div id="vkSetupView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-mode>← Zurück</button></div>
+    <h1 id="vk_exercise_title">🏁 Vierkampf einrichten</h1>
+    <h2 class="sub">4 Spieler, gleiche Aufgabe – wer zuerst richtig antwortet, bekommt den Punkt. Wer zuerst 5 Punkte hat, gewinnt.</h2>
+    <div class="setup-card">
+      <label class="field-label">Spielernamen</label>
+      <div class="vk-name-inputs">
+        <input type="text" id="vk_name0" placeholder="Spieler 1" maxlength="14">
+        <input type="text" id="vk_name1" placeholder="Spieler 2" maxlength="14">
+        <input type="text" id="vk_name2" placeholder="Spieler 3" maxlength="14">
+        <input type="text" id="vk_name3" placeholder="Spieler 4" maxlength="14">
+      </div>
+    </div>
+    <button class="btn btn-big btn-vk" id="startVkBtn">Vierkampf starten</button>
+  </div>
+
+  <!-- VIERKAMPF PLAY -->
+  <div id="vkPlayView" class="view hidden">
+    <div class="vk-grid">
+      <div class="vk-quad vk-flip vk-p2" data-vkslot="2">
+        <div class="vk-inner">
+          <div class="vk-name" id="duell_vk2_name"></div>
+          <div class="vk-score" id="duell_vk2_score"></div>
+          <div id="duell_vk2_visual"></div>
+          <div class="vk-prompt" id="duell_vk2_prompt"></div>
+          <div class="vk-input" id="duell_vk2_input"> </div>
+          <div id="duell_vk2_pairWrap" class="pair-wrap hidden">
+            <div class="pair-boxes style-coord" id="duell_vk2_pairBoxes">
+              <button class="pair-box" data-side="vk2" data-part="a" id="duell_vk2_pairA">?</button>
+              <div class="pair-sep" id="duell_vk2_pairSep">|</div>
+              <button class="pair-box" data-side="vk2" data-part="b" id="duell_vk2_pairB">?</button>
+            </div>
+          </div>
+          <div id="duell_vk2_varRow" class="var-row hidden">
+            <button data-side="vk2" data-key="x">x</button>
+            <button data-side="vk2" data-key="y">y</button>
+            <button data-side="vk2" data-key="a">a</button>
+            <button data-side="vk2" data-key="n">n</button>
+          </div>
+          <div id="duell_vk2_keypadWrap"><div class="keypad" data-side="vk2"></div></div>
+          <div id="duell_vk2_boolWrap" class="duell-bool-wrap hidden">
+            <button style="background:var(--success);" data-side="vk2" data-bool="1">Wahr</button>
+            <button style="background:var(--danger);" data-side="vk2" data-bool="0">Falsch</button>
+          </div>
+          <div id="duell_vk2_textWrap" class="duell-text-wrap hidden">
+            <input type="text" id="duell_vk2_textInput">
+            <button data-side="vk2" data-textsubmit="1">✓</button>
+          </div>
+        </div>
+      </div>
+      <div class="vk-quad vk-flip vk-p3" data-vkslot="3">
+        <div class="vk-inner">
+          <div class="vk-name" id="duell_vk3_name"></div>
+          <div class="vk-score" id="duell_vk3_score"></div>
+          <div id="duell_vk3_visual"></div>
+          <div class="vk-prompt" id="duell_vk3_prompt"></div>
+          <div class="vk-input" id="duell_vk3_input"> </div>
+          <div id="duell_vk3_pairWrap" class="pair-wrap hidden">
+            <div class="pair-boxes style-coord" id="duell_vk3_pairBoxes">
+              <button class="pair-box" data-side="vk3" data-part="a" id="duell_vk3_pairA">?</button>
+              <div class="pair-sep" id="duell_vk3_pairSep">|</div>
+              <button class="pair-box" data-side="vk3" data-part="b" id="duell_vk3_pairB">?</button>
+            </div>
+          </div>
+          <div id="duell_vk3_varRow" class="var-row hidden">
+            <button data-side="vk3" data-key="x">x</button>
+            <button data-side="vk3" data-key="y">y</button>
+            <button data-side="vk3" data-key="a">a</button>
+            <button data-side="vk3" data-key="n">n</button>
+          </div>
+          <div id="duell_vk3_keypadWrap"><div class="keypad" data-side="vk3"></div></div>
+          <div id="duell_vk3_boolWrap" class="duell-bool-wrap hidden">
+            <button style="background:var(--success);" data-side="vk3" data-bool="1">Wahr</button>
+            <button style="background:var(--danger);" data-side="vk3" data-bool="0">Falsch</button>
+          </div>
+          <div id="duell_vk3_textWrap" class="duell-text-wrap hidden">
+            <input type="text" id="duell_vk3_textInput">
+            <button data-side="vk3" data-textsubmit="1">✓</button>
+          </div>
+        </div>
+      </div>
+      <div class="vk-quad vk-p0" data-vkslot="0">
+        <div class="vk-inner">
+          <div class="vk-name" id="duell_vk0_name"></div>
+          <div class="vk-score" id="duell_vk0_score"></div>
+          <div id="duell_vk0_visual"></div>
+          <div class="vk-prompt" id="duell_vk0_prompt"></div>
+          <div class="vk-input" id="duell_vk0_input"> </div>
+          <div id="duell_vk0_pairWrap" class="pair-wrap hidden">
+            <div class="pair-boxes style-coord" id="duell_vk0_pairBoxes">
+              <button class="pair-box" data-side="vk0" data-part="a" id="duell_vk0_pairA">?</button>
+              <div class="pair-sep" id="duell_vk0_pairSep">|</div>
+              <button class="pair-box" data-side="vk0" data-part="b" id="duell_vk0_pairB">?</button>
+            </div>
+          </div>
+          <div id="duell_vk0_varRow" class="var-row hidden">
+            <button data-side="vk0" data-key="x">x</button>
+            <button data-side="vk0" data-key="y">y</button>
+            <button data-side="vk0" data-key="a">a</button>
+            <button data-side="vk0" data-key="n">n</button>
+          </div>
+          <div id="duell_vk0_keypadWrap"><div class="keypad" data-side="vk0"></div></div>
+          <div id="duell_vk0_boolWrap" class="duell-bool-wrap hidden">
+            <button style="background:var(--success);" data-side="vk0" data-bool="1">Wahr</button>
+            <button style="background:var(--danger);" data-side="vk0" data-bool="0">Falsch</button>
+          </div>
+          <div id="duell_vk0_textWrap" class="duell-text-wrap hidden">
+            <input type="text" id="duell_vk0_textInput">
+            <button data-side="vk0" data-textsubmit="1">✓</button>
+          </div>
+        </div>
+      </div>
+      <div class="vk-quad vk-p1" data-vkslot="1">
+        <div class="vk-inner">
+          <div class="vk-name" id="duell_vk1_name"></div>
+          <div class="vk-score" id="duell_vk1_score"></div>
+          <div id="duell_vk1_visual"></div>
+          <div class="vk-prompt" id="duell_vk1_prompt"></div>
+          <div class="vk-input" id="duell_vk1_input"> </div>
+          <div id="duell_vk1_pairWrap" class="pair-wrap hidden">
+            <div class="pair-boxes style-coord" id="duell_vk1_pairBoxes">
+              <button class="pair-box" data-side="vk1" data-part="a" id="duell_vk1_pairA">?</button>
+              <div class="pair-sep" id="duell_vk1_pairSep">|</div>
+              <button class="pair-box" data-side="vk1" data-part="b" id="duell_vk1_pairB">?</button>
+            </div>
+          </div>
+          <div id="duell_vk1_varRow" class="var-row hidden">
+            <button data-side="vk1" data-key="x">x</button>
+            <button data-side="vk1" data-key="y">y</button>
+            <button data-side="vk1" data-key="a">a</button>
+            <button data-side="vk1" data-key="n">n</button>
+          </div>
+          <div id="duell_vk1_keypadWrap"><div class="keypad" data-side="vk1"></div></div>
+          <div id="duell_vk1_boolWrap" class="duell-bool-wrap hidden">
+            <button style="background:var(--success);" data-side="vk1" data-bool="1">Wahr</button>
+            <button style="background:var(--danger);" data-side="vk1" data-bool="0">Falsch</button>
+          </div>
+          <div id="duell_vk1_textWrap" class="duell-text-wrap hidden">
+            <input type="text" id="duell_vk1_textInput">
+            <button data-side="vk1" data-textsubmit="1">✓</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="vk-divider">
+      <span id="vk_status">Erster bis 5 Punkte gewinnt</span>
+      <button id="vk_stopBtn">Abbrechen</button>
+    </div>
+  </div>
+
+  <!-- VIERKAMPF RESULT -->
+  <div id="vkResultView" class="view hidden">
+    <h1>🏆 Vierkampf-Ergebnis</h1>
+    <div class="result-card">
+      <div class="result-winner" id="vk_result_winner"></div>
+      <div class="result-scores" id="vk_result_scores"></div>
+    </div>
+    <div class="row">
+      <button class="btn btn-duell" style="flex:1;" id="vk_result_replayBtn">Nochmals spielen</button>
       <button class="btn btn-secondary" style="flex:1;" data-back-home>Zur Startseite</button>
     </div>
   </div>
@@ -500,10 +699,44 @@ function generateAxisReflectionY() { const x = rndNonZero(-10, 10), y = rndNonZe
 function generatePointReflection() { const x = rndNonZero(-10, 10), y = rndNonZero(-10, 10); return { visual: null, prompt: `Spiegle P(${x}|${y}) am Ursprung O. Wie lautet der Bildpunkt P'?`, answerType: "pair", pairStyle: "coordinate", correct: [-x, -y] }; }
 function generatePowerCalc() { const base = rnd(2, 9), exp = rnd(2, 3); return { visual: null, prompt: `Berechne: ${base}^${exp} =`, answerType: "number", correct: Math.pow(base, exp) }; }
 function generatePowerRule() { const base = rnd(2, 9), e1 = rnd(2, 4), e2 = rnd(2, 4); return { visual: null, prompt: `Vereinfache: ${base}^${e1} · ${base}^${e2} = ${base}^?`, answerType: "number", correct: e1 + e2 }; }
+function generateOrderOfOperations() {
+  const withBrackets = Math.random() < 0.4;
+  if (withBrackets) {
+    const b = rnd(2, 12);
+    const useSub = Math.random() < 0.5;
+    const a = useSub ? rnd(b + 1, b + 12) : rnd(2, 15);
+    const inner = useSub ? a - b : a + b;
+    const c = rnd(2, 9);
+    return { visual: null, prompt: `Berechne: (${a} ${useSub ? "−" : "+"} ${b}) × ${c} =`, answerType: "number", correct: inner * c };
+  }
+  const b = rnd(2, 9), d = rnd(2, 9);
+  const product = b * d;
+  const useSub = Math.random() < 0.5;
+  const a = useSub ? rnd(product + 1, product + 20) : rnd(2, 30);
+  const mulFirst = Math.random() < 0.5;
+  const correct = useSub ? a - product : a + product;
+  const prompt = mulFirst
+    ? `Berechne: ${a} ${useSub ? "−" : "+"} ${b} × ${d} =`
+    : `Berechne: ${b} × ${d} ${useSub ? "−" : "+"} ${a} =`;
+  return { visual: null, prompt, answerType: "number", correct };
+}
 function generateVariables() { const a = rnd(2, 9), b = rnd(0, 20), x = rnd(-5, 10); const sign = b >= 0 ? "+" : "−"; return { visual: null, prompt: `Berechne den Wert des Terms ${a}x ${sign} ${Math.abs(b)} für x = ${x}.`, answerType: "number", correct: a * x + b }; }
 function generateIsPrime() { const n = rnd(2, 100); return { visual: null, prompt: `Ist ${n} eine Primzahl?`, answerType: "boolean", correct: isPrime(n) ? 1 : 0 }; }
-function generateDivisorCount() { const n = rnd(4, 60); return { visual: null, prompt: `Wie viele Teiler hat die Zahl ${n}?`, answerType: "number", correct: countDivisors(n) }; }
+function generateDivisorCount() { const n = rnd(4, 40); return { visual: null, prompt: `Wie viele Teiler hat die Zahl ${n}?`, answerType: "number", correct: countDivisors(n) }; }
 function generateLcm() { const a = rnd(2, 12), b = rnd(2, 12); return { visual: null, prompt: `Wie lautet das kleinste gemeinsame Vielfache (kgV) von ${a} und ${b}?`, answerType: "number", correct: lcmFn(a, b) }; }
+function generatePrimeFactorization() {
+  const smallPrimes = [2, 3, 5, 7];
+  let factors = [], n = 1;
+  const count = rnd(2, 4);
+  for (let i = 0; i < count; i++) {
+    const p = smallPrimes[rnd(0, smallPrimes.length - 1)];
+    if (n * p > 100) break;
+    factors.push(p); n *= p;
+  }
+  if (factors.length < 2) { factors = [2, 3]; n = 6; }
+  factors.sort((a, b) => a - b);
+  return { visual: null, prompt: `Zerlege ${n} in Primfaktoren (z.B. 2×2×3).`, answerType: "factors", correct: factors };
+}
 
 /* ---- Basiswissen: Generatoren ---- */
 function generateKopf(max) {
@@ -523,7 +756,7 @@ function generateFractionReduce() {
 function generatePercentToDecimal() { const p = rnd(1, 99); return { visual: null, prompt: `Wandle ${p}% in eine Dezimalzahl um.`, answerType: "number", correct: Math.round((p / 100) * 1000) / 1000 }; }
 function generateDecimalToPercent() { const d = rnd(1, 99) / 100; return { visual: null, prompt: `Wandle ${d} in Prozent um (nur Zahl, ohne %).`, answerType: "number", correct: Math.round(d * 100 * 100) / 100 }; }
 function generateFractionToDecimal() { const dens = [2, 4, 5, 8, 10, 20, 25, 50, 100]; const den = dens[rnd(0, dens.length - 1)]; const num = rnd(1, den - 1); return { visual: null, prompt: `Wandle den Bruch ${num}/${den} in eine Dezimalzahl um.`, answerType: "number", correct: Math.round((num / den) * 1000) / 1000 }; }
-function generateDecimalToFraction() { const den = [10, 100][rnd(0, 1)]; const num = rnd(1, den - 1); return { visual: null, prompt: `Wandle ${num / den} in einen Bruch um (nicht kürzen).`, answerType: "pair", pairStyle: "fraction", correct: [num, den] }; }
+function generateDecimalToFraction() { const den = [10, 100][rnd(0, 1)]; const num = rnd(1, den - 1); const g = gcdFn(num, den); const redNum = num / g, redDen = den / g; return { visual: null, prompt: `Wandle ${num / den} in einen vollständig gekürzten Bruch um.`, answerType: "pair", pairStyle: "fraction", correct: [redNum, redDen] }; }
 function generateCoordinateRead() { const x = rnd(-6, 6), y = rnd(-6, 6); return { visual: coordinateGridSVG(x, y), prompt: `Welche Koordinaten hat der markierte Punkt?`, answerType: "pair", pairStyle: "coordinate", correct: [x, y] }; }
 const UNIT_SETS = [
   { from: "cm", to: "m", factor: 0.01 }, { from: "m", to: "cm", factor: 100 },
@@ -533,7 +766,13 @@ const UNIT_SETS = [
   { from: "min", to: "h", factor: 1 / 60 }, { from: "h", to: "min", factor: 60 }
 ];
 function generateUnitConversion() { const s = UNIT_SETS[rnd(0, UNIT_SETS.length - 1)]; const val = rnd(1, 50); return { visual: null, prompt: `Wandle um: ${val} ${s.from} = ? ${s.to}`, answerType: "number", correct: Math.round(val * s.factor * 1000) / 1000 }; }
-function generateGgt() { const a = rnd(4, 60), b = rnd(4, 60); return { visual: null, prompt: `Wie lautet der grösste gemeinsame Teiler (ggT) von ${a} und ${b}?`, answerType: "number", correct: gcdFn(a, b) }; }
+function generateGgt() {
+  const g = rnd(2, 10);
+  let m = rnd(1, 8), n = rnd(1, 8);
+  while (gcdFn(m, n) !== 1) { m = rnd(1, 8); n = rnd(1, 8); }
+  const a = g * m, b = g * n;
+  return { visual: null, prompt: `Wie lautet der grösste gemeinsame Teiler (ggT) von ${a} und ${b}?`, answerType: "number", correct: g };
+}
 function generateKgvBW() { const a = rnd(2, 15), b = rnd(2, 15); return { visual: null, prompt: `Wie lautet das kleinste gemeinsame Vielfache (kgV) von ${a} und ${b}?`, answerType: "number", correct: lcmFn(a, b) }; }
 function generateAdd() { const a = rnd(10, 999), b = rnd(10, 999); return { visual: null, prompt: `${a} + ${b} =`, answerType: "number", correct: a + b }; }
 function generateSub() { const a = rnd(10, 999); const b = rnd(10, a); return { visual: null, prompt: `${a} − ${b} =`, answerType: "number", correct: a - b }; }
@@ -608,6 +847,7 @@ const QUAD_FACTS = [
 function generateQuadRightAngles() { const q = QUAD_FACTS[rnd(0, QUAD_FACTS.length - 1)]; return { visual: null, prompt: `Wie viele rechte Winkel hat ein ${q.name} (im Allgemeinen)?`, answerType: "number", correct: q.rightAngles }; }
 
 function generateTriangleAngleSum() { const a = rnd(20, 120), b = rnd(20, 150 - a > 20 ? 150 - a : 20); const c = 180 - a - b; return { visual: null, prompt: `In einem Dreieck sind zwei Winkel ${a}° und ${b}° gross. Wie gross ist der dritte Winkel?`, answerType: "number", correct: c }; }
+function generateQuadAngleSum() { let a, b, c, d; do { a = rnd(40, 140); b = rnd(40, 140); c = rnd(40, 140); d = 360 - a - b - c; } while (d < 20 || d > 160); return { visual: null, prompt: `In einem Viereck sind drei Winkel ${a}°, ${b}° und ${c}° gross. Wie gross ist der vierte Winkel?`, answerType: "number", correct: d }; }
 
 function generateSimplifyTerms() {
   const a = rnd(2, 15), b = rnd(2, 15);
@@ -716,10 +956,282 @@ function generateSpeed() { const s = rnd(20, 400), t = rnd(1, 10); return { visu
 function generateDistance() { const v = rnd(10, 120), t = rnd(1, 8); return { visual: null, prompt: `Ein Fahrzeug fährt mit ${v} km/h während ${t} h. Welche Strecke legt es zurück (in km)?`, answerType: "number", correct: v * t }; }
 function generateSlope() { const hoehe = rnd(1, 30), strecke = rnd(20, 200); return { visual: null, prompt: `Eine Strasse steigt auf ${strecke} m horizontaler Strecke um ${hoehe} m an. Wie gross ist die Steigung in %? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((hoehe / strecke) * 100 * 10) / 10 }; }
 
+/* ---- Mathematik 3. Jahr: Generatoren ---- */
+function generateSlopeTwoPoints() {
+  const m = rndNonZero(-5, 5);
+  const x1 = rnd(-8, 8), dx = rnd(1, 6), x2 = x1 + dx;
+  const y1 = rnd(-8, 8), y2 = y1 + m * dx;
+  return { visual: null, prompt: `Eine Gerade verläuft durch die Punkte P1(${x1}|${y1}) und P2(${x2}|${y2}). Wie gross ist die Steigung m?`, answerType: "number", correct: m };
+}
+function generateFunctionValue() {
+  const m = rndNonZero(-6, 6), q = rnd(-15, 15), x0 = rnd(-8, 8);
+  const sign = q >= 0 ? "+" : "−";
+  return { visual: null, prompt: `Gegeben ist die Funktion f(x) = ${m}x ${sign} ${Math.abs(q)}. Berechne f(${x0}).`, answerType: "number", correct: m * x0 + q };
+}
+function generateSimilarFigures() {
+  const bc = rnd(4, 20), cd = rnd(4, 20);
+  const kOptions = [0.5, 1.2, 1.25, 1.5, 2, 2.5, 3];
+  const k = kOptions[rnd(0, kOptions.length - 1)];
+  const ef = Math.round(cd * k * 10) / 10, fg = Math.round(bc * k * 10) / 10;
+  return { visual: null, prompt: `Zwei Vierecke sind ähnlich. Die Seite CD entspricht EF, die Seite BC entspricht FG. CD = ${cd} cm, BC = ${bc} cm, EF = ${ef} cm. Wie lang ist FG (in cm)? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: fg };
+}
+function sciToPlainString(mantissaStr, exp) {
+  const neg = mantissaStr.startsWith("-");
+  if (neg) mantissaStr = mantissaStr.slice(1);
+  const [intPart, decPart = "0"] = mantissaStr.split(".");
+  const digits = intPart + decPart;
+  const pointPos = intPart.length + exp;
+  let result;
+  if (pointPos <= 0) result = "0." + "0".repeat(-pointPos) + digits;
+  else if (pointPos >= digits.length) result = digits + "0".repeat(pointPos - digits.length);
+  else result = digits.slice(0, pointPos) + "." + digits.slice(pointPos);
+  if (result.includes(".")) result = result.replace(/0+$/, "").replace(/\.$/, "");
+  return (neg ? "-" : "") + result;
+}
+function generateScientificNotation() {
+  const mantissa = rnd(10, 99) / 10;
+  const mantissaStr = mantissa.toFixed(1);
+  const expPool = [-5, -4, -3, -2, 2, 3, 4, 5, 6];
+  const exp = expPool[rnd(0, expPool.length - 1)];
+  const plain = sciToPlainString(mantissaStr, exp);
+  return { visual: null, prompt: `Schreibe ${plain} in wissenschaftlicher Schreibweise (Beispiel: 4.5×10^4).`, answerType: "sci", correct: { m: mantissa, e: exp } };
+}
+function generateNegativeExponent() {
+  const base = rnd(2, 6), exp = rnd(2, 3);
+  return { visual: null, prompt: `Berechne: ${base}^-${exp} = (als Bruch)`, answerType: "pair", pairStyle: "fraction", correct: [1, Math.pow(base, exp)] };
+}
+function generateJahreszins() {
+  const k = rnd(1, 200) * 100;
+  const pOptions = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
+  const p = pOptions[rnd(0, pOptions.length - 1)];
+  return { visual: null, prompt: `Kapital: ${k} CHF, Zinssatz: ${p}%. Wie viel Jahreszins (in CHF) resultiert daraus? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(k * p / 100 * 100) / 100 };
+}
+function generateMarchzins() {
+  const k = rnd(1, 200) * 100;
+  const pOptions = [0.5, 1, 1.5, 2, 2.5, 3];
+  const p = pOptions[rnd(0, pOptions.length - 1)];
+  const d = rnd(10, 300);
+  return { visual: null, prompt: `Kapital: ${k} CHF, Zinssatz: ${p}%, Anlagedauer: ${d} Tage. Wie viel Marchzins (in CHF) resultiert? (Bankjahr = 360 Tage, auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(k * p / 100 * d / 360 * 100) / 100 };
+}
+function generateConeVolume() { const r = rnd(2, 12), h = rnd(3, 20); return { visual: null, prompt: `Berechne das Volumen eines Kegels mit Radius ${r} cm und Höhe ${h} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.PI * r * r * h / 3 * 10) / 10 }; }
+function generateSphereVolume() { const r = rnd(2, 15); return { visual: null, prompt: `Berechne das Volumen einer Kugel mit Radius ${r} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((4 / 3) * Math.PI * r * r * r * 10) / 10 }; }
+function generateEquationBothSides() {
+  const a = rnd(2, 9); let c = rnd(2, 9); if (c === a) c++;
+  const x = rndNonZero(-10, 10), b = rnd(-20, 20);
+  const d = a * x + b - c * x;
+  return { visual: null, prompt: `Löse die Gleichung: ${a}x ${b >= 0 ? "+" : "−"} ${Math.abs(b)} = ${c}x ${d >= 0 ? "+" : "−"} ${Math.abs(d)}. x = ?`, answerType: "number", correct: x };
+}
+function generateSimpleQuadratic() {
+  const x = rnd(2, 12);
+  return { visual: null, prompt: `Löse die Gleichung: x² = ${x * x}. Wie gross ist die positive Lösung x?`, answerType: "number", correct: x };
+}
+function generateLinearSystem() {
+  let a1, b1, a2, b2;
+  do { a1 = rndNonZero(-6, 6); b1 = rndNonZero(-6, 6); a2 = rndNonZero(-6, 6); b2 = rndNonZero(-6, 6); } while (a1 * b2 - a2 * b1 === 0);
+  const x = rnd(-8, 8), y = rnd(-8, 8);
+  const c1 = a1 * x + b1 * y, c2 = a2 * x + b2 * y;
+  const fmt = (a, b, c) => {
+    const termA = (a < 0 ? "−" : "") + (Math.abs(a) === 1 ? "" : Math.abs(a)) + "x";
+    const termB = (Math.abs(b) === 1 ? "" : Math.abs(b)) + "y";
+    return `${termA} ${b < 0 ? "−" : "+"} ${termB} = ${c}`;
+  };
+  return { visual: null, prompt: `Löse das Gleichungssystem: ${fmt(a1, b1, c1)} und ${fmt(a2, b2, c2)}. Wie lautet die Lösung (x|y)?`, answerType: "pair", pairStyle: "coordinate", correct: [x, y] };
+}
+function generatePermutations() {
+  const n = rnd(3, 6); let f = 1; for (let i = 2; i <= n; i++) f *= i;
+  return { visual: null, prompt: `Auf wie viele verschiedene Arten können ${n} Personen in einer Reihe aufgestellt werden?`, answerType: "number", correct: f };
+}
+function generateStretchVolume() {
+  const kOptions = [0.5, 1.5, 2, 2.5, 3];
+  const k = kOptions[rnd(0, kOptions.length - 1)];
+  const v = rnd(2, 50);
+  return { visual: null, prompt: `Ein Körper mit Volumen ${v} cm³ wird um den Streckfaktor ${k} vergrössert (linear gestreckt). Wie gross ist das Volumen des gestreckten Körpers (in cm³)? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(v * Math.pow(k, 3) * 10) / 10 };
+}
+function generateStretchSurface() {
+  const kOptions = [0.5, 1.5, 2, 2.5, 3];
+  const k = kOptions[rnd(0, kOptions.length - 1)];
+  const a = rnd(5, 200);
+  return { visual: null, prompt: `Ein Körper mit Oberfläche ${a} cm² wird um den Streckfaktor ${k} vergrössert (linear gestreckt). Wie gross ist die Oberfläche des gestreckten Körpers (in cm²)? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(a * Math.pow(k, 2) * 10) / 10 };
+}
+function generatePatternTerm() {
+  const a = rnd(2, 6), b = rnd(1, 5);
+  const n = rnd(6, 12);
+  const terms = [1, 2, 3].map(i => a * i + b);
+  return { visual: null, prompt: `Eine Musterfolge wächst gleichmässig: Schritt 1 hat ${terms[0]} Elemente, Schritt 2 hat ${terms[1]}, Schritt 3 hat ${terms[2]}. Wie viele Elemente hat Schritt ${n}?`, answerType: "number", correct: a * n + b };
+}
+function generateCreditRate() {
+  const k = rnd(5, 80) * 100;
+  const months = [6, 12, 18, 24, 36][rnd(0, 4)];
+  const kosten = Math.round(k * (rnd(3, 15) / 100));
+  return { visual: null, prompt: `Ein Kredit über ${k} CHF wird in ${months} gleichen Monatsraten zurückbezahlt. Zusätzlich fallen ${kosten} CHF Zinsen und Kosten an. Wie hoch ist die monatliche Rate (in CHF)? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round((k + kosten) / months * 100) / 100 };
+}
+const PLATONIC_SOLIDS = [
+  { name: "Tetraeder", faces: 4, edges: 6, vertices: 4 },
+  { name: "Würfel (Hexaeder)", faces: 6, edges: 12, vertices: 8 },
+  { name: "Oktaeder", faces: 8, edges: 12, vertices: 6 },
+  { name: "Dodekaeder", faces: 12, edges: 30, vertices: 20 },
+  { name: "Ikosaeder", faces: 20, edges: 30, vertices: 12 }
+];
+function generatePlatonicFaces() { const s = PLATONIC_SOLIDS[rnd(0, PLATONIC_SOLIDS.length - 1)]; return { visual: null, prompt: `Wie viele Flächen hat ein ${s.name}?`, answerType: "number", correct: s.faces }; }
+function generatePlatonicEdges() { const s = PLATONIC_SOLIDS[rnd(0, PLATONIC_SOLIDS.length - 1)]; return { visual: null, prompt: `Wie viele Kanten hat ein ${s.name}?`, answerType: "number", correct: s.edges }; }
+function generatePlatonicVertices() { const s = PLATONIC_SOLIDS[rnd(0, PLATONIC_SOLIDS.length - 1)]; return { visual: null, prompt: `Wie viele Ecken hat ein ${s.name}?`, answerType: "number", correct: s.vertices }; }
+function generateEulerFormula() {
+  const F = rnd(4, 20), E = rnd(F + 2, F + 40);
+  const V = E - F + 2;
+  const which = rnd(0, 2);
+  if (which === 0) return { visual: null, prompt: `Ein Polyeder hat ${F} Flächen und ${E} Kanten. Wie viele Ecken hat es? (Eulersche Polyederformel: Ecken − Kanten + Flächen = 2)`, answerType: "number", correct: V };
+  if (which === 1) return { visual: null, prompt: `Ein Polyeder hat ${V} Ecken und ${F} Flächen. Wie viele Kanten hat es? (Eulersche Polyederformel: Ecken − Kanten + Flächen = 2)`, answerType: "number", correct: E };
+  return { visual: null, prompt: `Ein Polyeder hat ${V} Ecken und ${E} Kanten. Wie viele Flächen hat es? (Eulersche Polyederformel: Ecken − Kanten + Flächen = 2)`, answerType: "number", correct: F };
+}
+function generateFibonacciNext() {
+  const a = rnd(1, 5), b = rnd(1, 8);
+  const terms = [a, b];
+  for (let i = 0; i < 3; i++) terms.push(terms[terms.length - 1] + terms[terms.length - 2]);
+  const next = terms[terms.length - 1] + terms[terms.length - 2];
+  return { visual: null, prompt: `Diese Zahlenfolge funktioniert wie die Fibonacci-Folge (jede Zahl ist die Summe der zwei vorherigen): ${terms.join(", ")}, ? Wie lautet die nächste Zahl?`, answerType: "number", correct: next };
+}
+function generateShadowProblem() {
+  const personHeight = rnd(140, 190), personShadow = rnd(80, 250), poleShadow = rnd(200, 800);
+  const poleHeight = Math.round(personHeight * (poleShadow / personShadow) * 10) / 10;
+  return { visual: null, prompt: `Eine Person ist ${personHeight} cm gross und wirft einen ${personShadow} cm langen Schatten. Zur gleichen Zeit wirft ein Mast einen ${poleShadow} cm langen Schatten. Wie hoch ist der Mast (in cm)? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: poleHeight };
+}
+function generateFuelConsumption() {
+  const verbrauch = rnd(40, 120) / 10, strecke = rnd(20, 600);
+  return { visual: null, prompt: `Ein Auto verbraucht ${verbrauch} Liter pro 100 km. Wie viel Treibstoff (in Liter) braucht es für eine Strecke von ${strecke} km? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(verbrauch * strecke / 100 * 10) / 10 };
+}
+function generateSurveyExtrapolation() {
+  const sample = rnd(20, 200), count = rnd(1, sample), population = sample * rnd(5, 50);
+  return { visual: null, prompt: `Bei einer Umfrage unter ${sample} Personen gaben ${count} an, eine bestimmte Antwort zu bevorzugen. Hochgerechnet auf ${population} Personen: Wie viele würden das wählen? (auf eine ganze Zahl runden)`, answerType: "number", correct: Math.round(population * count / sample) };
+}
+
 /* =========================================================================
    KAPITEL- UND KATEGORIE-STRUKTUR
    ========================================================================= */
-function ex(id, title, generate, help) { return { id, title, generate, help: help || "" }; }
+const EXERCISE_INFO = {
+  "kopf-100": { d: "Löse Additions-, Subtraktions- und Multiplikationsaufgaben im Zahlenraum bis 100 im Kopf.", g: "Grundoperationen im Kopf sicher und schnell anwenden." },
+  "kopf-200": { d: "Kopfrechnen im Zahlenraum bis 200.", g: "Kopfrechenstrategien auf grössere Zahlen übertragen." },
+  "kopf-500": { d: "Kopfrechnen im Zahlenraum bis 500.", g: "Kopfrechenstrategien auf grössere Zahlen übertragen." },
+  "bw-erw": { d: "Erweitere einen Bruch mit einer vorgegebenen Zahl.", g: "Verstehen, dass Erweitern den Wert eines Bruchs nicht verändert." },
+  "bw-kuerz": { d: "Kürze einen Bruch vollständig.", g: "Brüche in ihre einfachste Form bringen können." },
+  "bw-p2d": { d: "Wandle eine Prozentzahl in eine Dezimalzahl um.", g: "Zusammenhang zwischen Prozent und Dezimalzahl verstehen." },
+  "bw-d2p": { d: "Wandle eine Dezimalzahl in Prozent um.", g: "Zusammenhang zwischen Prozent und Dezimalzahl verstehen." },
+  "bw-b2d": { d: "Wandle einen Bruch in eine Dezimalzahl um.", g: "Brüche als Division verstehen und berechnen." },
+  "bw-d2b": { d: "Wandle eine Dezimalzahl in einen vollständig gekürzten Bruch um.", g: "Zusammenhang zwischen Dezimalzahl und Bruch verstehen." },
+  "bw-koord-1": { d: "Lies die Koordinaten eines markierten Punktes im Koordinatensystem ab.", g: "Sich im Koordinatensystem orientieren können." },
+  "bw-mass-1": { d: "Wandle zwischen gängigen Masseinheiten um (Länge, Gewicht, Volumen, Zeit).", g: "Grössenvorstellung für Masseinheiten entwickeln." },
+  "bw-ggt": { d: "Bestimme den grössten gemeinsamen Teiler (ggT) zweier Zahlen.", g: "Teilerbeziehungen zwischen Zahlen erkennen." },
+  "bw-kgv": { d: "Bestimme das kleinste gemeinsame Vielfache (kgV) zweier Zahlen.", g: "Vielfachenbeziehungen zwischen Zahlen erkennen." },
+  "bw-add": { d: "Addiere zwei mehrstellige Zahlen.", g: "Addition sicher beherrschen." },
+  "bw-sub": { d: "Subtrahiere zwei mehrstellige Zahlen.", g: "Subtraktion sicher beherrschen." },
+  "bw-mul": { d: "Multipliziere zwei Zahlen.", g: "Das kleine Einmaleins und einfache Multiplikationen sicher anwenden." },
+  "bw-div": { d: "Dividiere zwei Zahlen ohne Rest.", g: "Division als Umkehrung der Multiplikation verstehen." },
+  "bw-runden-1": { d: "Runde eine Zahl auf Zehner, Hunderter oder Tausender.", g: "Rundungsregeln korrekt anwenden." },
+  "bw-winkel-1": { d: "Berechne den Ergänzungswinkel zu 90° oder 180°.", g: "Komplementär- und Supplementärwinkel verstehen." },
+  "bw-winkel-2": { d: "Berechne den fehlenden Winkel in einem Dreieck, wenn zwei Winkel bekannt sind.", g: "Winkelsumme im Dreieck (180°) anwenden." },
+  "bw-winkel-3": { d: "Berechne den fehlenden Winkel in einem Viereck, wenn drei Winkel bekannt sind.", g: "Winkelsumme im Viereck (360°) anwenden." },
+  "1a-1": { d: "Bestimme die Anzahl Symmetrieachsen einer Figur.", g: "Achsensymmetrie an Figuren erkennen." },
+  "1b-1": { d: "Bestimme die Drehsymmetrie-Ordnung einer Figur.", g: "Drehsymmetrie an Figuren erkennen." },
+  "1c-x": { d: "Spiegle einen Punkt an der x-Achse.", g: "Achsenspiegelung an der x-Achse berechnen können." },
+  "1c-y": { d: "Spiegle einen Punkt an der y-Achse.", g: "Achsenspiegelung an der y-Achse berechnen können." },
+  "1d-1": { d: "Spiegle einen Punkt am Ursprung.", g: "Punktspiegelung am Ursprung berechnen können." },
+  "2a-berechnen": { d: "Berechne den Wert einer Potenz.", g: "Potenzschreibweise verstehen und anwenden." },
+  "2a-gesetz": { d: "Wende das Potenzgesetz für die Multiplikation gleicher Basen an.", g: "Potenzgesetze anwenden können." },
+  "2a-reihenfolge": { d: "Berechne einen Term unter Beachtung von «Punkt vor Strich» und Klammern.", g: "Rechenreihenfolge korrekt anwenden." },
+  "2b-1": { d: "Setze einen Wert für x in einen Term ein und berechne das Ergebnis.", g: "Terme mit Variablen auswerten können." },
+  "2c-prim": { d: "Entscheide, ob eine Zahl eine Primzahl ist.", g: "Primzahlen erkennen können." },
+  "2c-teiler": { d: "Bestimme, wie viele Teiler eine Zahl hat.", g: "Teiler einer Zahl systematisch bestimmen." },
+  "2c-kgv": { d: "Bestimme das kleinste gemeinsame Vielfache zweier Zahlen.", g: "Vielfachenbeziehungen zwischen Zahlen erkennen." },
+  "2c-primfaktor": { d: "Zerlege eine Zahl in ihre Primfaktoren.", g: "Primfaktorzerlegung durchführen können." },
+  "3a-mean": { d: "Berechne den Mittelwert (arithmetisches Mittel) einer Zahlenreihe.", g: "Den Mittelwert als Kennwert einer Datenreihe berechnen." },
+  "3a-median": { d: "Bestimme den Median einer Zahlenreihe.", g: "Den Median als Kennwert einer Datenreihe bestimmen." },
+  "3a-range": { d: "Bestimme die Spannweite einer Zahlenreihe.", g: "Die Spannweite als Streuungsmass bestimmen." },
+  "3b-wert": { d: "Berechne den Prozentwert zu Grundwert und Prozentsatz.", g: "Die Grundformel der Prozentrechnung anwenden." },
+  "3b-grund": { d: "Berechne den Grundwert zu Prozentwert und Prozentsatz.", g: "Die Grundformel der Prozentrechnung umstellen können." },
+  "3b-satz": { d: "Berechne den Prozentsatz zu Grundwert und Prozentwert.", g: "Die Grundformel der Prozentrechnung umstellen können." },
+  "3c-rect": { d: "Berechne die Fläche eines Rechtecks.", g: "Flächenformel des Rechtecks anwenden." },
+  "3c-tri": { d: "Berechne die Fläche eines Dreiecks.", g: "Flächenformel des Dreiecks anwenden." },
+  "3c-box": { d: "Berechne das Volumen eines Quaders.", g: "Volumenformel des Quaders anwenden." },
+  "4a-faces": { d: "Zähle die Flächen eines geometrischen Körpers.", g: "Eigenschaften geometrischer Körper kennen." },
+  "4a-edges": { d: "Zähle die Kanten eines geometrischen Körpers.", g: "Eigenschaften geometrischer Körper kennen." },
+  "4a-vertices": { d: "Zähle die Ecken eines geometrischen Körpers.", g: "Eigenschaften geometrischer Körper kennen." },
+  "5-dice": { d: "Berechne die Wahrscheinlichkeit für ein Ereignis beim Würfeln.", g: "Wahrscheinlichkeit als Verhältnis günstig ÷ möglich berechnen." },
+  "5-bag": { d: "Berechne die Wahrscheinlichkeit, eine bestimmte Kugel aus einem Beutel zu ziehen.", g: "Wahrscheinlichkeit als Verhältnis günstig ÷ möglich berechnen." },
+  "6a-compare": { d: "Vergleiche zwei negative Zahlen.", g: "Grössenvergleich bei negativen Zahlen sicher durchführen." },
+  "6a-order": { d: "Entscheide, welche von zwei ganzen Zahlen grösser ist.", g: "Ganze Zahlen der Grösse nach ordnen können." },
+  "6b-read": { d: "Lies die Koordinaten eines Punktes ab (auch mit negativen Werten).", g: "Sich im Koordinatensystem mit allen vier Quadranten orientieren." },
+  "6b-quad": { d: "Bestimme, in welchem Quadranten ein Punkt liegt.", g: "Die vier Quadranten des Koordinatensystems kennen." },
+  "6c-addsub": { d: "Addiere und subtrahiere ganze Zahlen mit Vorzeichen.", g: "Rechenregeln für Vorzeichen bei Addition/Subtraktion anwenden." },
+  "6c-mul": { d: "Multipliziere ganze Zahlen mit Vorzeichen.", g: "Vorzeichenregeln bei der Multiplikation anwenden." },
+  "6c-div": { d: "Dividiere ganze Zahlen mit Vorzeichen.", g: "Vorzeichenregeln bei der Division anwenden." },
+  "7a-umfang": { d: "Berechne den Umfang eines Rechtecks.", g: "Umfangsformel des Rechtecks anwenden." },
+  "7a-flaeche": { d: "Berechne die Fläche eines Rechtecks.", g: "Flächenformel des Rechtecks anwenden." },
+  "7b-1": { d: "Bestimme, wie viele rechte Winkel ein Viereck hat.", g: "Eigenschaften verschiedener Vierecksformen kennen." },
+  "7c-1": { d: "Berechne den fehlenden Winkel in einem Dreieck.", g: "Winkelsumme im Dreieck (180°) anwenden." },
+  "8a-1": { d: "Fasse gleichartige Terme zusammen.", g: "Termumformungen mit Variablen durchführen können." },
+  "8b-1": { d: "Löse eine lineare Gleichung nach x auf.", g: "Lineare Gleichungen lösen können." },
+  "9a-1": { d: "Bestimme Ecken, Kanten oder Flächen von Prismen und Pyramiden.", g: "Zusammenhang zwischen Grundfläche und Körpereigenschaften verstehen." },
+  "9b-vol": { d: "Berechne das Volumen eines Würfels.", g: "Volumenformel des Würfels anwenden." },
+  "9b-surf": { d: "Berechne die Oberfläche eines Würfels.", g: "Oberflächenformel des Würfels anwenden." },
+  "m2-1a-comp": { d: "Vergleiche zwei Brüche.", g: "Brüche der Grösse nach vergleichen können." },
+  "m2-1a-mixed": { d: "Wandle eine gemischte Zahl in einen unechten Bruch um.", g: "Zusammenhang zwischen gemischter Zahl und unechtem Bruch verstehen." },
+  "m2-1b-add": { d: "Addiere zwei Brüche.", g: "Brüche mit unterschiedlichen Nennern addieren können." },
+  "m2-1b-mul": { d: "Multipliziere zwei Brüche.", g: "Brüche multiplizieren können." },
+  "m2-1b-div": { d: "Dividiere zwei Brüche.", g: "Brüche dividieren können (Kehrwert bilden)." },
+  "m2-1c-eq": { d: "Löse eine lineare Gleichung nach x auf.", g: "Lineare Gleichungen lösen können." },
+  "m2-1c-seq": { d: "Setze eine Zahlenfolge fort.", g: "Muster in Zahlenfolgen erkennen und fortsetzen." },
+  "m2-1c-root": { d: "Berechne eine Quadratwurzel.", g: "Quadratzahlen und Quadratwurzeln kennen." },
+  "m2-2a-1": { d: "Berechne die Hypotenuse in einem rechtwinkligen Dreieck.", g: "Satz des Pythagoras anwenden." },
+  "m2-2b-1": { d: "Berechne eine Kathete in einem rechtwinkligen Dreieck.", g: "Satz des Pythagoras umstellen und anwenden." },
+  "m2-2c-1": { d: "Löse eine Anwendungsaufgabe zum Satz des Pythagoras (Leiter-Problem).", g: "Satz des Pythagoras auf Alltagssituationen anwenden." },
+  "m2-2d-1": { d: "Berechne die Diagonale eines Rechtecks.", g: "Satz des Pythagoras auf Rechtecke anwenden." },
+  "m2-3a-1": { d: "Entscheide, ob zwei Grössen direkt proportional zueinander sind.", g: "Direkte Proportionalität erkennen." },
+  "m2-3b-1": { d: "Löse eine Dreisatzaufgabe mit direkter Proportionalität.", g: "Dreisatz bei direkter Proportionalität anwenden." },
+  "m2-3c-1": { d: "Löse eine Dreisatzaufgabe mit umgekehrter Proportionalität.", g: "Dreisatz bei umgekehrter Proportionalität anwenden." },
+  "m2-4a-1": { d: "Berechne das Volumen eines geraden Prismas.", g: "Volumenformel des Prismas anwenden." },
+  "m2-4b-1": { d: "Berechne die Oberfläche eines geraden Prismas.", g: "Oberflächenformel des Prismas anwenden." },
+  "m2-4c-1": { d: "Berechne das Volumen einer Pyramide.", g: "Volumenformel der Pyramide anwenden." },
+  "m2-5a-rabatt": { d: "Berechne den Preis nach Abzug eines Rabatts.", g: "Prozentrechnung auf Rabatte anwenden." },
+  "m2-5a-mwst": { d: "Berechne den Preis inklusive Mehrwertsteuer.", g: "Prozentrechnung auf die Mehrwertsteuer anwenden." },
+  "m2-5b-1": { d: "Rechne einen Betrag in eine andere Währung um.", g: "Wechselkursrechnung durchführen können." },
+  "m2-6a-u": { d: "Berechne den Umfang eines Kreises.", g: "Umfangsformel des Kreises anwenden." },
+  "m2-6a-a": { d: "Berechne die Fläche eines Kreises.", g: "Flächenformel des Kreises anwenden." },
+  "m2-6b-1": { d: "Berechne die Fläche eines Kreissektors.", g: "Flächenformel des Kreissektors anwenden." },
+  "m2-7a-1": { d: "Zähle die Kombinationsmöglichkeiten mehrerer unabhängiger Entscheidungen.", g: "Baumdiagramm-Prinzip (Multiplikationsregel) anwenden." },
+  "m2-7b-1": { d: "Bestimme den Modus (häufigster Wert) einer Datenreihe.", g: "Den Modus als statistischen Kennwert bestimmen." },
+  "m2-7c-1": { d: "Berechne die relative Häufigkeit eines Ereignisses.", g: "Relative Häufigkeit berechnen können." },
+  "m2-8-vol": { d: "Berechne das Volumen eines Zylinders.", g: "Volumenformel des Zylinders anwenden." },
+  "m2-8-surf": { d: "Berechne die Oberfläche eines Zylinders.", g: "Oberflächenformel des Zylinders anwenden." },
+  "m2-9a-v": { d: "Berechne die Geschwindigkeit aus Strecke und Zeit.", g: "Zusammenhang von Strecke, Zeit und Geschwindigkeit anwenden." },
+  "m2-9a-s": { d: "Berechne die zurückgelegte Strecke aus Geschwindigkeit und Zeit.", g: "Zusammenhang von Strecke, Zeit und Geschwindigkeit anwenden." },
+  "m2-9b-1": { d: "Berechne die Steigung in Prozent.", g: "Steigung als Verhältnis von Höhenunterschied und Strecke berechnen." },
+  "m3-1a-1": { d: "Berechne die Steigung einer Geraden durch zwei Punkte.", g: "Steigung einer Geraden bestimmen können." },
+  "m3-1b-1": { d: "Berechne den Funktionswert einer linearen Funktion.", g: "Funktionsgleichungen auswerten können." },
+  "m3-2a-1": { d: "Berechne eine fehlende Seite bei ähnlichen Figuren.", g: "Streckfaktor bei ähnlichen Figuren anwenden." },
+  "m3-2b-vol": { d: "Berechne das Volumen eines Körpers nach einer Streckung.", g: "Verhalten des Volumens bei linearer Streckung (Faktor³) verstehen." },
+  "m3-2b-surf": { d: "Berechne die Oberfläche eines Körpers nach einer Streckung.", g: "Verhalten der Oberfläche bei linearer Streckung (Faktor²) verstehen." },
+  "m3-3a-sci": { d: "Schreibe eine Zahl in wissenschaftlicher Schreibweise.", g: "Grosse und kleine Zahlen in wissenschaftlicher Schreibweise darstellen." },
+  "m3-3a-negexp": { d: "Berechne eine Potenz mit negativem Exponenten.", g: "Potenzen mit negativen Exponenten als Brüche verstehen." },
+  "m3-3b-1": { d: "Setze eine wachsende Musterfolge fort.", g: "Aus einem Muster eine Formel ableiten und anwenden." },
+  "m3-4a-jz": { d: "Berechne den Jahreszins zu Kapital und Zinssatz.", g: "Zinsrechnung anwenden." },
+  "m3-4a-mz": { d: "Berechne den Marchzins (tageweise) zu Kapital, Zinssatz und Anlagedauer.", g: "Tagesgenaue Zinsrechnung anwenden." },
+  "m3-4b-1": { d: "Berechne die monatliche Rate eines Konsumkredits.", g: "Kreditkosten auf Monatsraten verteilen können." },
+  "m3-5a-kegel": { d: "Berechne das Volumen eines Kegels.", g: "Volumenformel des Kegels anwenden." },
+  "m3-5a-kugel": { d: "Berechne das Volumen einer Kugel.", g: "Volumenformel der Kugel anwenden." },
+  "m3-5b-faces": { d: "Zähle die Flächen eines platonischen Körpers.", g: "Die 5 platonischen Körper kennen." },
+  "m3-5b-edges": { d: "Zähle die Kanten eines platonischen Körpers.", g: "Die 5 platonischen Körper kennen." },
+  "m3-5b-vertices": { d: "Zähle die Ecken eines platonischen Körpers.", g: "Die 5 platonischen Körper kennen." },
+  "m3-5c-1": { d: "Berechne eine fehlende Grösse mit der eulerschen Polyederformel.", g: "Die eulersche Polyederformel (Ecken − Kanten + Flächen = 2) anwenden." },
+  "m3-7a-beide": { d: "Löse eine Gleichung mit x auf beiden Seiten.", g: "Gleichungen mit Variablen auf beiden Seiten lösen." },
+  "m3-7a-quad": { d: "Löse eine einfache quadratische Gleichung.", g: "Quadratische Gleichungen der Form x² = c lösen." },
+  "m3-7b-1": { d: "Löse ein lineares Gleichungssystem mit zwei Unbekannten.", g: "Gleichungssysteme lösen können (Einsetzungs- oder Additionsverfahren)." },
+  "m3-8b-1": { d: "Setze eine Fibonacci-artige Zahlenfolge fort.", g: "Das Bildungsgesetz der Fibonacci-Folge verstehen." },
+  "m3-8c-1": { d: "Berechne eine Höhe mithilfe des Schattenwurfs (ähnliche Dreiecke).", g: "Ähnliche Dreiecke auf reale Situationen anwenden." },
+  "m3-9a-1": { d: "Berechne den Treibstoffverbrauch für eine Strecke.", g: "Verbrauchsrechnung im Alltag anwenden." },
+  "m3-9b-1": { d: "Zähle die Anordnungsmöglichkeiten mehrerer Personen.", g: "Fakultät und Anordnungen (Permutationen) berechnen." },
+  "m3-9c-1": { d: "Rechne ein Umfrageergebnis auf eine grössere Gruppe hoch.", g: "Hochrechnung von Stichproben verstehen." }
+};
+function ex(id, title, generate, help, calc) { return { id, title, generate, help: help || "", calc: !!calc }; }
+function titleWithCalc(t, calc) { return calc ? `${t} <span class="calc-badge">(TR erlaubt)</span>` : t; }
 function chapter(id, title, exercises) { return { id, title, exercises }; }
 function lockedChapter(id, title) { return { id, title, exercises: [] }; }
 
@@ -761,7 +1273,9 @@ const BASISWISSEN_CHAPTERS = [
     ex("bw-runden-1", "Zahlen runden", generateRounding, "Schau auf die Ziffer rechts von der Rundungsstelle: ab 5 wird aufgerundet, sonst abgerundet.")
   ]),
   chapter("bw-winkel", "Winkel bestimmen", [
-    ex("bw-winkel-1", "Ergänzungswinkel", generateAngle, "Ergänzungswinkel zu 90° (Komplementärwinkel) bzw. zu 180° (Supplementärwinkel): ziehe den gegebenen Winkel von 90° bzw. 180° ab.")
+    ex("bw-winkel-1", "Ergänzungswinkel", generateAngle, "Ergänzungswinkel zu 90° (Komplementärwinkel) bzw. zu 180° (Supplementärwinkel): ziehe den gegebenen Winkel von 90° bzw. 180° ab."),
+    ex("bw-winkel-2", "Winkelsumme im Dreieck", generateTriangleAngleSum, "Die Winkelsumme im Dreieck ist immer 180°. Ziehe die beiden bekannten Winkel von 180° ab."),
+    ex("bw-winkel-3", "Winkelsumme im Viereck", generateQuadAngleSum, "Die Winkelsumme im Viereck ist immer 360°. Ziehe die drei bekannten Winkel von 360° ab.")
   ])
 ];
 
@@ -775,23 +1289,25 @@ const JAHR1_CHAPTERS = [
   chapter("1d", "Die Punktspiegelung", [ex("1d-1", "Punktspiegelung am Ursprung", generatePointReflection, "Bei der Punktspiegelung am Ursprung wechseln beide Koordinaten das Vorzeichen.")]),
   chapter("2a", "Potenzen/Regeln und Gesetze", [
     ex("2a-berechnen", "Potenz berechnen", generatePowerCalc, "a^n heisst: a wird n-mal mit sich selbst multipliziert."),
-    ex("2a-gesetz", "Potenzgesetz: Multiplikation", generatePowerRule, "Bei gleicher Basis: Exponenten addieren (a^m · a^n = a^(m+n)).")
+    ex("2a-gesetz", "Potenzgesetz: Multiplikation", generatePowerRule, "Bei gleicher Basis: Exponenten addieren (a^m · a^n = a^(m+n))."),
+    ex("2a-reihenfolge", "Punkt vor Strich", generateOrderOfOperations, "Punkt-Rechnungen (× und :) werden vor Strich-Rechnungen (+ und −) ausgeführt. Bei Klammern: zuerst die Klammer ausrechnen.")
   ]),
   chapter("2b", "Variablen", [ex("2b-1", "Term auswerten", generateVariables, "Setze den gegebenen Wert für die Variable ein und rechne aus.")]),
   chapter("2c", "Teiler, Vielfache und Primzahlen", [
     ex("2c-prim", "Ist es eine Primzahl?", generateIsPrime, "Eine Primzahl ist nur durch 1 und sich selbst teilbar. Prüfe die Teilbarkeit durch 2, 3, 5, 7 ..."),
-    ex("2c-teiler", "Teiler zählen", generateDivisorCount, "Prüfe für jede Zahl von 1 bis zur Zahl selbst, ob sie ohne Rest teilt, und zähle die Treffer."),
-    ex("2c-kgv", "kgV berechnen", generateLcm, "Liste die Vielfachen beider Zahlen auf und suche das kleinste gemeinsame.")
+    ex("2c-teiler", "Teiler zählen", generateDivisorCount, "Prüfe nur die Zahlen von 1 bis zur Wurzel der Zahl. Jeder gefundene Teiler hat einen Partner (Zahl ÷ Teiler) – zähle beide mit."),
+    ex("2c-kgv", "kgV berechnen", generateLcm, "Liste die Vielfachen beider Zahlen auf und suche das kleinste gemeinsame."),
+    ex("2c-primfaktor", "Primfaktorzerlegung", generatePrimeFactorization, "Teile die Zahl so lange durch die kleinste passende Primzahl (2, 3, 5, 7, ...), bis 1 übrig bleibt. Die verwendeten Primzahlen sind die Primfaktoren.")
   ]),
   chapter("3a", "Daten darstellen", [
-    ex("3a-mean", "Mittelwert berechnen", generateMean, "Addiere alle Zahlen und teile die Summe durch die Anzahl der Zahlen."),
+    ex("3a-mean", "Mittelwert berechnen", generateMean, "Addiere alle Zahlen und teile die Summe durch die Anzahl der Zahlen.", true),
     ex("3a-median", "Median bestimmen", generateMedian, "Sortiere die Zahlen der Grösse nach. Der Median ist die Zahl genau in der Mitte."),
     ex("3a-range", "Spannweite bestimmen", generateRange, "Spannweite = grösste Zahl minus kleinste Zahl.")
   ]),
   chapter("3b", "Grössen und Prozente", [
-    ex("3b-wert", "Prozentwert berechnen", generatePercentValue, "Prozentwert = Grundwert × Prozentsatz ÷ 100."),
-    ex("3b-grund", "Grundwert berechnen", generatePercentBase, "Grundwert = Prozentwert ÷ Prozentsatz × 100."),
-    ex("3b-satz", "Prozentsatz berechnen", generatePercentRate, "Prozentsatz = Prozentwert ÷ Grundwert × 100.")
+    ex("3b-wert", "Prozentwert berechnen", generatePercentValue, "Prozentwert = Grundwert × Prozentsatz ÷ 100.", true),
+    ex("3b-grund", "Grundwert berechnen", generatePercentBase, "Grundwert = Prozentwert ÷ Prozentsatz × 100.", true),
+    ex("3b-satz", "Prozentsatz berechnen", generatePercentRate, "Prozentsatz = Prozentwert ÷ Grundwert × 100.", true)
   ]),
   chapter("3c", "Flächen und Volumen", [
     ex("3c-rect", "Fläche Rechteck", generateRectArea, "Fläche des Rechtecks = Länge × Breite."),
@@ -861,32 +1377,32 @@ const JAHR2_CHAPTERS = [
     ex("m2-1c-seq", "Zahlenfolge fortsetzen", generateSequence, "Berechne die Differenz zwischen den ersten Gliedern und wende sie auf das letzte Glied an."),
     ex("m2-1c-root", "Quadratwurzel berechnen", generateSquareRoot, "Überlege, welche Zahl mit sich selbst multipliziert die gegebene Zahl ergibt.")
   ]),
-  chapter("2a", "Sätze von Thales und Pythagoras", [ex("m2-2a-1", "Hypotenuse berechnen", generatePythagorasHyp, "Satz des Pythagoras: c = √(a² + b²).")]),
-  chapter("2b", "Der Satz von Pythagoras unter der Lupe", [ex("m2-2b-1", "Kathete berechnen", generatePythagorasLeg, "Satz des Pythagoras umgestellt: b = √(c² − a²).")]),
-  chapter("2c", "Pythagoras praktisch", [ex("m2-2c-1", "Leiter-Problem", generatePythagorasLadder, "Wand, Boden und Leiter bilden ein rechtwinkliges Dreieck. Die Leiter ist die Hypotenuse: c = √(a² + b²).")]),
-  chapter("2d", "Anwendungen des Pythagoras", [ex("m2-2d-1", "Rechteck-Diagonale", generatePythagorasDiagonal, "Die Diagonale eines Rechtecks ist die Hypotenuse eines rechtwinkligen Dreiecks aus den beiden Seiten: d = √(l² + b²).")]),
+  chapter("2a", "Sätze von Thales und Pythagoras", [ex("m2-2a-1", "Hypotenuse berechnen", generatePythagorasHyp, "Satz des Pythagoras: c = √(a² + b²).", true)]),
+  chapter("2b", "Der Satz von Pythagoras unter der Lupe", [ex("m2-2b-1", "Kathete berechnen", generatePythagorasLeg, "Satz des Pythagoras umgestellt: b = √(c² − a²).", true)]),
+  chapter("2c", "Pythagoras praktisch", [ex("m2-2c-1", "Leiter-Problem", generatePythagorasLadder, "Wand, Boden und Leiter bilden ein rechtwinkliges Dreieck. Die Leiter ist die Hypotenuse: c = √(a² + b²).", true)]),
+  chapter("2d", "Anwendungen des Pythagoras", [ex("m2-2d-1", "Rechteck-Diagonale", generatePythagorasDiagonal, "Die Diagonale eines Rechtecks ist die Hypotenuse eines rechtwinkligen Dreiecks aus den beiden Seiten: d = √(l² + b²).", true)]),
   chapter("3a", "Zuordnungen und Abhängigkeiten", [ex("m2-3a-1", "Proportional oder nicht?", generateProportionalCheck, "Bei direkter Proportionalität ist der Quotient y÷x bei allen Wertepaaren immer gleich gross.")]),
-  chapter("3b", "Proportionalität", [ex("m2-3b-1", "Dreisatz (direkt)", generateDirectProportion, "Berechne zuerst den Preis für 1 Stück (÷ Menge), dann multipliziere mit der gesuchten Menge.")]),
-  chapter("3c", "Umgekehrte Proportionalität", [ex("m2-3c-1", "Dreisatz (umgekehrt)", generateInverseProportion, "Bei umgekehrter Proportionalität bleibt das Produkt gleich: Arbeiter × Tage = konstant.")]),
+  chapter("3b", "Proportionalität", [ex("m2-3b-1", "Dreisatz (direkt)", generateDirectProportion, "Berechne zuerst den Preis für 1 Stück (÷ Menge), dann multipliziere mit der gesuchten Menge.", true)]),
+  chapter("3c", "Umgekehrte Proportionalität", [ex("m2-3c-1", "Dreisatz (umgekehrt)", generateInverseProportion, "Bei umgekehrter Proportionalität bleibt das Produkt gleich: Arbeiter × Tage = konstant.", true)]),
   chapter("4a", "Das gerade Prisma", [ex("m2-4a-1", "Volumen Prisma", generatePrismVolume, "Volumen = Grundfläche × Höhe.")]),
   chapter("4b", "Volumen und Oberflächeninhalt beim geraden Prisma", [ex("m2-4b-1", "Oberfläche Prisma", generatePrismSurface, "Oberfläche = 2 × Grundfläche + Umfang der Grundfläche × Höhe (Mantelfläche).")]),
   chapter("4c", "Die Pyramide", [ex("m2-4c-1", "Volumen Pyramide", generatePyramidVolume, "Volumen = ⅓ × Grundfläche × Höhe.")]),
   chapter("5a", "Preise – Aktionen – Mehrwertsteuer", [
-    ex("m2-5a-rabatt", "Rabatt berechnen", generateDiscount, "Ziehe den Rabatt-Prozentsatz vom ursprünglichen Preis ab: neuer Preis = Preis × (1 − Rabatt/100)."),
-    ex("m2-5a-mwst", "MWST berechnen", generateVAT, "Preis inkl. MWST = Preis exkl. MWST × (1 + Satz/100).")
+    ex("m2-5a-rabatt", "Rabatt berechnen", generateDiscount, "Ziehe den Rabatt-Prozentsatz vom ursprünglichen Preis ab: neuer Preis = Preis × (1 − Rabatt/100).", true),
+    ex("m2-5a-mwst", "MWST berechnen", generateVAT, "Preis inkl. MWST = Preis exkl. MWST × (1 + Satz/100).", true)
   ]),
-  chapter("5b", "Währungen und Budget", [ex("m2-5b-1", "Währung umrechnen", generateCurrency, "Multipliziere den Betrag mit dem Wechselkurs.")]),
+  chapter("5b", "Währungen und Budget", [ex("m2-5b-1", "Währung umrechnen", generateCurrency, "Multipliziere den Betrag mit dem Wechselkurs.", true)]),
   chapter("6a", "Der Kreisumfang und die Kreisfläche", [
-    ex("m2-6a-u", "Kreisumfang berechnen", generateCircleCircumference, "Umfang = 2 × π × Radius."),
-    ex("m2-6a-a", "Kreisfläche berechnen", generateCircleArea, "Fläche = π × Radius².")
+    ex("m2-6a-u", "Kreisumfang berechnen", generateCircleCircumference, "Umfang = 2 × π × Radius.", true),
+    ex("m2-6a-a", "Kreisfläche berechnen", generateCircleArea, "Fläche = π × Radius².", true)
   ]),
-  chapter("6b", "Der Kreissektor/Geraden und Kreise", [ex("m2-6b-1", "Kreissektor-Fläche", generateCircleSector, "Fläche des Sektors = (Mittelpunktswinkel ÷ 360°) × π × Radius².")]),
+  chapter("6b", "Der Kreissektor/Geraden und Kreise", [ex("m2-6b-1", "Kreissektor-Fläche", generateCircleSector, "Fläche des Sektors = (Mittelpunktswinkel ÷ 360°) × π × Radius².", true)]),
   chapter("7a", "Baumdarstellungen, Wiederholung und Vertiefung", [ex("m2-7a-1", "Kombinationen zählen", generateTreeCount, "Bei einem Baumdiagramm multiplizierst du die Anzahl Möglichkeiten auf jeder Stufe: Möglichkeiten^Entscheidungen.")]),
   chapter("7b", "Statistische Kennwerte", [ex("m2-7b-1", "Modus bestimmen", generateMode, "Der Modus ist der Wert, der in der Liste am häufigsten vorkommt.")]),
-  chapter("7c", "Simulationen/Statistik praktisch", [ex("m2-7c-1", "Relative Häufigkeit", generateRelativeFrequency, "Relative Häufigkeit = absolute Häufigkeit ÷ Gesamtzahl der Versuche × 100%.")]),
+  chapter("7c", "Simulationen/Statistik praktisch", [ex("m2-7c-1", "Relative Häufigkeit", generateRelativeFrequency, "Relative Häufigkeit = absolute Häufigkeit ÷ Gesamtzahl der Versuche × 100%.", true)]),
   chapter("8", "Zylinder", [
-    ex("m2-8-vol", "Volumen Zylinder", generateCylinderVolume, "Volumen = π × Radius² × Höhe."),
-    ex("m2-8-surf", "Oberfläche Zylinder", generateCylinderSurface, "Oberfläche = 2 × π × Radius² (Deckel+Boden) + 2 × π × Radius × Höhe (Mantel).")
+    ex("m2-8-vol", "Volumen Zylinder", generateCylinderVolume, "Volumen = π × Radius² × Höhe.", true),
+    ex("m2-8-surf", "Oberfläche Zylinder", generateCylinderSurface, "Oberfläche = 2 × π × Radius² (Deckel+Boden) + 2 × π × Radius × Höhe (Mantel).", true)
   ]),
   chapter("9a", "Weg – Zeit – Geschwindigkeit", [
     ex("m2-9a-v", "Geschwindigkeit berechnen", generateSpeed, "Geschwindigkeit = Strecke ÷ Zeit."),
@@ -895,26 +1411,72 @@ const JAHR2_CHAPTERS = [
   chapter("9b", "Steigung und Gefälle", [ex("m2-9b-1", "Steigung berechnen", generateSlope, "Steigung in % = (Höhenunterschied ÷ horizontale Strecke) × 100.")])
 ];
 
+const JAHR3_CHAPTERS = [
+  chapter("1a", "Geraden", [ex("m3-1a-1", "Steigung durch zwei Punkte", generateSlopeTwoPoints, "Steigung m = (y2 − y1) ÷ (x2 − x1).")]),
+  chapter("1b", "Lineare und nicht lineare Funktionen", [ex("m3-1b-1", "Funktionswert berechnen", generateFunctionValue, "Setze den gegebenen x-Wert in die Funktionsgleichung ein und rechne aus.")]),
+  chapter("2a", "Ähnliche Figuren", [ex("m3-2a-1", "Fehlende Seite berechnen", generateSimilarFigures, "Berechne den Streckfaktor k = EF ÷ CD. Die fehlende Seite FG = BC × k.", true)]),
+  chapter("2b", "Die Streckung/Ähnlichkeit bei Körpern", [
+    ex("m3-2b-vol", "Volumen nach Streckung", generateStretchVolume, "Bei linearer Streckung um Faktor k wird das Volumen k³-mal so gross.", true),
+    ex("m3-2b-surf", "Oberfläche nach Streckung", generateStretchSurface, "Bei linearer Streckung um Faktor k wird die Oberfläche k²-mal so gross.", true)
+  ]),
+  chapter("3a", "Potenzen und Wurzeln", [
+    ex("m3-3a-sci", "Wissenschaftliche Schreibweise", generateScientificNotation, "Verschiebe das Komma so, dass vor dem Komma genau eine Ziffer (1–9) steht. Die Anzahl verschobener Stellen ist der Exponent von 10 (nach rechts verschoben = negativ, nach links = positiv)."),
+    ex("m3-3a-negexp", "Potenzen mit negativen Exponenten", generateNegativeExponent, "a^-n = 1 ÷ (a^n). Rechne a^n aus, das Ergebnis kommt in den Nenner, im Zähler steht 1.")
+  ]),
+  chapter("3b", "Vom Bild zum Term", [ex("m3-3b-1", "Musterfolge fortsetzen", generatePatternTerm, "Berechne die Zunahme pro Schritt (Differenz zwischen Schritt 2 und Schritt 1) und wende sie so oft wie nötig an, oder finde die Formel a×n + b aus den ersten drei Schritten.")]),
+  chapter("4a", "Jahreszins und Marchzins", [
+    ex("m3-4a-jz", "Jahreszins berechnen", generateJahreszins, "Jahreszins = Kapital × Zinssatz ÷ 100.", true),
+    ex("m3-4a-mz", "Marchzins berechnen", generateMarchzins, "Marchzins = Kapital × Zinssatz ÷ 100 × Tage ÷ 360.", true)
+  ]),
+  chapter("4b", "Konsumkredit und Leasing", [ex("m3-4b-1", "Monatliche Rate berechnen", generateCreditRate, "Addiere Kreditbetrag und Zinsen/Kosten, teile die Summe durch die Anzahl Monatsraten.", true)]),
+  chapter("5a", "Der Kegel und die Kugel", [
+    ex("m3-5a-kegel", "Kegelvolumen", generateConeVolume, "Volumen = ⅓ × π × Radius² × Höhe.", true),
+    ex("m3-5a-kugel", "Kugelvolumen", generateSphereVolume, "Volumen = 4/3 × π × Radius³.", true)
+  ]),
+  chapter("5b", "Regelmässige Körper", [
+    ex("m3-5b-faces", "Flächen zählen", generatePlatonicFaces, "Die 5 platonischen Körper: Tetraeder, Würfel, Oktaeder, Dodekaeder, Ikosaeder – jeder hat eine feste Anzahl Flächen, Kanten und Ecken."),
+    ex("m3-5b-edges", "Kanten zählen", generatePlatonicEdges, "Die 5 platonischen Körper: Tetraeder, Würfel, Oktaeder, Dodekaeder, Ikosaeder – jeder hat eine feste Anzahl Flächen, Kanten und Ecken."),
+    ex("m3-5b-vertices", "Ecken zählen", generatePlatonicVertices, "Die 5 platonischen Körper: Tetraeder, Würfel, Oktaeder, Dodekaeder, Ikosaeder – jeder hat eine feste Anzahl Flächen, Kanten und Ecken.")
+  ]),
+  chapter("5c", "Der Fussball", [ex("m3-5c-1", "Eulersche Polyederformel", generateEulerFormula, "Bei jedem Polyeder gilt: Ecken − Kanten + Flächen = 2. Löse die Formel nach der gesuchten Grösse auf.")]),
+  lockedChapter("5d", "Überblick und Anwendungen"),
+  lockedChapter("6a", "Wiederholung und Vertiefung"),
+  lockedChapter("6b", "Problemlösen"),
+  chapter("7a", "Gleichungen und Ungleichungen", [
+    ex("m3-7a-beide", "Gleichung mit x auf beiden Seiten", generateEquationBothSides, "Bringe alle x-Terme auf eine Seite und alle Zahlen auf die andere Seite, dann teile durch die Zahl vor dem x."),
+    ex("m3-7a-quad", "Quadratische Gleichung", generateSimpleQuadratic, "Ziehe auf beiden Seiten die Quadratwurzel. Gesucht ist die positive Lösung.")
+  ]),
+  chapter("7b", "Gleichungssysteme", [ex("m3-7b-1", "Gleichungssystem lösen", generateLinearSystem, "Löse eine Gleichung nach einer Variablen auf und setze sie in die andere Gleichung ein (Einsetzungsverfahren), oder addiere/subtrahiere geeignete Vielfache der Gleichungen (Additionsverfahren).")]),
+  lockedChapter("8a", "Polyominos und Parkette"),
+  chapter("8b", "Fibonacci-Folge und Goldener Schnitt", [ex("m3-8b-1", "Fibonacci-Folge fortsetzen", generateFibonacciNext, "Addiere die beiden letzten Zahlen der Folge, um die nächste zu erhalten.")]),
+  chapter("8c", "Der Schattenwurf", [ex("m3-8c-1", "Höhe über den Schatten berechnen", generateShadowProblem, "Person und Mast bilden ähnliche Dreiecke: Höhe ÷ Schatten ist bei beiden gleich gross.", true)]),
+  chapter("9a", "Mobilität", [ex("m3-9a-1", "Treibstoffverbrauch berechnen", generateFuelConsumption, "Treibstoff = Verbrauch pro 100 km × Strecke ÷ 100.", true)]),
+  chapter("9b", "Kombinatorik", [ex("m3-9b-1", "Anordnungen zählen", generatePermutations, "Für die 1. Position gibt es n Möglichkeiten, für die 2. Position noch (n−1), usw. Multipliziere alle Möglichkeiten (n Fakultät, n!).")]),
+  chapter("9c", "Die Umfrage", [ex("m3-9c-1", "Hochrechnung berechnen", generateSurveyExtrapolation, "Hochrechnung = Gesamtzahl × (Anzahl in der Umfrage ÷ Stichprobengrösse).", true)])
+];
+
 const CATEGORIES = [
   { id: "basiswissen", title: "Basiswissen", chapters: BASISWISSEN_CHAPTERS },
   { id: "jahr1", title: "Mathematik 1. Jahr", chapters: JAHR1_CHAPTERS },
   { id: "jahr2", title: "Mathematik 2. Jahr", chapters: JAHR2_CHAPTERS },
-  { id: "jahr3", title: "Mathematik 3. Jahr", chapters: [] }
+  { id: "jahr3", title: "Mathematik 3. Jahr", chapters: JAHR3_CHAPTERS }
 ];
 
 function makeMixedExercise(ch) {
+  const showNum = navCategory && navCategory.id !== "basiswissen";
   return {
     id: ch.id + "-mixed",
-    title: `Kapitel ${ch.id} gemischte Aufgaben`,
+    title: showNum ? `Kapitel ${ch.id} gemischte Aufgaben` : `Gemischte Aufgaben: ${ch.title}`,
     isMixed: true,
     generate: () => { const sub = ch.exercises[rnd(0, ch.exercises.length - 1)]; const t = sub.generate(); t.sourceHelp = sub.help; return t; },
-    help: "Diese Übung mischt die verschiedenen Aufgabentypen dieses Kapitels. Der Hilfe-Button zeigt jeweils den Lösungsweg zur aktuellen Aufgabe."
+    help: "Diese Übung mischt die verschiedenen Aufgabentypen dieses Kapitels. Der Hilfe-Button zeigt jeweils den Lösungsweg zur aktuellen Aufgabe.",
+    calc: ch.exercises.some(e => e.calc)
   };
 }
 
 /* ================= Home / Kategorie / Kapitel Navigation ================= */
 let navCategory = null, navChapter = null, currentExercise = null;
-document.querySelectorAll(".cat-tile").forEach(btn => btn.addEventListener("click", () => openCategory(btn.dataset.cat)));
+document.querySelectorAll(".cat-tile[data-cat]").forEach(btn => btn.addEventListener("click", () => openCategory(btn.dataset.cat)));
 function openCategory(id) {
   navCategory = CATEGORIES.find(c => c.id === id);
   document.getElementById("category_title").textContent = navCategory.title;
@@ -922,9 +1484,10 @@ function openCategory(id) {
   if (navCategory.chapters.length === 0) {
     el.innerHTML = '<div class="empty-hint">Noch keine Kapitel – bald verfügbar.</div>';
   } else {
+    const showNum = navCategory.id !== "basiswissen";
     el.innerHTML = navCategory.chapters.map(c => `
       <div class="chapter-row ${c.exercises.length === 0 ? "locked" : ""}" data-id="${c.id}">
-        <span class="chapter-id">${c.id}</span><span class="chapter-title">${escapeHtml(c.title)}</span>
+        ${showNum ? `<span class="chapter-id">${escapeHtml(c.id)}</span>` : ""}<span class="chapter-title">${escapeHtml(c.title)}</span>
         <span class="chapter-status">${c.exercises.length ? "✅" : "🔒 bald"}</span>
       </div>`).join("");
   }
@@ -937,11 +1500,14 @@ function openCategory(id) {
 }
 function openChapter(id) {
   navChapter = navCategory.chapters.find(c => c.id === id);
-  document.getElementById("chapter_title").textContent = `${navChapter.id} – ${navChapter.title}`;
+  const showNum = navCategory.id !== "basiswissen";
+  document.getElementById("chapter_title").textContent = showNum ? `${navChapter.id} – ${navChapter.title}` : navChapter.title;
   const el = document.getElementById("exerciseList");
-  let rows = navChapter.exercises.map(e => `<div class="chapter-row" data-id="${e.id}"><span class="chapter-title">${escapeHtml(e.title)}</span><span class="chapter-status">▶</span></div>`).join("");
+  let rows = navChapter.exercises.map(e => `<div class="chapter-row" data-id="${e.id}"><span class="chapter-title">${titleWithCalc(escapeHtml(e.title), e.calc)}</span><span class="chapter-status">▶</span></div>`).join("");
   if (navChapter.exercises.length > 1) {
-    rows = `<div class="chapter-row mixed" data-id="mixed"><span class="chapter-title">Kapitel ${navChapter.id} gemischte Aufgaben</span><span class="chapter-status">🔀</span></div>` + rows;
+    const mixedLabel = showNum ? `Kapitel ${navChapter.id} gemischte Aufgaben` : `Gemischte Aufgaben: ${navChapter.title}`;
+    const chapCalc = navChapter.exercises.some(e => e.calc);
+    rows = `<div class="chapter-row mixed" data-id="mixed"><span class="chapter-title">${titleWithCalc(escapeHtml(mixedLabel), chapCalc)}</span><span class="chapter-status">🔀</span></div>` + rows;
   }
   el.innerHTML = rows;
   el.onclick = (e) => {
@@ -954,16 +1520,25 @@ function openChapter(id) {
 }
 function selectExercise(exercise) {
   currentExercise = exercise;
-  document.getElementById("mode_exercise_title").textContent = exercise.title;
-  document.getElementById("duell_exercise_title").textContent = "⚔️ " + exercise.title;
+  document.getElementById("mode_exercise_title").innerHTML = titleWithCalc(escapeHtml(exercise.title), exercise.calc);
+  document.getElementById("duell_exercise_title").innerHTML = "⚔️ " + titleWithCalc(escapeHtml(exercise.title), exercise.calc);
+  document.getElementById("vk_exercise_title").innerHTML = "🏁 " + titleWithCalc(escapeHtml(exercise.title), exercise.calc);
+  const descEl = document.getElementById("mode_exercise_desc");
+  if (exercise.isMixed) {
+    const subTitles = navChapter.exercises.map(e => e.title).join(", ");
+    descEl.innerHTML = `<p class="ex-desc-text">Zufällig gemischt aus allen Aufgabentypen dieses Kapitels: ${escapeHtml(subTitles)}.</p><p class="ex-desc-goal">🎯 Lernziel: Alle Aufgabentypen dieses Kapitels sicher beherrschen.</p>`;
+  } else {
+    const info = EXERCISE_INFO[exercise.id];
+    descEl.innerHTML = info ? `<p class="ex-desc-text">${escapeHtml(info.d)}</p><p class="ex-desc-goal">🎯 Lernziel: ${escapeHtml(info.g)}</p>` : "";
+  }
   showView("modeChoice");
 }
 
 /* =========================================================================
    KEYPAD / EINGABE-WIDGETS (gemeinsam für Solo & Duell)
    ========================================================================= */
-let inputBuffers = { solo: "", top: "", bottom: "" };
-let activePart = { solo: "a", top: "a", bottom: "a" };
+let inputBuffers = { solo: "", top: "", bottom: "", vk0: "", vk1: "", vk2: "", vk3: "" };
+let activePart = { solo: "a", top: "a", bottom: "a", vk0: "a", vk1: "a", vk2: "a", vk3: "a" };
 function keypadHTML(side) {
   const k = (key, label, cls) => `<button data-side="${side}" data-key="${key}" class="${cls || ""}">${label}</button>`;
   return `
@@ -974,7 +1549,7 @@ function keypadHTML(side) {
     <div class="keypad-row">${k("back","⌫")}${k("ok","✓","ok-key")}</div>`;
 }
 document.querySelectorAll(".keypad").forEach(el => { el.innerHTML = keypadHTML(el.dataset.side); });
-function currentTaskFor(side) { return side === "solo" ? soloCurrent : duellTasks[side]; }
+function currentTaskFor(side) { if (side === "solo") return soloCurrent; if (side.startsWith("vk")) return vkTask; return duellTasks[side]; }
 document.addEventListener("click", (e) => {
   const pb = e.target.closest(".pair-box");
   if (pb) { activePart[pb.dataset.side] = pb.dataset.part; renderPairBuffer(pb.dataset.side); return; }
@@ -1038,6 +1613,18 @@ function checkAnswer(task, bufferStr) {
     return !isNaN(a) && !isNaN(b) && Math.abs(a - task.correct[0]) < 0.01 && Math.abs(b - task.correct[1]) < 0.01;
   }
   if (task.answerType === "text") return String(bufferStr).trim().toLowerCase() === String(task.correct).trim().toLowerCase();
+  if (task.answerType === "sci") {
+    const s = String(bufferStr).trim().replace(",", ".");
+    const m2 = s.match(/^(-?\d+(?:\.\d+)?)\s*(?:[x×*]\s*10\s*\^?|e)\s*(-?\d+)$/i);
+    if (!m2) return false;
+    const mVal = parseFloat(m2[1]), eVal = parseInt(m2[2], 10);
+    return Math.abs(mVal - task.correct.m) < 0.05 && eVal === task.correct.e;
+  }
+  if (task.answerType === "factors") {
+    const nums = String(bufferStr).split(/[^0-9]+/).filter(Boolean).map(Number).sort((a, b) => a - b);
+    const correct = [...task.correct].sort((a, b) => a - b);
+    return nums.length === correct.length && nums.every((v, i) => v === correct[i]);
+  }
   if (task.answerType === "term") return String(bufferStr).replace(/\s+/g, "").toLowerCase() === String(task.correct).replace(/\s+/g, "").toLowerCase();
   const val = parseFloat(bufferStr);
   return !isNaN(val) && Math.abs(val - task.correct) < 0.01;
@@ -1051,7 +1638,7 @@ function setWidgetMode(prefix, answerType, pairStyle) {
   if (disp) disp.classList.add("hidden");
   if (answerType === "none") return;
   if (answerType === "boolean") { bw.classList.remove("hidden"); return; }
-  if (answerType === "text") { tw.classList.remove("hidden"); return; }
+  if (answerType === "text" || answerType === "factors" || answerType === "sci") { tw.classList.remove("hidden"); return; }
   if (answerType === "pair") {
     pw.classList.remove("hidden"); kp.classList.remove("hidden");
     const boxesEl = document.getElementById(`${prefix}_pairBoxes`), sepEl = document.getElementById(`${prefix}_pairSep`);
@@ -1071,7 +1658,7 @@ let soloDuration = 0, soloTimeRemaining = 0, soloInterval = null, soloRunning = 
 
 document.getElementById("goSoloBtn").addEventListener("click", () => {
   soloExercise = currentExercise;
-  document.getElementById("solo_setup_title").textContent = "🧠 " + currentExercise.title;
+  document.getElementById("solo_setup_title").innerHTML = "🧠 " + titleWithCalc(escapeHtml(currentExercise.title), currentExercise.calc);
   showView("soloSetup");
 });
 document.querySelectorAll(".choice-btn[data-solo-duration]").forEach(btn => {
@@ -1205,10 +1792,11 @@ document.querySelectorAll('.choice-btn[data-handicapside]').forEach(btn => btn.a
   duellSettings.handicapSide = btn.dataset.handicapside;
   document.querySelectorAll('.choice-btn[data-handicapside]').forEach(b => b.classList.toggle("active", b === btn));
 }));
-document.querySelectorAll('.choice-btn[data-handicapms]').forEach(btn => btn.addEventListener("click", () => {
-  duellSettings.handicapMs = Number(btn.dataset.handicapms);
-  document.querySelectorAll('.choice-btn[data-handicapms]').forEach(b => b.classList.toggle("active", b === btn));
-}));
+document.getElementById("handicapSlider").addEventListener("input", (e) => {
+  duellSettings.handicapMs = Number(e.target.value);
+  const secs = duellSettings.handicapMs / 1000;
+  document.getElementById("handicapMsLabel").textContent = `${Number.isInteger(secs) ? secs : secs.toFixed(1)} Sek.`;
+});
 
 document.getElementById("startDuellBtn").addEventListener("click", () => {
   if (!duellSettings.timeLimitOn && !duellSettings.scoreLimitOn) { openConfirm("Bitte mindestens Zeitlimit oder Punktelimit aktivieren.", null, "OK"); return; }
@@ -1242,7 +1830,7 @@ function startDuell() {
   }, 1000);
 }
 function revealDuellSide(side) {
-  const task = duellTasks[side];
+  const task = currentTaskFor(side);
   document.getElementById(`duell_${side}_visual`).innerHTML = task.visual || "";
   document.getElementById(`duell_${side}_prompt`).textContent = task.prompt;
   activePart[side] = "a";
@@ -1278,6 +1866,7 @@ function nextRound(side) {
 }
 function submitAnswer(side) {
   if (side === "solo") { submitSolo(); return; }
+  if (side.startsWith("vk")) { vkSubmitAnswer(side); return; }
   if (!duellRunning) return;
   const task = duellTasks[side];
   const ok = checkAnswer(task, inputBuffers[side]);
@@ -1318,6 +1907,71 @@ function finishDuell() {
   document.getElementById("result_scores").textContent = `${bottomName}: ${duellScores.bottom} Punkte · ${topName}: ${duellScores.top} Punkte`;
   showView("duellResult");
 }
+
+/* =========================================================================
+   VIERKAMPF (PILOT) – 4 Spieler, gleiche Aufgabe, schnellste richtige Antwort gewinnt den Punkt
+   ========================================================================= */
+let vkNames = ["Spieler 1", "Spieler 2", "Spieler 3", "Spieler 4"];
+let vkScores = [0, 0, 0, 0];
+let vkTask = null;
+let vkRunning = false;
+const VK_TARGET_SCORE = 5;
+
+document.getElementById("goVkSetupBtn").addEventListener("click", () => showView("vkSetup"));
+document.getElementById("startVkBtn").addEventListener("click", () => {
+  for (let i = 0; i < 4; i++) {
+    const val = document.getElementById(`vk_name${i}`).value.trim();
+    vkNames[i] = val || `Spieler ${i + 1}`;
+  }
+  startVierkampf();
+});
+function startVierkampf() {
+  vkScores = [0, 0, 0, 0];
+  vkRunning = true;
+  for (let i = 0; i < 4; i++) document.getElementById(`duell_vk${i}_name`).textContent = vkNames[i];
+  vkNextTask();
+  renderVk();
+  showView("vkPlay");
+}
+function vkNextTask() {
+  vkTask = currentExercise.generate();
+  for (let i = 0; i < 4; i++) inputBuffers[`vk${i}`] = "";
+}
+function renderVk() {
+  for (let i = 0; i < 4; i++) {
+    const side = `vk${i}`;
+    document.getElementById(`duell_${side}_score`).textContent = `${vkScores[i]} Punkte`;
+    revealDuellSide(side);
+  }
+}
+function vkSubmitAnswer(side) {
+  if (!vkRunning) return;
+  const idx = Number(side.slice(2));
+  const ok = checkAnswer(vkTask, inputBuffers[side]);
+  const inputElId = `duell_${side}_input`;
+  if (ok) {
+    vkScores[idx]++;
+    flash(inputElId, "correct-flash");
+    for (let i = 0; i < 4; i++) inputBuffers[`vk${i}`] = "";
+    if (vkScores[idx] >= VK_TARGET_SCORE) { finishVierkampf(); return; }
+    vkNextTask();
+    renderVk();
+  } else {
+    flash(inputElId, "wrong-flash");
+    inputBuffers[side] = "";
+    renderBuffer(side);
+  }
+}
+document.getElementById("vk_stopBtn").addEventListener("click", () => { openConfirm("Vierkampf wirklich vorzeitig beenden?", () => finishVierkampf(), "Beenden"); });
+function finishVierkampf() {
+  vkRunning = false;
+  const ranking = vkNames.map((name, i) => ({ name, score: vkScores[i] })).sort((a, b) => b.score - a.score);
+  const winnerText = ranking[0].score === ranking[1].score ? "Unentschieden an der Spitze!" : `${ranking[0].name} gewinnt! 🎉`;
+  document.getElementById("vk_result_winner").textContent = winnerText;
+  document.getElementById("vk_result_scores").textContent = ranking.map(r => `${r.name}: ${r.score} Punkte`).join(" · ");
+  showView("vkResult");
+}
+document.getElementById("vk_result_replayBtn").addEventListener("click", () => startVierkampf());
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });

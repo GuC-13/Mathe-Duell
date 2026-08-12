@@ -918,70 +918,51 @@ function generateLinearEquation() {
   return { visual: null, prompt: `Löse die Gleichung: ${a}x ${sign} ${Math.abs(b)} = ${c}. Wie gross ist x?`, answerType: "number", correct: x };
 }
 
-/* ---- Würfelgebäude / Baupläne (Jahr 1, Kapitel 9a) ---- */
-function randomHeightGrid(rows, cols, maxH) {
-  const g = [];
-  for (let r = 0; r < rows; r++) { const row = []; for (let c = 0; c < cols; c++) row.push(rnd(1, maxH)); g.push(row); }
-  return g;
+/* ---- Vierecke & Dreiecke im Würfel (Jahr 1, Kapitel 9a) ---- */
+const CUBE_HALF_W = 45, CUBE_HALF_H = 22, CUBE_H = 70, CUBE_OX = 120, CUBE_OY = 152;
+function cubeVertex(x, y, z) {
+  return { x: CUBE_OX + (x - y) * CUBE_HALF_W, y: CUBE_OY + (x + y) * CUBE_HALF_H - z * CUBE_H };
 }
-function baupanGridSVG(grid) {
-  const rows = grid.length, cols = grid[0].length;
-  const cell = 44;
-  const originX = (200 - cols * cell) / 2, originY = (200 - rows * cell) / 2;
+const CUBE_V = {
+  A: cubeVertex(0, 0, 0), B: cubeVertex(1, 0, 0), C: cubeVertex(0, 1, 0), D: cubeVertex(1, 1, 0),
+  E: cubeVertex(0, 0, 1), F: cubeVertex(1, 0, 1), G: cubeVertex(0, 1, 1), H: cubeVertex(1, 1, 1)
+};
+const CUBE_EDGES = [["A", "B"], ["A", "C"], ["A", "E"], ["B", "D"], ["B", "F"], ["C", "D"], ["C", "G"], ["D", "H"], ["E", "F"], ["E", "G"], ["F", "H"], ["G", "H"]];
+function cubeShapeSVG(vertices, color) {
   let s = "";
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const x = originX + c * cell, y = originY + r * cell;
-      s += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>`;
-      s += `<text x="${x + cell / 2}" y="${y + cell / 2 + 8}" text-anchor="middle" font-size="22" font-weight="800" fill="#1e3a8a">${grid[r][c]}</text>`;
-    }
-  }
-  return `<svg viewBox="0 0 200 200" class="mt-shape">${s}</svg>`;
-}
-function buildingSVG(grid) {
-  const halfW = 20, halfH = 10, cubeH = 18, originX = 100, originY = 120;
-  const topColor = "#93c5fd", leftColor = "#60a5fa", rightColor = "#2563eb", stroke = "#1e3a8a";
-  const cells = [];
-  for (let r = 0; r < grid.length; r++) for (let c = 0; c < grid[0].length; c++) if (grid[r][c] > 0) cells.push({ r, c, h: grid[r][c] });
-  cells.sort((a, b) => (a.r + a.c) - (b.r + b.c));
-  let shapes = "";
-  cells.forEach(({ r, c, h }) => {
-    const baseX = originX + (c - r) * halfW;
-    const baseYGround = originY + (c + r) * halfH;
-    for (let z = 0; z < h; z++) {
-      const topY = baseYGround - (z + 1) * cubeH;
-      const N = `${baseX},${topY - halfH}`, E = `${baseX + halfW},${topY}`, S = `${baseX},${topY + halfH}`, W = `${baseX - halfW},${topY}`;
-      const Sd = `${baseX},${topY + halfH + cubeH}`, Wd = `${baseX - halfW},${topY + cubeH}`, Ed = `${baseX + halfW},${topY + cubeH}`;
-      shapes += `<polygon points="${N} ${E} ${S} ${W}" fill="${topColor}" stroke="${stroke}" stroke-width="1.2"/>`;
-      shapes += `<polygon points="${W} ${S} ${Sd} ${Wd}" fill="${leftColor}" stroke="${stroke}" stroke-width="1.2"/>`;
-      shapes += `<polygon points="${S} ${E} ${Ed} ${Sd}" fill="${rightColor}" stroke="${stroke}" stroke-width="1.2"/>`;
-    }
+  CUBE_EDGES.forEach(([a, b]) => {
+    const hidden = a === "D" || b === "D";
+    const p1 = CUBE_V[a], p2 = CUBE_V[b];
+    s += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${hidden ? "#cbd5e1" : "#1e3a8a"}" stroke-width="2" stroke-dasharray="${hidden ? "4,3" : "none"}"/>`;
   });
-  return `<svg viewBox="0 0 200 200" class="mt-shape">${shapes}</svg>`;
+  const pts = vertices.map(k => `${CUBE_V[k].x},${CUBE_V[k].y}`).join(" ");
+  s += `<polygon points="${pts}" fill="${color}" fill-opacity="0.55" stroke="${color}" stroke-width="3" stroke-linejoin="round"/>`;
+  vertices.forEach(k => { const p = CUBE_V[k]; s += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#1e293b"/>`; });
+  return `<svg viewBox="0 0 240 246" class="mt-shape">${s}</svg>`;
 }
-function generateBauplanCount() {
-  const grid = randomHeightGrid(2, rnd(0, 1) === 0 ? 2 : 3, 3);
-  const total = grid.flat().reduce((s, v) => s + v, 0);
-  return { visual: baupanGridSVG(grid), prompt: `Der Bauplan zeigt, wie viele Würfel an jeder Stelle aufeinandergestapelt werden. Wie viele Würfel braucht man insgesamt für dieses Würfelgebäude?`, answerType: "number", correct: total };
+const CUBE_SHAPES = [
+  { vertices: ["E", "F", "H", "G"], name: "Quadrat", sides: 4, rightAngles: 4, equalSides: true, color: "#2563eb" },
+  { vertices: ["A", "B", "F"], name: "rechtwinkliges Dreieck", sides: 3, rightAngles: 1, equalSides: false, color: "#16a34a" },
+  { vertices: ["B", "C", "E"], name: "gleichseitiges Dreieck", sides: 3, rightAngles: 0, equalSides: true, color: "#f59e0b" },
+  { vertices: ["A", "B", "H", "G"], name: "Rechteck", sides: 4, rightAngles: 4, equalSides: false, color: "#db2777" }
+];
+function pickCubeShape() { return CUBE_SHAPES[rnd(0, CUBE_SHAPES.length - 1)]; }
+function generateCubeShapeName() {
+  const shp = pickCubeShape();
+  const options = ["Quadrat", "Rechteck", "gleichseitiges Dreieck", "rechtwinkliges Dreieck"].slice().sort(() => Math.random() - 0.5);
+  return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Welche Form hat die markierte Fläche im Würfel?`, answerType: "mc", options, correct: shp.name };
 }
-function generateBauplanView() {
-  const grid = randomHeightGrid(2, 3, 3);
-  const cols = grid[0].length;
-  let visible = 0;
-  for (let c = 0; c < cols; c++) { let maxH = 0; for (let r = 0; r < grid.length; r++) maxH = Math.max(maxH, grid[r][c]); visible += maxH; }
-  return { visual: baupanGridSVG(grid), prompt: `Du schaust von einer Seite so auf das Würfelgebäude, dass du die Spalten des Bauplans der Reihe nach siehst. Pro Spalte ist nur der höchste Turm sichtbar (kleinere Türme dahinter sind verdeckt). Wie viele Würfel siehst du insgesamt?`, answerType: "number", correct: visible };
+function generateCubeShapeCorners() {
+  const shp = pickCubeShape();
+  return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Wie viele Ecken hat die markierte Fläche im Würfel?`, answerType: "number", correct: shp.sides };
 }
-function generateBuildingCubeCount() {
-  const grid = randomHeightGrid(2, 2, 3);
-  const total = grid.flat().reduce((s, v) => s + v, 0);
-  return { visual: buildingSVG(grid), prompt: `Wie viele Würfel wurden für dieses Würfelgebäude verwendet?`, answerType: "number", correct: total };
+function generateCubeShapeRightAngles() {
+  const shp = pickCubeShape();
+  return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Wie viele rechte Winkel hat die markierte Fläche im Würfel?`, answerType: "number", correct: shp.rightAngles };
 }
-function generateCubeFaceShape() {
-  if (Math.random() < 0.5) {
-    const options = ["Quadrat", "Rechteck", "Dreieck", "Kreis"].slice().sort(() => Math.random() - 0.5);
-    return { visual: null, prompt: `Welche Form haben die Seitenflächen eines Würfels?`, answerType: "mc", options, correct: "Quadrat" };
-  }
-  return { visual: null, prompt: `Wie viele quadratische Flächen hat ein Würfel?`, answerType: "number", correct: 6 };
+function generateCubeShapeEqualSides() {
+  const shp = pickCubeShape();
+  return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Sind alle Seiten der markierten Fläche gleich lang?`, answerType: "boolean", correct: shp.equalSides ? 1 : 0 };
 }
 
 function generateCubeVolume() { const a = rnd(2, 15); return { visual: null, prompt: `Berechne das Volumen eines Würfels mit Kantenlänge ${a} cm (in cm³).`, answerType: "number", correct: a * a * a }; }
@@ -1411,10 +1392,10 @@ const EXERCISE_INFO = {
   "7c-1": { d: "Berechne den fehlenden Winkel in einem Dreieck.", g: "Winkelsumme im Dreieck (180°) anwenden." },
   "8a-1": { d: "Fasse gleichartige Terme zusammen.", g: "Termumformungen mit Variablen durchführen können." },
   "8b-1": { d: "Löse eine lineare Gleichung nach x auf.", g: "Lineare Gleichungen lösen können." },
-  "9a-bauplan": { d: "Lies einen Bauplan (Zahlengitter) und bestimme die Gesamtzahl der Würfel eines Würfelgebäudes.", g: "Würfelgebäude mit Hilfe von Bauplänen aufbauen und verstehen können." },
-  "9a-ansicht": { d: "Bestimme, wie viele Würfel eines Würfelgebäudes aus einer bestimmten Blickrichtung sichtbar sind.", g: "Würfelgebäude in Gedanken drehen/betrachten und die sichtbare Ansicht bestimmen können." },
-  "9a-gebaeude": { d: "Zähle anhand einer Schrägbild-Zeichnung, wie viele Würfel für ein Würfelgebäude verwendet wurden.", g: "Würfel und Würfelgebäude aus einer Zeichnung (Schrägbild) richtig erfassen können." },
-  "9a-flaechen": { d: "Beantworte Fragen zu den quadratischen Seitenflächen eines Würfels.", g: "Formen von Flächen im Würfel erkennen und beschreiben können." },
+  "9a-form": { d: "Erkenne die Form einer im Würfel markierten Fläche (Quadrat, Rechteck, gleichseitiges oder rechtwinkliges Dreieck).", g: "Vierecke und Dreiecke innerhalb eines Würfels erkennen und benennen können." },
+  "9a-ecken": { d: "Bestimme die Anzahl Ecken einer im Würfel markierten Fläche.", g: "Vierecke und Dreiecke innerhalb eines Würfels anhand ihrer Eckenzahl unterscheiden können." },
+  "9a-winkel": { d: "Bestimme die Anzahl rechter Winkel einer im Würfel markierten Fläche.", g: "Eigenschaften (rechte Winkel) von Vierecken und Dreiecken im Würfel erkennen können." },
+  "9a-seiten": { d: "Beurteile, ob alle Seiten einer im Würfel markierten Fläche gleich lang sind.", g: "Seitenlängen von Vierecken und Dreiecken im Würfel vergleichen können." },
   "9b-vol": { d: "Berechne das Volumen eines Würfels.", g: "Volumenformel des Würfels anwenden." },
   "9b-surf": { d: "Berechne die Oberfläche eines Würfels.", g: "Oberflächenformel des Würfels anwenden." },
   "m2-1a-comp": { d: "Vergleiche zwei Brüche.", g: "Brüche der Grösse nach vergleichen können." },
@@ -1604,10 +1585,10 @@ const JAHR1_CHAPTERS = [
     ex("8b-1", "Lineare Gleichung lösen", generateLinearEquation, "Bringe zuerst die Zahl ohne x auf die andere Seite, dann teile durch die Zahl vor dem x.")
   ]),
   chapter("9a", "Körper untersuchen und skizzieren", [
-    ex("9a-bauplan", "Bauplan: Würfel zählen", generateBauplanCount, "Addiere alle Zahlen im Bauplan – jede Zahl gibt an, wie viele Würfel an dieser Stelle übereinander liegen."),
-    ex("9a-ansicht", "Bauplan: Ansicht bestimmen", generateBauplanView, "Schaue spaltenweise: Von jeder Spalte ist nur der höchste Turm sichtbar, die kleineren dahinter sind verdeckt. Addiere die höchsten Türme jeder Spalte."),
-    ex("9a-gebaeude", "Würfelgebäude: Würfel zählen", generateBuildingCubeCount, "Zähle für jeden sichtbaren Turm, wie viele Würfel übereinandergestapelt sind, und addiere alle Türme."),
-    ex("9a-flaechen", "Formen der Würfelflächen", generateCubeFaceShape, "Alle 6 Seitenflächen eines Würfels sind gleich grosse Quadrate.")
+    ex("9a-form", "Form erkennen", generateCubeShapeName, "Verbinden Kanten des Würfels nur Eckpunkte, entsteht oft ein Dreieck oder Viereck über eine Flächendiagonale – zähl die Ecken und vergleiche die Seitenlängen, um die Form zu bestimmen."),
+    ex("9a-ecken", "Ecken zählen", generateCubeShapeCorners, "Zähle, wie viele Eckpunkte die markierte Fläche hat: 3 = Dreieck, 4 = Viereck."),
+    ex("9a-winkel", "Rechte Winkel zählen", generateCubeShapeRightAngles, "Ein Winkel zwischen zwei Kanten des Würfels (z.B. an einer Ecke) ist immer rechtwinklig; ein Winkel entlang einer Flächendiagonale meist nicht."),
+    ex("9a-seiten", "Seitenlängen vergleichen", generateCubeShapeEqualSides, "Würfelkanten sind alle gleich lang, Flächendiagonalen sind alle gleich lang (aber länger als eine Kante) – mischt eine Fläche beide, sind die Seiten nicht alle gleich lang.")
   ]),
   chapter("9b", "Volumen und Oberflächeninhalt", [
     ex("9b-vol", "Volumen Würfel", generateCubeVolume, "Volumen des Würfels = Kantenlänge × Kantenlänge × Kantenlänge."),

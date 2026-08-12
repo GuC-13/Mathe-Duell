@@ -76,9 +76,10 @@
 
   /* Solo play */
   .solo-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 16px; }
-  .solo-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .solo-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; row-gap: 6px; }
   .solo-score { font-weight: 700; color: var(--success); }
   .help-btn { border: none; background: #fef3c7; color: #92400e; border-radius: 20px; padding: 6px 14px; font-weight: 700; font-size: 0.85rem; }
+  .help-btn.skip-btn { background: #e0e7ff; color: #3730a3; }
   .mt-shape { width: 160px; height: 160px; margin: 0 auto 10px; display: block; }
   .task-prompt { font-size: 1.3rem; font-weight: 700; margin-bottom: 14px; }
   .answer-display { font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; background: var(--bg); border-radius: 10px; padding: 12px; min-height: 54px; margin-bottom: 14px; }
@@ -96,6 +97,11 @@
   .text-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
   .text-wrap input { flex: 1; }
   .text-wrap button { background: var(--success); color: white; border: none; border-radius: 8px; padding: 0 20px; font-weight: 700; }
+
+  /* Fachbegriffe: Multiple-Choice-Auswahl */
+  .mc-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; padding: 6px; border-radius: 12px; }
+  .mc-btn { border: 2px solid var(--border); background: white; color: var(--text); border-radius: 10px; padding: 12px 8px; font-weight: 700; font-size: 0.92rem; cursor: pointer; line-height: 1.25; }
+  .mc-btn:active { transform: scale(0.97); }
 
   /* Bruch-/Koordinaten-Kästchen und Variablen-Tastatur */
   .pair-wrap { margin-bottom: 10px; display: flex; justify-content: center; }
@@ -158,6 +164,8 @@
   .vk-quad .duell-text-wrap { gap: 4px; margin-bottom: 4px; }
   .vk-quad .duell-text-wrap input { min-width: 0; }
   .vk-quad .duell-text-wrap button { padding: 0 10px; }
+  .vk-quad .mc-wrap { gap: 4px; margin-bottom: 4px; }
+  .vk-quad .mc-btn { padding: 6px 4px; font-size: 0.68rem; border-width: 1px; }
   .vk-divider { height: 44px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; gap: 20px; font-weight: 700; font-size: 1rem; }
   .vk-divider button { background: #ef4444; color: white; border: none; border-radius: 8px; padding: 6px 12px; font-weight: 700; }
   .vk-name-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
@@ -240,6 +248,7 @@
         <div class="solo-score" id="solo_score">Richtig: 0</div>
         <div class="solo-score" id="solo_timerDisplay">00:00</div>
         <button class="help-btn" id="solo_helpBtn">❓ Hilfe</button>
+        <button class="help-btn skip-btn" id="solo_skipBtn">⏭️ Überspringen</button>
       </div>
       <div id="solo_visual"></div>
       <div class="task-prompt" id="solo_prompt"></div>
@@ -265,6 +274,12 @@
       <div id="solo_textWrap" class="text-wrap hidden">
         <input type="text" id="solo_textInput">
         <button data-side="solo" data-textsubmit="1">✓</button>
+      </div>
+      <div id="solo_mcWrap" class="mc-wrap hidden">
+        <button class="mc-btn" data-side="solo" data-mc="0"></button>
+        <button class="mc-btn" data-side="solo" data-mc="1"></button>
+        <button class="mc-btn" data-side="solo" data-mc="2"></button>
+        <button class="mc-btn" data-side="solo" data-mc="3"></button>
       </div>
     </div>
   </div>
@@ -381,6 +396,12 @@
           <input type="text" id="duell_top_textInput">
           <button data-side="top" data-textsubmit="1">✓</button>
         </div>
+        <div id="duell_top_mcWrap" class="mc-wrap hidden">
+          <button class="mc-btn" data-side="top" data-mc="0"></button>
+          <button class="mc-btn" data-side="top" data-mc="1"></button>
+          <button class="mc-btn" data-side="top" data-mc="2"></button>
+          <button class="mc-btn" data-side="top" data-mc="3"></button>
+        </div>
       </div>
     </div>
     <div class="duell-divider">
@@ -415,6 +436,12 @@
         <div id="duell_bottom_textWrap" class="duell-text-wrap hidden">
           <input type="text" id="duell_bottom_textInput">
           <button data-side="bottom" data-textsubmit="1">✓</button>
+        </div>
+        <div id="duell_bottom_mcWrap" class="mc-wrap hidden">
+          <button class="mc-btn" data-side="bottom" data-mc="0"></button>
+          <button class="mc-btn" data-side="bottom" data-mc="1"></button>
+          <button class="mc-btn" data-side="bottom" data-mc="2"></button>
+          <button class="mc-btn" data-side="bottom" data-mc="3"></button>
         </div>
       </div>
     </div>
@@ -482,6 +509,12 @@
             <input type="text" id="duell_vk2_textInput">
             <button data-side="vk2" data-textsubmit="1">✓</button>
           </div>
+          <div id="duell_vk2_mcWrap" class="mc-wrap hidden">
+            <button class="mc-btn" data-side="vk2" data-mc="0"></button>
+            <button class="mc-btn" data-side="vk2" data-mc="1"></button>
+            <button class="mc-btn" data-side="vk2" data-mc="2"></button>
+            <button class="mc-btn" data-side="vk2" data-mc="3"></button>
+          </div>
         </div>
       </div>
       <div class="vk-quad vk-flip vk-p3" data-vkslot="3">
@@ -512,6 +545,12 @@
           <div id="duell_vk3_textWrap" class="duell-text-wrap hidden">
             <input type="text" id="duell_vk3_textInput">
             <button data-side="vk3" data-textsubmit="1">✓</button>
+          </div>
+          <div id="duell_vk3_mcWrap" class="mc-wrap hidden">
+            <button class="mc-btn" data-side="vk3" data-mc="0"></button>
+            <button class="mc-btn" data-side="vk3" data-mc="1"></button>
+            <button class="mc-btn" data-side="vk3" data-mc="2"></button>
+            <button class="mc-btn" data-side="vk3" data-mc="3"></button>
           </div>
         </div>
       </div>
@@ -544,6 +583,12 @@
             <input type="text" id="duell_vk0_textInput">
             <button data-side="vk0" data-textsubmit="1">✓</button>
           </div>
+          <div id="duell_vk0_mcWrap" class="mc-wrap hidden">
+            <button class="mc-btn" data-side="vk0" data-mc="0"></button>
+            <button class="mc-btn" data-side="vk0" data-mc="1"></button>
+            <button class="mc-btn" data-side="vk0" data-mc="2"></button>
+            <button class="mc-btn" data-side="vk0" data-mc="3"></button>
+          </div>
         </div>
       </div>
       <div class="vk-quad vk-p1" data-vkslot="1">
@@ -574,6 +619,12 @@
           <div id="duell_vk1_textWrap" class="duell-text-wrap hidden">
             <input type="text" id="duell_vk1_textInput">
             <button data-side="vk1" data-textsubmit="1">✓</button>
+          </div>
+          <div id="duell_vk1_mcWrap" class="mc-wrap hidden">
+            <button class="mc-btn" data-side="vk1" data-mc="0"></button>
+            <button class="mc-btn" data-side="vk1" data-mc="1"></button>
+            <button class="mc-btn" data-side="vk1" data-mc="2"></button>
+            <button class="mc-btn" data-side="vk1" data-mc="3"></button>
           </div>
         </div>
       </div>
@@ -643,6 +694,10 @@ document.getElementById("solo_helpBtn").addEventListener("click", () => {
   const text = (soloCurrent && soloCurrent.sourceHelp) || soloExercise.help || "Für diese Aufgabe ist noch kein Lösungsweg hinterlegt.";
   document.getElementById("helpText").textContent = text;
   document.getElementById("helpOverlay").classList.remove("hidden");
+});
+document.getElementById("solo_skipBtn").addEventListener("click", () => {
+  if (!soloRunning) return;
+  nextSoloTask();
 });
 
 /* ================= Navigation ================= */
@@ -863,19 +918,70 @@ function generateLinearEquation() {
   return { visual: null, prompt: `Löse die Gleichung: ${a}x ${sign} ${Math.abs(b)} = ${c}. Wie gross ist x?`, answerType: "number", correct: x };
 }
 
-function generatePolyhedronParts() {
-  const n = rnd(3, 8);
-  const isPyramid = Math.random() < 0.5;
-  if (isPyramid) {
-    const which = rnd(0, 2);
-    if (which === 0) return { visual: null, prompt: `Eine Pyramide hat eine ${n}-eckige Grundfläche. Wie viele Ecken hat sie?`, answerType: "number", correct: n + 1 };
-    if (which === 1) return { visual: null, prompt: `Eine Pyramide hat eine ${n}-eckige Grundfläche. Wie viele Kanten hat sie?`, answerType: "number", correct: 2 * n };
-    return { visual: null, prompt: `Eine Pyramide hat eine ${n}-eckige Grundfläche. Wie viele Flächen hat sie?`, answerType: "number", correct: n + 1 };
+/* ---- Würfelgebäude / Baupläne (Jahr 1, Kapitel 9a) ---- */
+function randomHeightGrid(rows, cols, maxH) {
+  const g = [];
+  for (let r = 0; r < rows; r++) { const row = []; for (let c = 0; c < cols; c++) row.push(rnd(1, maxH)); g.push(row); }
+  return g;
+}
+function baupanGridSVG(grid) {
+  const rows = grid.length, cols = grid[0].length;
+  const cell = 44;
+  const originX = (200 - cols * cell) / 2, originY = (200 - rows * cell) / 2;
+  let s = "";
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = originX + c * cell, y = originY + r * cell;
+      s += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>`;
+      s += `<text x="${x + cell / 2}" y="${y + cell / 2 + 8}" text-anchor="middle" font-size="22" font-weight="800" fill="#1e3a8a">${grid[r][c]}</text>`;
+    }
   }
-  const which = rnd(0, 2);
-  if (which === 0) return { visual: null, prompt: `Ein Prisma hat eine ${n}-eckige Grundfläche. Wie viele Ecken hat es?`, answerType: "number", correct: 2 * n };
-  if (which === 1) return { visual: null, prompt: `Ein Prisma hat eine ${n}-eckige Grundfläche. Wie viele Kanten hat es?`, answerType: "number", correct: 3 * n };
-  return { visual: null, prompt: `Ein Prisma hat eine ${n}-eckige Grundfläche. Wie viele Flächen hat es?`, answerType: "number", correct: n + 2 };
+  return `<svg viewBox="0 0 200 200" class="mt-shape">${s}</svg>`;
+}
+function buildingSVG(grid) {
+  const halfW = 20, halfH = 10, cubeH = 18, originX = 100, originY = 120;
+  const topColor = "#93c5fd", leftColor = "#60a5fa", rightColor = "#2563eb", stroke = "#1e3a8a";
+  const cells = [];
+  for (let r = 0; r < grid.length; r++) for (let c = 0; c < grid[0].length; c++) if (grid[r][c] > 0) cells.push({ r, c, h: grid[r][c] });
+  cells.sort((a, b) => (a.r + a.c) - (b.r + b.c));
+  let shapes = "";
+  cells.forEach(({ r, c, h }) => {
+    const baseX = originX + (c - r) * halfW;
+    const baseYGround = originY + (c + r) * halfH;
+    for (let z = 0; z < h; z++) {
+      const topY = baseYGround - (z + 1) * cubeH;
+      const N = `${baseX},${topY - halfH}`, E = `${baseX + halfW},${topY}`, S = `${baseX},${topY + halfH}`, W = `${baseX - halfW},${topY}`;
+      const Sd = `${baseX},${topY + halfH + cubeH}`, Wd = `${baseX - halfW},${topY + cubeH}`, Ed = `${baseX + halfW},${topY + cubeH}`;
+      shapes += `<polygon points="${N} ${E} ${S} ${W}" fill="${topColor}" stroke="${stroke}" stroke-width="1.2"/>`;
+      shapes += `<polygon points="${W} ${S} ${Sd} ${Wd}" fill="${leftColor}" stroke="${stroke}" stroke-width="1.2"/>`;
+      shapes += `<polygon points="${S} ${E} ${Ed} ${Sd}" fill="${rightColor}" stroke="${stroke}" stroke-width="1.2"/>`;
+    }
+  });
+  return `<svg viewBox="0 0 200 200" class="mt-shape">${shapes}</svg>`;
+}
+function generateBauplanCount() {
+  const grid = randomHeightGrid(2, rnd(0, 1) === 0 ? 2 : 3, 3);
+  const total = grid.flat().reduce((s, v) => s + v, 0);
+  return { visual: baupanGridSVG(grid), prompt: `Der Bauplan zeigt, wie viele Würfel an jeder Stelle aufeinandergestapelt werden. Wie viele Würfel braucht man insgesamt für dieses Würfelgebäude?`, answerType: "number", correct: total };
+}
+function generateBauplanView() {
+  const grid = randomHeightGrid(2, 3, 3);
+  const cols = grid[0].length;
+  let visible = 0;
+  for (let c = 0; c < cols; c++) { let maxH = 0; for (let r = 0; r < grid.length; r++) maxH = Math.max(maxH, grid[r][c]); visible += maxH; }
+  return { visual: baupanGridSVG(grid), prompt: `Du schaust von einer Seite so auf das Würfelgebäude, dass du die Spalten des Bauplans der Reihe nach siehst. Pro Spalte ist nur der höchste Turm sichtbar (kleinere Türme dahinter sind verdeckt). Wie viele Würfel siehst du insgesamt?`, answerType: "number", correct: visible };
+}
+function generateBuildingCubeCount() {
+  const grid = randomHeightGrid(2, 2, 3);
+  const total = grid.flat().reduce((s, v) => s + v, 0);
+  return { visual: buildingSVG(grid), prompt: `Wie viele Würfel wurden für dieses Würfelgebäude verwendet?`, answerType: "number", correct: total };
+}
+function generateCubeFaceShape() {
+  if (Math.random() < 0.5) {
+    const options = ["Quadrat", "Rechteck", "Dreieck", "Kreis"].slice().sort(() => Math.random() - 0.5);
+    return { visual: null, prompt: `Welche Form haben die Seitenflächen eines Würfels?`, answerType: "mc", options, correct: "Quadrat" };
+  }
+  return { visual: null, prompt: `Wie viele quadratische Flächen hat ein Würfel?`, answerType: "number", correct: 6 };
 }
 
 function generateCubeVolume() { const a = rnd(2, 15); return { visual: null, prompt: `Berechne das Volumen eines Würfels mit Kantenlänge ${a} cm (in cm³).`, answerType: "number", correct: a * a * a }; }
@@ -1105,6 +1211,139 @@ function generateSurveyExtrapolation() {
 }
 
 /* =========================================================================
+   FACHBEGRIFFE (Basiswissen) – Multiple-Choice-Vokabeltrainer
+   ========================================================================= */
+const FACHBEGRIFFE = [
+  { term: "Summand", expl: "Eine der Zahlen, die addiert werden", tier: 1 },
+  { term: "Summe", expl: "Ergebnis einer Addition", tier: 1 },
+  { term: "Minuend", expl: "Die Zahl, von der subtrahiert wird", tier: 1 },
+  { term: "Subtrahend", expl: "Die Zahl, die abgezogen wird", tier: 1 },
+  { term: "Differenz", expl: "Ergebnis einer Subtraktion", tier: 1 },
+  { term: "Faktor", expl: "Eine der Zahlen, die multipliziert werden", tier: 1 },
+  { term: "Produkt", expl: "Ergebnis einer Multiplikation", tier: 1 },
+  { term: "Dividend", expl: "Die Zahl, die geteilt wird", tier: 1 },
+  { term: "Divisor", expl: "Die Zahl, durch die geteilt wird", tier: 1 },
+  { term: "Quotient", expl: "Ergebnis einer Division", tier: 1 },
+  { term: "Rest", expl: "Was bei einer Division mit Rest übrig bleibt", tier: 1 },
+  { term: "Primzahl", expl: "Zahl, die nur durch 1 und sich selbst teilbar ist", tier: 1 },
+  { term: "Teiler", expl: "Zahl, durch die eine andere ohne Rest teilbar ist", tier: 1 },
+  { term: "Vielfaches", expl: "Ergebnis der Multiplikation einer Zahl mit einer ganzen Zahl", tier: 1 },
+  { term: "ggT", expl: "Grösster gemeinsamer Teiler zweier Zahlen", tier: 1 },
+  { term: "kgV", expl: "Kleinstes gemeinsames Vielfaches zweier Zahlen", tier: 1 },
+  { term: "Runden", expl: "Eine Zahl auf eine bestimmte Stelle genau annähern", tier: 1 },
+  { term: "Punkt-vor-Strich", expl: "Regel: Malnehmen/Teilen vor Plus/Minus rechnen", tier: 1 },
+  { term: "Primfaktorzerlegung", expl: "Eine Zahl als Produkt von Primzahlen schreiben", tier: 1 },
+  { term: "Zähler", expl: "Obere Zahl eines Bruchs", tier: 1 },
+  { term: "Nenner", expl: "Untere Zahl eines Bruchs", tier: 1 },
+  { term: "Echter Bruch", expl: "Bruch, bei dem der Zähler kleiner als der Nenner ist", tier: 1 },
+  { term: "Unechter Bruch", expl: "Bruch, bei dem der Zähler grösser oder gleich dem Nenner ist", tier: 1 },
+  { term: "Gemischte Zahl", expl: "Zahl aus ganzer Zahl und Bruch, z.B. 2 ¾", tier: 1 },
+  { term: "Kürzen", expl: "Zähler und Nenner durch dieselbe Zahl teilen", tier: 1 },
+  { term: "Erweitern", expl: "Zähler und Nenner mit derselben Zahl multiplizieren", tier: 1 },
+  { term: "Kehrwert", expl: "Bruch mit vertauschtem Zähler und Nenner", tier: 1 },
+  { term: "Grundwert", expl: "Die Ausgangsgrösse, von der ein Prozentsatz berechnet wird", tier: 1 },
+  { term: "Prozentsatz", expl: "Angabe in Prozent (%)", tier: 1 },
+  { term: "Prozentwert", expl: "Ergebnis der Prozentrechnung vom Grundwert", tier: 1 },
+  { term: "Symmetrieachse", expl: "Linie, an der eine Figur gespiegelt werden kann", tier: 1 },
+  { term: "Achsensymmetrie", expl: "Eigenschaft einer Figur, an einer Achse spiegelbar zu sein", tier: 1 },
+  { term: "Drehsymmetrie", expl: "Eigenschaft einer Figur, sich bei Drehung wieder zu decken", tier: 1 },
+  { term: "Punktspiegelung", expl: "Spiegelung an einem einzelnen Punkt", tier: 1 },
+  { term: "Koordinatensystem", expl: "Achsenkreuz zur Angabe von Punkten", tier: 1 },
+  { term: "Quadrant", expl: "Eines der vier Felder im Koordinatensystem", tier: 1 },
+  { term: "Parallel", expl: "Zwei Linien, die sich nie schneiden", tier: 1 },
+  { term: "Senkrecht", expl: "Zwei Linien, die sich im rechten Winkel schneiden", tier: 1 },
+  { term: "Diagonale", expl: "Verbindungslinie zwischen zwei nicht benachbarten Ecken", tier: 1 },
+  { term: "Rechteck", expl: "Viereck mit vier rechten Winkeln", tier: 1 },
+  { term: "Quadrat", expl: "Rechteck mit vier gleich langen Seiten", tier: 1 },
+  { term: "Umfang", expl: "Länge der Aussenlinie einer Figur", tier: 1 },
+  { term: "Fläche", expl: "Grösse der von einer Figur bedeckten Fläche", tier: 1 },
+  { term: "Volumen", expl: "Rauminhalt eines Körpers", tier: 1 },
+  { term: "Netz (eines Körpers)", expl: "Auseinandergefaltete Oberfläche eines Körpers", tier: 1 },
+  { term: "Kante", expl: "Linie, an der zwei Flächen eines Körpers zusammentreffen", tier: 1 },
+  { term: "Ecke", expl: "Punkt, an dem mehrere Kanten zusammentreffen", tier: 1 },
+  { term: "Würfel", expl: "Körper mit 6 quadratischen Flächen", tier: 1 },
+  { term: "Quader", expl: "Körper mit 6 rechteckigen Flächen", tier: 1 },
+  { term: "Winkel", expl: "Öffnung zwischen zwei Strahlen mit gemeinsamem Anfangspunkt", tier: 1 },
+  { term: "Spitzer Winkel", expl: "Winkel kleiner als 90°", tier: 1 },
+  { term: "Rechter Winkel", expl: "Winkel von genau 90°", tier: 1 },
+  { term: "Stumpfer Winkel", expl: "Winkel zwischen 90° und 180°", tier: 1 },
+  { term: "Gleichseitiges Dreieck", expl: "Dreieck mit drei gleich langen Seiten", tier: 1 },
+  { term: "Gleichschenkliges Dreieck", expl: "Dreieck mit zwei gleich langen Seiten", tier: 1 },
+  { term: "Rechtwinkliges Dreieck", expl: "Dreieck mit einem rechten Winkel", tier: 1 },
+  { term: "Radius", expl: "Abstand vom Mittelpunkt zum Kreisrand", tier: 1 },
+  { term: "Durchmesser", expl: "Doppelter Radius, Linie durch den Mittelpunkt", tier: 1 },
+  { term: "Ganze Zahl", expl: "Positive und negative Zahlen sowie Null, ohne Nachkommastellen", tier: 1 },
+
+  { term: "Term", expl: "Rechenausdruck mit Zahlen und/oder Variablen", tier: 2 },
+  { term: "Variable", expl: "Platzhalter (Buchstabe) für eine Zahl", tier: 2 },
+  { term: "Gleichung", expl: "Zwei Terme, die durch ein Gleichheitszeichen verbunden sind", tier: 2 },
+  { term: "Lösung (einer Gleichung)", expl: "Wert, der die Gleichung erfüllt", tier: 2 },
+  { term: "Potenz", expl: "Zahl, die mit sich selbst multipliziert wird (Basis hoch Exponent)", tier: 2 },
+  { term: "Basis", expl: "Die Zahl, die potenziert wird", tier: 2 },
+  { term: "Exponent", expl: "Zeigt an, wie oft die Basis mit sich selbst multipliziert wird", tier: 2 },
+  { term: "Quadratzahl", expl: "Ergebnis einer Zahl hoch 2", tier: 2 },
+  { term: "Quadratwurzel", expl: "Umkehrung des Quadrierens", tier: 2 },
+  { term: "Parallelogramm", expl: "Viereck mit zwei Paaren paralleler Seiten", tier: 2 },
+  { term: "Raute", expl: "Parallelogramm mit vier gleich langen Seiten", tier: 2 },
+  { term: "Trapez", expl: "Viereck mit genau einem Paar paralleler Seiten", tier: 2 },
+  { term: "Prisma", expl: "Körper mit zwei deckungsgleichen, parallelen Grundflächen", tier: 2 },
+  { term: "Pyramide", expl: "Körper mit einer Grundfläche und einer Spitze", tier: 2 },
+  { term: "Zylinder", expl: "Körper mit zwei kreisförmigen Grundflächen", tier: 2 },
+  { term: "Hypotenuse", expl: "Längste Seite im rechtwinkligen Dreieck (gegenüber dem rechten Winkel)", tier: 2 },
+  { term: "Kathete", expl: "Eine der beiden kürzeren Seiten im rechtwinkligen Dreieck", tier: 2 },
+  { term: "Satz des Pythagoras", expl: "a² + b² = c² im rechtwinkligen Dreieck", tier: 2 },
+  { term: "Kreisumfang", expl: "Länge der Kreislinie", tier: 2 },
+  { term: "Kreissektor", expl: "«Tortenstück» eines Kreises", tier: 2 },
+  { term: "Proportional", expl: "Zwei Grössen wachsen im gleichen Verhältnis", tier: 2 },
+  { term: "Umgekehrt proportional", expl: "Wenn die eine Grösse steigt, sinkt die andere im gleichen Verhältnis", tier: 2 },
+  { term: "Dreisatz", expl: "Rechenverfahren zur Lösung von Proportionalitätsaufgaben", tier: 2 },
+  { term: "Massstab", expl: "Verhältnis zwischen Darstellung und Wirklichkeit", tier: 2 },
+  { term: "Mittelwert", expl: "Summe aller Werte geteilt durch ihre Anzahl", tier: 2 },
+  { term: "Median", expl: "Der mittlere Wert einer der Grösse nach geordneten Liste", tier: 2 },
+  { term: "Spannweite", expl: "Differenz zwischen grösstem und kleinstem Wert", tier: 2 },
+  { term: "Wahrscheinlichkeit", expl: "Mass dafür, wie wahrscheinlich ein Ereignis eintritt", tier: 2 },
+  { term: "Relative Häufigkeit", expl: "Anteil eines Ereignisses an allen Versuchen", tier: 2 },
+
+  { term: "Lösungsmenge", expl: "Menge aller Werte, die eine Gleichung erfüllen", tier: 3 },
+  { term: "Quadratische Gleichung", expl: "Gleichung, in der die Variable im Quadrat vorkommt", tier: 3 },
+  { term: "Gleichungssystem", expl: "Mehrere Gleichungen mit denselben Unbekannten", tier: 3 },
+  { term: "Lineare Funktion", expl: "Funktion, deren Graph eine Gerade ist", tier: 3 },
+  { term: "Steigung", expl: "Gibt an, wie steil eine Gerade verläuft", tier: 3 },
+  { term: "y-Achsenabschnitt", expl: "Punkt, an dem eine Gerade die y-Achse schneidet", tier: 3 },
+  { term: "Wertetabelle", expl: "Tabelle mit Eingabewerten und zugehörigen Funktionswerten", tier: 3 },
+  { term: "Kegel", expl: "Körper mit einer kreisförmigen Grundfläche und einer Spitze", tier: 3 },
+  { term: "Kugel", expl: "Körper, dessen Oberfläche überall gleich weit vom Mittelpunkt entfernt ist", tier: 3 },
+  { term: "Platonischer Körper", expl: "Regelmässiger Körper mit lauter gleichen Flächen (z.B. Würfel)", tier: 3 },
+  { term: "Ähnlichkeit", expl: "Figuren mit gleicher Form, aber unterschiedlicher Grösse", tier: 3 },
+  { term: "Streckfaktor", expl: "Faktor, um den eine Figur vergrössert/verkleinert wird", tier: 3 },
+  { term: "Wissenschaftliche Schreibweise", expl: "Zahl als a × 10ⁿ dargestellt", tier: 3 },
+  { term: "Kapital", expl: "Der Geldbetrag, auf den sich die Zinsberechnung bezieht", tier: 3 },
+  { term: "Zins", expl: "Betrag, der für geliehenes/angelegtes Geld bezahlt wird", tier: 3 },
+  { term: "Zinssatz", expl: "Zins in Prozent des Kapitals pro Jahr", tier: 3 },
+  { term: "Jahreszins", expl: "Zins, der für ein volles Jahr berechnet wird", tier: 3 },
+  { term: "Kombinatorik", expl: "Lehre vom Zählen von Möglichkeiten", tier: 3 },
+  { term: "Permutation", expl: "Anordnung von Elementen in einer bestimmten Reihenfolge", tier: 3 }
+];
+function generateFachbegriff(maxTier) {
+  const pool = FACHBEGRIFFE.filter(f => f.tier <= maxTier);
+  const item = pool[rnd(0, pool.length - 1)];
+  const askForExpl = Math.random() < 0.5;
+  const correctText = askForExpl ? item.expl : item.term;
+  const shuffled = pool.filter(f => f !== item).sort(() => Math.random() - 0.5);
+  const distractors = [];
+  for (const d of shuffled) {
+    const text = askForExpl ? d.expl : d.term;
+    if (text !== correctText && !distractors.includes(text)) distractors.push(text);
+    if (distractors.length === 3) break;
+  }
+  const options = [correctText, ...distractors].sort(() => Math.random() - 0.5);
+  const prompt = askForExpl
+    ? `Was bedeutet der Fachbegriff: „${item.term}“?`
+    : `Welcher Fachbegriff passt zu dieser Erklärung: „${item.expl}“?`;
+  return { visual: null, prompt, answerType: "mc", options, correct: correctText };
+}
+
+/* =========================================================================
    KAPITEL- UND KATEGORIE-STRUKTUR
    ========================================================================= */
 const EXERCISE_INFO = {
@@ -1129,6 +1368,9 @@ const EXERCISE_INFO = {
   "bw-winkel-1": { d: "Berechne den Ergänzungswinkel zu 90° oder 180°.", g: "Komplementär- und Supplementärwinkel verstehen." },
   "bw-winkel-2": { d: "Berechne den fehlenden Winkel in einem Dreieck, wenn zwei Winkel bekannt sind.", g: "Winkelsumme im Dreieck (180°) anwenden." },
   "bw-winkel-3": { d: "Berechne den fehlenden Winkel in einem Viereck, wenn drei Winkel bekannt sind.", g: "Winkelsumme im Viereck (360°) anwenden." },
+  "bw-fach-1": { d: "Ordne Fachbegriffe des 1. Jahres ihrer richtigen Erklärung zu (und umgekehrt).", g: "Grundlegendes mathematisches Vokabular sicher verstehen und anwenden." },
+  "bw-fach-2": { d: "Ordne Fachbegriffe bis und mit 2. Jahr ihrer richtigen Erklärung zu (und umgekehrt).", g: "Mathematisches Vokabular bis zum 2. Jahr sicher verstehen und anwenden." },
+  "bw-fach-3": { d: "Ordne Fachbegriffe bis und mit 3. Jahr ihrer richtigen Erklärung zu (und umgekehrt).", g: "Das gesamte mathematische Vokabular der Sek 1 sicher verstehen und anwenden." },
   "1a-1": { d: "Bestimme die Anzahl Symmetrieachsen einer Figur.", g: "Achsensymmetrie an Figuren erkennen." },
   "1b-1": { d: "Bestimme die Drehsymmetrie-Ordnung einer Figur.", g: "Drehsymmetrie an Figuren erkennen." },
   "1c-x": { d: "Spiegle einen Punkt an der x-Achse.", g: "Achsenspiegelung an der x-Achse berechnen können." },
@@ -1169,7 +1411,10 @@ const EXERCISE_INFO = {
   "7c-1": { d: "Berechne den fehlenden Winkel in einem Dreieck.", g: "Winkelsumme im Dreieck (180°) anwenden." },
   "8a-1": { d: "Fasse gleichartige Terme zusammen.", g: "Termumformungen mit Variablen durchführen können." },
   "8b-1": { d: "Löse eine lineare Gleichung nach x auf.", g: "Lineare Gleichungen lösen können." },
-  "9a-1": { d: "Bestimme Ecken, Kanten oder Flächen von Prismen und Pyramiden.", g: "Zusammenhang zwischen Grundfläche und Körpereigenschaften verstehen." },
+  "9a-bauplan": { d: "Lies einen Bauplan (Zahlengitter) und bestimme die Gesamtzahl der Würfel eines Würfelgebäudes.", g: "Würfelgebäude mit Hilfe von Bauplänen aufbauen und verstehen können." },
+  "9a-ansicht": { d: "Bestimme, wie viele Würfel eines Würfelgebäudes aus einer bestimmten Blickrichtung sichtbar sind.", g: "Würfelgebäude in Gedanken drehen/betrachten und die sichtbare Ansicht bestimmen können." },
+  "9a-gebaeude": { d: "Zähle anhand einer Schrägbild-Zeichnung, wie viele Würfel für ein Würfelgebäude verwendet wurden.", g: "Würfel und Würfelgebäude aus einer Zeichnung (Schrägbild) richtig erfassen können." },
+  "9a-flaechen": { d: "Beantworte Fragen zu den quadratischen Seitenflächen eines Würfels.", g: "Formen von Flächen im Würfel erkennen und beschreiben können." },
   "9b-vol": { d: "Berechne das Volumen eines Würfels.", g: "Volumenformel des Würfels anwenden." },
   "9b-surf": { d: "Berechne die Oberfläche eines Würfels.", g: "Oberflächenformel des Würfels anwenden." },
   "m2-1a-comp": { d: "Vergleiche zwei Brüche.", g: "Brüche der Grösse nach vergleichen können." },
@@ -1276,6 +1521,11 @@ const BASISWISSEN_CHAPTERS = [
     ex("bw-winkel-1", "Ergänzungswinkel", generateAngle, "Ergänzungswinkel zu 90° (Komplementärwinkel) bzw. zu 180° (Supplementärwinkel): ziehe den gegebenen Winkel von 90° bzw. 180° ab."),
     ex("bw-winkel-2", "Winkelsumme im Dreieck", generateTriangleAngleSum, "Die Winkelsumme im Dreieck ist immer 180°. Ziehe die beiden bekannten Winkel von 180° ab."),
     ex("bw-winkel-3", "Winkelsumme im Viereck", generateQuadAngleSum, "Die Winkelsumme im Viereck ist immer 360°. Ziehe die drei bekannten Winkel von 360° ab.")
+  ]),
+  chapter("bw-fachbegriffe", "Fachbegriffe", [
+    ex("bw-fach-1", "Fachbegriffe 1. Jahr", () => generateFachbegriff(1), "Überlege dir, in welchem Zusammenhang der Begriff im Unterricht vorkam, oder erkenne die passende Beschreibung."),
+    ex("bw-fach-2", "Fachbegriffe bis 2. Jahr", () => generateFachbegriff(2), "Überlege dir, in welchem Zusammenhang der Begriff im Unterricht vorkam, oder erkenne die passende Beschreibung."),
+    ex("bw-fach-3", "Fachbegriffe bis 3. Jahr", () => generateFachbegriff(3), "Überlege dir, in welchem Zusammenhang der Begriff im Unterricht vorkam, oder erkenne die passende Beschreibung.")
   ])
 ];
 
@@ -1354,7 +1604,10 @@ const JAHR1_CHAPTERS = [
     ex("8b-1", "Lineare Gleichung lösen", generateLinearEquation, "Bringe zuerst die Zahl ohne x auf die andere Seite, dann teile durch die Zahl vor dem x.")
   ]),
   chapter("9a", "Körper untersuchen und skizzieren", [
-    ex("9a-1", "Ecken, Kanten, Flächen bei Prismen/Pyramiden", generatePolyhedronParts, "Pyramide mit n-eckiger Grundfläche: Ecken=n+1, Kanten=2n, Flächen=n+1. Prisma mit n-eckiger Grundfläche: Ecken=2n, Kanten=3n, Flächen=n+2.")
+    ex("9a-bauplan", "Bauplan: Würfel zählen", generateBauplanCount, "Addiere alle Zahlen im Bauplan – jede Zahl gibt an, wie viele Würfel an dieser Stelle übereinander liegen."),
+    ex("9a-ansicht", "Bauplan: Ansicht bestimmen", generateBauplanView, "Schaue spaltenweise: Von jeder Spalte ist nur der höchste Turm sichtbar, die kleineren dahinter sind verdeckt. Addiere die höchsten Türme jeder Spalte."),
+    ex("9a-gebaeude", "Würfelgebäude: Würfel zählen", generateBuildingCubeCount, "Zähle für jeden sichtbaren Turm, wie viele Würfel übereinandergestapelt sind, und addiere alle Türme."),
+    ex("9a-flaechen", "Formen der Würfelflächen", generateCubeFaceShape, "Alle 6 Seitenflächen eines Würfels sind gleich grosse Quadrate.")
   ]),
   chapter("9b", "Volumen und Oberflächeninhalt", [
     ex("9b-vol", "Volumen Würfel", generateCubeVolume, "Volumen des Würfels = Kantenlänge × Kantenlänge × Kantenlänge."),
@@ -1557,6 +1810,14 @@ document.addEventListener("click", (e) => {
   if (kb) { handleKey(kb.dataset.side, kb.dataset.key); return; }
   const bb = e.target.closest("button[data-side][data-bool]");
   if (bb) { inputBuffers[bb.dataset.side] = bb.dataset.bool; submitAnswer(bb.dataset.side); return; }
+  const mb = e.target.closest("button[data-side][data-mc]");
+  if (mb) {
+    const side = mb.dataset.side;
+    const task = currentTaskFor(side);
+    const idx = Number(mb.dataset.mc);
+    if (task && task.options && task.options[idx] != null) { inputBuffers[side] = task.options[idx]; submitAnswer(side); }
+    return;
+  }
   const tb = e.target.closest("button[data-side][data-textsubmit]");
   if (tb) {
     const side = tb.dataset.side;
@@ -1626,19 +1887,21 @@ function checkAnswer(task, bufferStr) {
     return nums.length === correct.length && nums.every((v, i) => v === correct[i]);
   }
   if (task.answerType === "term") return String(bufferStr).replace(/\s+/g, "").toLowerCase() === String(task.correct).replace(/\s+/g, "").toLowerCase();
+  if (task.answerType === "mc") return String(bufferStr) === String(task.correct);
   const val = parseFloat(bufferStr);
   return !isNaN(val) && Math.abs(val - task.correct) < 0.01;
 }
 function flash(elId, cls) { const el = document.getElementById(elId); if (!el) return; el.classList.remove("wrong-flash", "correct-flash"); void el.offsetWidth; el.classList.add(cls); }
 function setWidgetMode(prefix, answerType, pairStyle) {
   const kp = document.getElementById(`${prefix}_keypadWrap`), bw = document.getElementById(`${prefix}_boolWrap`), tw = document.getElementById(`${prefix}_textWrap`);
-  const pw = document.getElementById(`${prefix}_pairWrap`), vr = document.getElementById(`${prefix}_varRow`);
+  const pw = document.getElementById(`${prefix}_pairWrap`), vr = document.getElementById(`${prefix}_varRow`), mw = document.getElementById(`${prefix}_mcWrap`);
   const disp = document.getElementById(`${prefix}_input`);
-  [kp, bw, tw, pw, vr].forEach(el => el.classList.add("hidden"));
+  [kp, bw, tw, pw, vr, mw].forEach(el => el.classList.add("hidden"));
   if (disp) disp.classList.add("hidden");
   if (answerType === "none") return;
   if (answerType === "boolean") { bw.classList.remove("hidden"); return; }
   if (answerType === "text" || answerType === "factors" || answerType === "sci") { tw.classList.remove("hidden"); return; }
+  if (answerType === "mc") { mw.classList.remove("hidden"); return; }
   if (answerType === "pair") {
     pw.classList.remove("hidden"); kp.classList.remove("hidden");
     const boxesEl = document.getElementById(`${prefix}_pairBoxes`), sepEl = document.getElementById(`${prefix}_pairSep`);
@@ -1648,6 +1911,13 @@ function setWidgetMode(prefix, answerType, pairStyle) {
   }
   if (answerType === "term") { disp.classList.remove("hidden"); kp.classList.remove("hidden"); vr.classList.remove("hidden"); return; }
   disp.classList.remove("hidden"); kp.classList.remove("hidden");
+}
+function renderMcOptions(prefix, task) {
+  if (!task || task.answerType !== "mc") return;
+  for (let i = 0; i < 4; i++) {
+    const btn = document.getElementById(`${prefix}_mcWrap`).children[i];
+    btn.textContent = task.options[i] || "";
+  }
 }
 
 /* =========================================================================
@@ -1702,6 +1972,7 @@ function nextSoloTask() {
   document.getElementById("solo_visual").innerHTML = soloCurrent.visual || "";
   document.getElementById("solo_prompt").textContent = soloCurrent.prompt;
   setWidgetMode("solo", soloCurrent.answerType, soloCurrent.pairStyle);
+  renderMcOptions("solo", soloCurrent);
   document.getElementById("solo_textInput").value = "";
   renderBuffer("solo");
   renderPairBuffer("solo");
@@ -1710,8 +1981,9 @@ function nextSoloTask() {
 function submitSolo() {
   if (!soloRunning) return;
   const ok = checkAnswer(soloCurrent, inputBuffers.solo);
-  if (ok) { soloScore++; document.getElementById("solo_score").textContent = `Richtig: ${soloScore}`; flash("solo_input", "correct-flash"); setTimeout(nextSoloTask, 250); }
-  else { flash("solo_input", "wrong-flash"); inputBuffers.solo = ""; renderBuffer("solo"); }
+  const soloFlashId = soloCurrent.answerType === "mc" ? "solo_mcWrap" : "solo_input";
+  if (ok) { soloScore++; document.getElementById("solo_score").textContent = `Richtig: ${soloScore}`; flash(soloFlashId, "correct-flash"); setTimeout(nextSoloTask, 250); }
+  else { flash(soloFlashId, "wrong-flash"); inputBuffers.solo = ""; renderBuffer("solo"); }
 }
 function finishSolo() {
   clearInterval(soloInterval);
@@ -1835,6 +2107,7 @@ function revealDuellSide(side) {
   document.getElementById(`duell_${side}_prompt`).textContent = task.prompt;
   activePart[side] = "a";
   setWidgetMode(`duell_${side}`, task.answerType, task.pairStyle);
+  renderMcOptions(`duell_${side}`, task);
   const ti = document.getElementById(`duell_${side}_textInput`); if (ti) ti.value = "";
   renderBuffer(side);
   renderPairBuffer(side);
@@ -1870,7 +2143,7 @@ function submitAnswer(side) {
   if (!duellRunning) return;
   const task = duellTasks[side];
   const ok = checkAnswer(task, inputBuffers[side]);
-  const inputElId = `duell_${side}_input`;
+  const inputElId = task.answerType === "mc" ? `duell_${side}_mcWrap` : `duell_${side}_input`;
   if (ok) {
     duellScores[side]++;
     flash(inputElId, "correct-flash");
@@ -1948,7 +2221,7 @@ function vkSubmitAnswer(side) {
   if (!vkRunning) return;
   const idx = Number(side.slice(2));
   const ok = checkAnswer(vkTask, inputBuffers[side]);
-  const inputElId = `duell_${side}_input`;
+  const inputElId = vkTask.answerType === "mc" ? `duell_${side}_mcWrap` : `duell_${side}_input`;
   if (ok) {
     vkScores[idx]++;
     flash(inputElId, "correct-flash");

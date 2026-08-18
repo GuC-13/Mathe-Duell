@@ -27,6 +27,13 @@
   .back-row { margin-bottom: 14px; }
 
   /* Home: 4 Kategorie-Boxen */
+  .lp21-link { display: block; margin: 28px auto 0; background: none; border: none; color: var(--muted); font-size: 0.72rem; text-decoration: underline; cursor: pointer; padding: 6px; }
+  .lp21-intro { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; }
+  .lp21-block { margin-bottom: 22px; }
+  .lp21-block h2 { font-size: 1.05rem; margin: 0 0 6px; }
+  .lp21-sub { font-weight: 700; font-size: 0.85rem; margin: 10px 0 4px; }
+  .lp21-chapters { font-size: 0.85rem; color: var(--text); line-height: 1.6; margin: 0; }
+  .lp21-missing .lp21-chapters { line-height: 1.9; }
   .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .cat-tile { border: none; border-radius: 16px; padding: 30px 12px; cursor: pointer; color: white; font-weight: 800; font-size: 1.1rem; text-align: center; }
   .cat-basiswissen { background: linear-gradient(135deg, #16a34a, #14532d); }
@@ -193,6 +200,7 @@
       <button class="cat-tile cat-jahr2" data-cat="jahr2"><span class="ti">2️⃣</span>Mathematik 2. Jahr</button>
       <button class="cat-tile cat-jahr3" data-cat="jahr3"><span class="ti">3️⃣</span>Mathematik 3. Jahr</button>
     </div>
+    <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
   </div>
 
   <!-- KATEGORIE: Kapitel-Liste -->
@@ -648,6 +656,51 @@
     </div>
   </div>
 
+  <!-- LEHRPLAN 21 -->
+  <div id="lp21View" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>📘 Lehrplan 21 – Kompetenzbezug</h1>
+    <p class="lp21-intro">Diese Übersicht zeigt, welchem Kompetenzbereich des Lehrplans 21 (Fach Mathematik) die einzelnen Spiele/Kapitel dieser App zugeordnet werden können.</p>
+
+    <div class="lp21-block">
+      <h2>MA.1 Zahl und Variable</h2>
+      <p class="lp21-sub">Operieren und Berechnen mit Zahlen, Termen und Gleichungen</p>
+      <p class="lp21-chapters">Kopfrechnen · Brüche erweitern/kürzen · Prozent ⇄ Dezimalzahl · Bruch ⇄ Dezimalzahl · ggT und kgV · Grundrechenarten · Runden · Fachbegriffe · Potenzen/Regeln und Gesetze · Variablen · Teiler, Vielfache und Primzahlen · Negative Zahlen · Grundoperationen (Vorzeichen) · Terme und Termumformungen · Gleichungen (1. und 2. Jahr: lineare Gleichung, 2-Schritt-Gleichung) · Brüche · Grundoperationen mit Brüchen · Gleichungen, Folgen und Wurzeln · Potenzen und Wurzeln · Gleichungen und Ungleichungen · Gleichungssysteme · Fibonacci-Folge und Goldener Schnitt</p>
+    </div>
+
+    <div class="lp21-block">
+      <h2>MA.2 Form und Raum</h2>
+      <p class="lp21-sub">Figuren, Symmetrien und Koordinatensysteme erkennen</p>
+      <p class="lp21-chapters">Achsensymmetrie · Drehsymmetrie · Achsenspiegelung · Punktspiegelung · Koordinatensystem · Winkel bestimmen · Koordinaten · Vielfalt der Vierecksformen · Dreiecke · Körper untersuchen und skizzieren (Vierecke/Dreiecke im Würfel)</p>
+      <p class="lp21-sub">Flächen, Umfang, Volumen und Oberfläche berechnen</p>
+      <p class="lp21-chapters">Flächen und Volumen · Geometrische Körper und ihre Netze · Umfang und Flächeninhalt von Rechtecken · Volumen und Oberflächeninhalt (Würfel) · Sätze von Thales und Pythagoras (alle 4 Kapitel) · Das gerade Prisma · Volumen/Oberfläche Prisma · Die Pyramide · Kreisumfang und Kreisfläche · Kreissektor · Zylinder · Ähnliche Figuren · Streckung/Ähnlichkeit bei Körpern · Der Kegel und die Kugel · Regelmässige Körper · Der Fussball (Eulersche Polyederformel)</p>
+    </div>
+
+    <div class="lp21-block">
+      <h2>MA.3 Grössen, Funktionen, Daten und Zufall</h2>
+      <p class="lp21-sub">Grössen, Masseinheiten und Sachrechnen</p>
+      <p class="lp21-chapters">Masseinheiten umrechnen · Grössen und Prozente · Preise – Aktionen – Mehrwertsteuer · Währungen und Budget · Weg – Zeit – Geschwindigkeit · Steigung und Gefälle · Jahreszins und Marchzins · Konsumkredit und Leasing · Der Schattenwurf · Mobilität</p>
+      <p class="lp21-sub">Funktionale Zusammenhänge und Zuordnungen</p>
+      <p class="lp21-chapters">Zuordnungen und Abhängigkeiten · Proportionalität · Umgekehrte Proportionalität · Geraden · Lineare und nicht lineare Funktionen · Vom Bild zum Term</p>
+      <p class="lp21-sub">Daten und Zufall</p>
+      <p class="lp21-chapters">Daten darstellen · Regelmässigkeiten des Zufalls · Baumdarstellungen · Statistische Kennwerte · Simulationen/Statistik praktisch · Kombinatorik · Die Umfrage</p>
+    </div>
+
+    <div class="lp21-block lp21-missing">
+      <h2>Kompetenzen, die in dieser App nicht geübt werden können</h2>
+      <p class="lp21-chapters">
+        • Exaktes Konstruieren mit Zirkel, Lineal und Geodreieck<br>
+        • Freihändiges Skizzieren von Figuren und Körpern (echtes Zeichnen von Hand)<br>
+        • Schriftliches oder mündliches Begründen/Argumentieren (Beweise, Herleitungen in eigenen Worten)<br>
+        • Offenes Modellieren komplexer Sachaufgaben ohne vorgegebene Formel oder mit mehreren Lösungswegen<br>
+        • Arbeiten mit konkretem Material (Messen mit Massstab, Bauen von Körpermodellen)<br>
+        • Dokumentation des Rechenwegs (schriftliche Verfahren aufschreiben, nicht nur das Resultat eingeben)<br>
+        • Mathematisches Kommunizieren im Austausch mit anderen (Erklären, Diskutieren, Vergleichen von Lösungswegen)<br>
+        • Offenes Erkunden/Explorieren von Fragestellungen ohne eindeutig richtige Antwort
+      </p>
+    </div>
+  </div>
+
 </div>
 
 <div class="modal-overlay hidden" id="confirmOverlay">
@@ -706,6 +759,7 @@ function showView(name) {
   document.getElementById(name + "View").classList.remove("hidden");
 }
 document.querySelectorAll("[data-back-home]").forEach(b => b.addEventListener("click", () => { stopDuellTimerIfRunning(); showView("home"); }));
+document.getElementById("lp21LinkBtn").addEventListener("click", () => showView("lp21"));
 document.getElementById("categoryView").querySelector("[data-back-home]");
 document.querySelectorAll("[data-back-category]").forEach(b => b.addEventListener("click", () => showView("category")));
 document.querySelectorAll("[data-back-chapter]").forEach(b => b.addEventListener("click", () => showView("chapter")));
@@ -813,6 +867,14 @@ function generateDecimalToPercent() { const d = rnd(1, 99) / 100; return { visua
 function generateFractionToDecimal() { const dens = [2, 4, 5, 8, 10, 20, 25, 50, 100]; const den = dens[rnd(0, dens.length - 1)]; const num = rnd(1, den - 1); return { visual: null, prompt: `Wandle den Bruch ${num}/${den} in eine Dezimalzahl um.`, answerType: "number", correct: Math.round((num / den) * 1000) / 1000 }; }
 function generateDecimalToFraction() { const den = [10, 100][rnd(0, 1)]; const num = rnd(1, den - 1); const g = gcdFn(num, den); const redNum = num / g, redDen = den / g; return { visual: null, prompt: `Wandle ${num / den} in einen vollständig gekürzten Bruch um.`, answerType: "pair", pairStyle: "fraction", correct: [redNum, redDen] }; }
 function generateCoordinateRead() { const x = rnd(-6, 6), y = rnd(-6, 6); return { visual: coordinateGridSVG(x, y), prompt: `Welche Koordinaten hat der markierte Punkt?`, answerType: "pair", pairStyle: "coordinate", correct: [x, y] }; }
+function generateCoordinateOffset() {
+  const dx = rndNonZero(-5, 5), dy = rndNonZero(-5, 5);
+  let x, y;
+  do { x = rnd(-6, 6); y = rnd(-6, 6); } while (x + dx < -6 || x + dx > 6 || y + dy < -6 || y + dy > 6);
+  const dxText = dx > 0 ? `${dx} nach rechts (x+${dx})` : `${Math.abs(dx)} nach links (x−${Math.abs(dx)})`;
+  const dyText = dy > 0 ? `${dy} nach oben (y+${dy})` : `${Math.abs(dy)} nach unten (y−${Math.abs(dy)})`;
+  return { visual: coordinateGridSVG(x, y), prompt: `Ausgehend vom markierten Punkt P liegt Q ${dxText} und ${dyText}. Welche Koordinaten hat Q?`, answerType: "pair", pairStyle: "coordinate", correct: [x + dx, y + dy] };
+}
 const UNIT_SETS = [
   { from: "cm", to: "m", factor: 0.01 }, { from: "m", to: "cm", factor: 100 },
   { from: "m", to: "km", factor: 0.001 }, { from: "km", to: "m", factor: 1000 },
@@ -896,10 +958,11 @@ function generateRectPerimeter() { const l = rnd(3, 25), b = rnd(3, 25); return 
 function generateRectArea7a() { const l = rnd(3, 25), b = rnd(3, 25); return { visual: null, prompt: `Berechne die Fläche eines Rechtecks mit Länge ${l} cm und Breite ${b} cm (in cm²).`, answerType: "number", correct: l * b }; }
 
 const QUAD_FACTS = [
-  { name: "Quadrat", rightAngles: 4 }, { name: "Rechteck", rightAngles: 4 },
-  { name: "Parallelogramm", rightAngles: 0 }, { name: "Raute", rightAngles: 0 }, { name: "Trapez", rightAngles: 0 }
+  { name: "Quadrat", rightAngles: 4, parallelPairs: 2 }, { name: "Rechteck", rightAngles: 4, parallelPairs: 2 },
+  { name: "Parallelogramm", rightAngles: 0, parallelPairs: 2 }, { name: "Raute", rightAngles: 0, parallelPairs: 2 }, { name: "Trapez", rightAngles: 0, parallelPairs: 1 }
 ];
 function generateQuadRightAngles() { const q = QUAD_FACTS[rnd(0, QUAD_FACTS.length - 1)]; return { visual: null, prompt: `Wie viele rechte Winkel hat ein ${q.name} (im Allgemeinen)?`, answerType: "number", correct: q.rightAngles }; }
+function generateQuadParallelSides() { const q = QUAD_FACTS[rnd(0, QUAD_FACTS.length - 1)]; return { visual: null, prompt: `Wie viele Paare paralleler Seiten hat ein ${q.name} (im Allgemeinen)?`, answerType: "number", correct: q.parallelPairs }; }
 
 function generateTriangleAngleSum() { const a = rnd(20, 120), b = rnd(20, 150 - a > 20 ? 150 - a : 20); const c = 180 - a - b; return { visual: null, prompt: `In einem Dreieck sind zwei Winkel ${a}° und ${b}° gross. Wie gross ist der dritte Winkel?`, answerType: "number", correct: c }; }
 function generateQuadAngleSum() { let a, b, c, d; do { a = rnd(40, 140); b = rnd(40, 140); c = rnd(40, 140); d = 360 - a - b - c; } while (d < 20 || d > 160); return { visual: null, prompt: `In einem Viereck sind drei Winkel ${a}°, ${b}° und ${c}° gross. Wie gross ist der vierte Winkel?`, answerType: "number", correct: d }; }
@@ -1338,6 +1401,7 @@ const EXERCISE_INFO = {
   "bw-b2d": { d: "Wandle einen Bruch in eine Dezimalzahl um.", g: "Brüche als Division verstehen und berechnen." },
   "bw-d2b": { d: "Wandle eine Dezimalzahl in einen vollständig gekürzten Bruch um.", g: "Zusammenhang zwischen Dezimalzahl und Bruch verstehen." },
   "bw-koord-1": { d: "Lies die Koordinaten eines markierten Punktes im Koordinatensystem ab.", g: "Sich im Koordinatensystem orientieren können." },
+  "bw-koord-2": { d: "Bestimme die Koordinaten eines Punktes Q, der um eine angegebene Verschiebung vom markierten Punkt P entfernt liegt.", g: "Mit Koordinaten rechnen und Verschiebungen im Koordinatensystem verstehen." },
   "bw-mass-1": { d: "Wandle zwischen gängigen Masseinheiten um (Länge, Gewicht, Volumen, Zeit).", g: "Grössenvorstellung für Masseinheiten entwickeln." },
   "bw-ggt": { d: "Bestimme den grössten gemeinsamen Teiler (ggT) zweier Zahlen.", g: "Teilerbeziehungen zwischen Zahlen erkennen." },
   "bw-kgv": { d: "Bestimme das kleinste gemeinsame Vielfache (kgV) zweier Zahlen.", g: "Vielfachenbeziehungen zwischen Zahlen erkennen." },
@@ -1382,6 +1446,7 @@ const EXERCISE_INFO = {
   "6a-compare": { d: "Vergleiche zwei negative Zahlen.", g: "Grössenvergleich bei negativen Zahlen sicher durchführen." },
   "6a-order": { d: "Entscheide, welche von zwei ganzen Zahlen grösser ist.", g: "Ganze Zahlen der Grösse nach ordnen können." },
   "6b-read": { d: "Lies die Koordinaten eines Punktes ab (auch mit negativen Werten).", g: "Sich im Koordinatensystem mit allen vier Quadranten orientieren." },
+  "6b-offset": { d: "Bestimme die Koordinaten eines Punktes Q, der um eine angegebene Verschiebung vom markierten Punkt P entfernt liegt.", g: "Mit Koordinaten rechnen und Verschiebungen im Koordinatensystem verstehen." },
   "6b-quad": { d: "Bestimme, in welchem Quadranten ein Punkt liegt.", g: "Die vier Quadranten des Koordinatensystems kennen." },
   "6c-addsub": { d: "Addiere und subtrahiere ganze Zahlen mit Vorzeichen.", g: "Rechenregeln für Vorzeichen bei Addition/Subtraktion anwenden." },
   "6c-mul": { d: "Multipliziere ganze Zahlen mit Vorzeichen.", g: "Vorzeichenregeln bei der Multiplikation anwenden." },
@@ -1389,6 +1454,7 @@ const EXERCISE_INFO = {
   "7a-umfang": { d: "Berechne den Umfang eines Rechtecks.", g: "Umfangsformel des Rechtecks anwenden." },
   "7a-flaeche": { d: "Berechne die Fläche eines Rechtecks.", g: "Flächenformel des Rechtecks anwenden." },
   "7b-1": { d: "Bestimme, wie viele rechte Winkel ein Viereck hat.", g: "Eigenschaften verschiedener Vierecksformen kennen." },
+  "7b-2": { d: "Bestimme, wie viele Paare paralleler Seiten ein Viereck hat.", g: "Eigenschaften verschiedener Vierecksformen kennen." },
   "7c-1": { d: "Berechne den fehlenden Winkel in einem Dreieck.", g: "Winkelsumme im Dreieck (180°) anwenden." },
   "8a-1": { d: "Fasse gleichartige Terme zusammen.", g: "Termumformungen mit Variablen durchführen können." },
   "8b-1": { d: "Löse eine lineare Gleichung nach x auf.", g: "Lineare Gleichungen lösen können." },
@@ -1480,7 +1546,8 @@ const BASISWISSEN_CHAPTERS = [
     ex("bw-d2b", "Dezimalzahl → Bruch", generateDecimalToFraction, "Zähle die Nachkommastellen: 1 Stelle = Zehntel (/10), 2 Stellen = Hundertstel (/100).")
   ]),
   chapter("bw-koord", "Koordinatensystem", [
-    ex("bw-koord-1", "Punkte ablesen", generateCoordinateRead, "Die erste Zahl (x) ist der Wert auf der waagrechten Achse, die zweite (y) auf der senkrechten Achse.")
+    ex("bw-koord-1", "Punkte ablesen", generateCoordinateRead, "Die erste Zahl (x) ist der Wert auf der waagrechten Achse, die zweite (y) auf der senkrechten Achse."),
+    ex("bw-koord-2", "Punkt verschieben", generateCoordinateOffset, "Lies zuerst die Koordinaten von P ab, dann rechne die Verschiebung auf x und y separat dazu bzw. davon ab.")
   ]),
   chapter("bw-mass", "Masseinheiten umrechnen", [
     ex("bw-mass-1", "Masseinheiten umrechnen", generateUnitConversion, "Überlege, ob die neue Einheit grösser oder kleiner ist: bei einer grösseren Einheit wird die Zahl kleiner, bei einer kleineren Einheit wird die Zahl grösser.")
@@ -1561,6 +1628,7 @@ const JAHR1_CHAPTERS = [
   ]),
   chapter("6b", "Koordinaten", [
     ex("6b-read", "Punkte ablesen", generateCoordinateRead, "Die erste Zahl (x) ist der Wert auf der waagrechten Achse, die zweite (y) auf der senkrechten Achse."),
+    ex("6b-offset", "Punkt verschieben", generateCoordinateOffset, "Lies zuerst die Koordinaten von P ab, dann rechne die Verschiebung auf x und y separat dazu bzw. davon ab."),
     ex("6b-quad", "Quadranten bestimmen", generateQuadrant, "I: x>0,y>0 · II: x<0,y>0 · III: x<0,y<0 · IV: x>0,y<0.")
   ]),
   chapter("6c", "Grundoperationen", [
@@ -1573,7 +1641,8 @@ const JAHR1_CHAPTERS = [
     ex("7a-flaeche", "Fläche berechnen", generateRectArea7a, "Fläche = Länge × Breite.")
   ]),
   chapter("7b", "Vielfalt der Vierecksformen", [
-    ex("7b-1", "Rechte Winkel zählen", generateQuadRightAngles, "Überlege dir die typische Form: Quadrat und Rechteck haben 4 rechte Winkel, die anderen Vierecke im Allgemeinen keine.")
+    ex("7b-1", "Rechte Winkel zählen", generateQuadRightAngles, "Überlege dir die typische Form: Quadrat und Rechteck haben 4 rechte Winkel, die anderen Vierecke im Allgemeinen keine."),
+    ex("7b-2", "Parallele Seiten zählen", generateQuadParallelSides, "Quadrat, Rechteck, Parallelogramm und Raute haben 2 Paare paralleler Seiten, ein Trapez nur 1 Paar.")
   ]),
   chapter("7c", "Dreiecke", [
     ex("7c-1", "Winkelsumme im Dreieck", generateTriangleAngleSum, "Die Winkelsumme im Dreieck ist immer 180°. Ziehe die beiden bekannten Winkel von 180° ab.")

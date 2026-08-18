@@ -28,12 +28,19 @@
 
   /* Home: 4 Kategorie-Boxen */
   .lp21-link { display: block; margin: 28px auto 0; background: none; border: none; color: var(--muted); font-size: 0.72rem; text-decoration: underline; cursor: pointer; padding: 6px; }
-  .lp21-intro { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; }
-  .lp21-block { margin-bottom: 22px; }
-  .lp21-block h2 { font-size: 1.05rem; margin: 0 0 6px; }
+  .lp21-intro { color: var(--muted); font-size: 0.9rem; margin-bottom: 8px; }
+  .lp21-source { color: var(--muted); font-size: 0.72rem; margin-bottom: 20px; font-style: italic; }
+  .lp21-block { margin-bottom: 26px; }
+  .lp21-block > h2 { font-size: 1.15rem; margin: 0 0 4px; padding-top: 10px; border-top: 3px solid var(--accent); }
+  .lp21-block > p.lp21-sub { font-size: 0.85rem; color: var(--muted); margin: 0 0 14px; }
   .lp21-sub { font-weight: 700; font-size: 0.85rem; margin: 10px 0 4px; }
   .lp21-chapters { font-size: 0.85rem; color: var(--text); line-height: 1.6; margin: 0; }
   .lp21-missing .lp21-chapters { line-height: 1.9; }
+  .lp21-comp { margin-bottom: 16px; padding: 10px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; }
+  .lp21-code { font-weight: 800; font-size: 0.92rem; }
+  .lp21-zyklus { display: inline-block; margin-left: 8px; font-size: 0.66rem; font-weight: 700; background: #e0e7ff; color: #3730a3; padding: 2px 7px; border-radius: 10px; vertical-align: middle; }
+  .lp21-desc { font-size: 0.8rem; color: var(--muted); font-style: italic; margin: 4px 0 6px; }
+  .lp21-list { margin: 0; padding-left: 18px; font-size: 0.85rem; line-height: 1.55; }
   .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .cat-tile { border: none; border-radius: 16px; padding: 30px 12px; cursor: pointer; color: white; font-weight: 800; font-size: 1.1rem; text-align: center; }
   .cat-basiswissen { background: linear-gradient(135deg, #16a34a, #14532d); }
@@ -660,30 +667,321 @@
   <div id="lp21View" class="view hidden">
     <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
     <h1>📘 Lehrplan 21 – Kompetenzbezug</h1>
-    <p class="lp21-intro">Diese Übersicht zeigt, welchem Kompetenzbereich des Lehrplans 21 (Fach Mathematik) die einzelnen Spiele/Kapitel dieser App zugeordnet werden können.</p>
+    <p class="lp21-intro">Diese Übersicht zeigt, welcher Kompetenz des Lehrplans 21 (Fachbereich Mathematik) die einzelnen Spiele/Kapitel dieser App zugeordnet werden können – bis auf Stufe der einzelnen Kompetenzstufe (Buchstabe) und des zugehörigen Zyklus.</p>
+    <p class="lp21-source">Quelle der Kompetenzcodes und Zitate: Fachbereichslehrplan Mathematik, Lehrplan Volksschule Basel-Landschaft (Vorlage D-EDK Lehrplan 21), 01.08.2018. Basiswissen-Kapitel wiederholen mehrheitlich Zyklus-2-Stoff, die Jahr-1-bis-3-Kapitel (Sek I) liegen im Zyklus 3 – einzelne Kompetenzstufen weichen davon ab, wie unten vermerkt.</p>
 
     <div class="lp21-block">
-      <h2>MA.1 Zahl und Variable</h2>
-      <p class="lp21-sub">Operieren und Berechnen mit Zahlen, Termen und Gleichungen</p>
-      <p class="lp21-chapters">Kopfrechnen · Brüche erweitern/kürzen · Prozent ⇄ Dezimalzahl · Bruch ⇄ Dezimalzahl · ggT und kgV · Grundrechenarten · Runden · Fachbegriffe · Potenzen/Regeln und Gesetze · Variablen · Teiler, Vielfache und Primzahlen · Negative Zahlen · Grundoperationen (Vorzeichen) · Terme und Termumformungen · Gleichungen (1. und 2. Jahr: lineare Gleichung, 2-Schritt-Gleichung) · Brüche · Grundoperationen mit Brüchen · Gleichungen, Folgen und Wurzeln · Potenzen und Wurzeln · Gleichungen und Ungleichungen · Gleichungssysteme · Fibonacci-Folge und Goldener Schnitt</p>
+      <h2>M.1 Zahl und Variable</h2>
+      <p class="lp21-sub">A Operieren und Benennen, B Erforschen und Argumentieren, C Mathematisieren und Darstellen</p>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.1.A.1 g–h <span class="lp21-zyklus">Zyklus 2</span></div>
+        <p class="lp21-desc">„können Dezimalzahlen und Brüche lesen und schreiben … können Brüche, Dezimalzahlen und Prozentzahlen je in die beiden anderen Schreibweisen übertragen.“</p>
+        <ul class="lp21-list">
+          <li><strong>Basiswissen:</strong> Prozent und Dezimalzahl</li>
+          <li><strong>Basiswissen:</strong> Bruch und Dezimalzahl</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.1.A.3 d <span class="lp21-zyklus">Zyklus 2</span></div>
+        <p class="lp21-desc">„können beim Addieren und Subtrahieren Rechenwege notieren und Ergebnisse überprüfen … können schriftlich addieren und subtrahieren; kennen die Produkte des kleinen Einmaleins.“</p>
+        <ul class="lp21-list">
+          <li><strong>Basiswissen:</strong> Kopfrechnen (bis 100 / 200 / 500)</li>
+          <li><strong>Basiswissen:</strong> Grundrechenarten</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.1.A.4 f–g <span class="lp21-zyklus">Zyklus 2</span></div>
+        <p class="lp21-desc">„können natürliche Zahlen auf 10er, 100er und 1'000er runden … können Dezimalzahlen runden.“</p>
+        <ul class="lp21-list">
+          <li><strong>Basiswissen:</strong> Runden</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.1.A.3 f <span class="lp21-zyklus">Zyklus 2</span></div>
+        <p class="lp21-desc">„können Brüche mit den Nennern 2, 3, 4, 5, 6, 8, 10, 20, 50, 100 am Rechteckmodell kürzen, erweitern, addieren und subtrahieren.“</p>
+        <ul class="lp21-list">
+          <li><strong>Basiswissen:</strong> Brüche erweitern und kürzen</li>
+          <li><strong>Jahr 2:</strong> Brüche</li>
+          <li><strong>Jahr 2:</strong> Grundoperationen mit Brüchen</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.1.A.4 h <span class="lp21-zyklus">Zyklus 3 (Erweiterung)</span></div>
+        <p class="lp21-desc">„Erweiterung: können Teilbarkeitsregeln durch 3, 4, 6, 8, 9, 25, 50 nutzen und Teiler natürlicher Zahlen bestimmen.“</p>
+        <ul class="lp21-list">
+          <li><strong>Basiswissen:</strong> ggT und kgV</li>
+          <li><strong>Jahr 1:</strong> Teiler, Vielfache und Primzahlen</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.1.A.1 i <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„verstehen und verwenden die Begriffe Term, Variable, Unbekannte, hoch, Potenz, Zehnerpotenz, Vorzeichen, positive Zahlen, negative Zahlen, (Quadrat-)Wurzel.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 1:</strong> Potenzen/Regeln und Gesetze</li>
+          <li><strong>Jahr 1:</strong> Variablen</li>
+          <li><strong>Jahr 1:</strong> Negative Zahlen</li>
+          <li><strong>Jahr 1:</strong> Grundoperationen (mit Vorzeichen)</li>
+          <li><strong>Jahr 2:</strong> Gleichungen, Folgen und Wurzeln</li>
+          <li><strong>Jahr 3:</strong> Potenzen und Wurzeln</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.1.A.4 h <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können die Rechenregeln Punkt vor Strich und die Klammerregeln befolgen (z.B. 4 + 8 - 2 · 3 = 6; (4 + 8 - 2) · 3 = 30).“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 1:</strong> Potenzen/Regeln und Gesetze (Punkt-vor-Strich-Teil)</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.1.A.4 j, k <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„Erweiterung: können lineare Gleichungen mit einer Variablen mit Äquivalenzumformungen lösen … können Terme mit Variablen addieren und subtrahieren.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 1:</strong> Terme und Termumformungen</li>
+          <li><strong>Jahr 1:</strong> Gleichungen</li>
+          <li><strong>Jahr 2:</strong> Gleichungen, Folgen und Wurzeln (Gleichung-lösen-Teil)</li>
+          <li><strong>Jahr 3:</strong> Gleichungen und Ungleichungen</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.1.A.4 m <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können lineare Gleichungssysteme mit 2 Unbekannten lösen.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 3:</strong> Gleichungssysteme</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.1.B.1 i, j <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können arithmetische Zusammenhänge durch systematisches Variieren von Zahlen, Stellenwerten und Operationen erforschen … Erweiterung: können arithmetische Muster bilden, weiterführen, verändern und algebraisch beschreiben.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 2:</strong> Gleichungen, Folgen und Wurzeln (Zahlenfolge fortsetzen)</li>
+          <li><strong>Jahr 3:</strong> Vom Bild zum Term</li>
+          <li><strong>Jahr 3:</strong> Fibonacci-Folge und Goldener Schnitt</li>
+        </ul>
+      </div>
     </div>
 
     <div class="lp21-block">
-      <h2>MA.2 Form und Raum</h2>
-      <p class="lp21-sub">Figuren, Symmetrien und Koordinatensysteme erkennen</p>
-      <p class="lp21-chapters">Achsensymmetrie · Drehsymmetrie · Achsenspiegelung · Punktspiegelung · Koordinatensystem · Winkel bestimmen · Koordinaten · Vielfalt der Vierecksformen · Dreiecke · Körper untersuchen und skizzieren (Vierecke/Dreiecke im Würfel)</p>
-      <p class="lp21-sub">Flächen, Umfang, Volumen und Oberfläche berechnen</p>
-      <p class="lp21-chapters">Flächen und Volumen · Geometrische Körper und ihre Netze · Umfang und Flächeninhalt von Rechtecken · Volumen und Oberflächeninhalt (Würfel) · Sätze von Thales und Pythagoras (alle 4 Kapitel) · Das gerade Prisma · Volumen/Oberfläche Prisma · Die Pyramide · Kreisumfang und Kreisfläche · Kreissektor · Zylinder · Ähnliche Figuren · Streckung/Ähnlichkeit bei Körpern · Der Kegel und die Kugel · Regelmässige Körper · Der Fussball (Eulersche Polyederformel)</p>
+      <h2>M.2 Form und Raum</h2>
+      <p class="lp21-sub">A Operieren und Benennen, B Erforschen und Argumentieren, C Mathematisieren und Darstellen</p>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.2.A.1 e <span class="lp21-zyklus">Zyklus 2</span></div>
+        <p class="lp21-desc">„verstehen und verwenden die Begriffe Punkt, Ecke, Kante, Seitenfläche, Würfel, Quader.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 1:</strong> Geometrische Körper und ihre Netze</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.2.A.1 g <span class="lp21-zyklus">Zyklus 2</span></div>
+        <p class="lp21-desc">„verstehen und verwenden die Begriffe … Symmetrie, Achsenspiegelung, Umfang, Winkel, rechtwinklig, Verschiebung, Geodreieck.“</p>
+        <ul class="lp21-list">
+          <li><strong>Basiswissen:</strong> Winkel bestimmen</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.2.B.1 c <span class="lp21-zyklus">Zyklus 2</span></div>
+        <p class="lp21-desc">„erforschen Symmetrien an Figuren und Objekten und formulieren Vermutungen (z.B. Symmetrien an einer Hausfassade).“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 1:</strong> Die Achsensymmetrie</li>
+          <li><strong>Jahr 1:</strong> Die Drehsymmetrie</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.2.C.4 d <span class="lp21-zyklus">Zyklus 2</span> / i, j <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können Figuren in einem Koordinatensystem zeichnen, horizontal und vertikal verschieben sowie die Koordinaten der Eckpunkte angeben“ (d) … „können Figuren im kartesischen Koordinatensystem darstellen (auch mit negativen … Koordinaten)“ (i) … „können geometrische Abbildungen im Koordinatensystem darstellen (z.B. Spiegelung eines Dreiecks an der Geraden x = 2)“ (j).</p>
+        <ul class="lp21-list">
+          <li><strong>Basiswissen:</strong> Koordinatensystem – Punkte ablesen</li>
+          <li><strong>Basiswissen:</strong> Koordinatensystem – Punkt verschieben</li>
+          <li><strong>Jahr 1:</strong> Die Achsenspiegelung</li>
+          <li><strong>Jahr 1:</strong> Die Punktspiegelung</li>
+          <li><strong>Jahr 1:</strong> Koordinaten (Punkte ablesen, Punkt verschieben, Quadranten)</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.2.A.1 j <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können Drei- und Vierecke nach Winkel, Parallelität, Diagonalen, Seitenlängen charakterisieren.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 1:</strong> Vielfalt der Vierecksformen</li>
+          <li><strong>Jahr 1:</strong> Dreiecke</li>
+          <li><strong>Jahr 1:</strong> Körper untersuchen und skizzieren (Vierecke/Dreiecke im Würfel)</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.2.A.2 g <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können den Flächeninhalt von Drei- und Vierecken berechnen; können Kantenlängen, Seitenflächen und Volumen von Quadern berechnen.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 1:</strong> Flächen und Volumen</li>
+          <li><strong>Jahr 1:</strong> Umfang und Flächeninhalt von Rechtecken</li>
+          <li><strong>Jahr 1:</strong> Volumen und Oberflächeninhalt (Würfel)</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.2.A.2 h <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können Längen und Flächeninhalte mithilfe des Satzes von Pythagoras berechnen.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 2:</strong> Sätze von Thales und Pythagoras</li>
+          <li><strong>Jahr 2:</strong> Der Satz von Pythagoras unter der Lupe</li>
+          <li><strong>Jahr 2:</strong> Pythagoras praktisch</li>
+          <li><strong>Jahr 2:</strong> Anwendungen des Pythagoras</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.2.A.2 i <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können Umfang und Flächeninhalt von Kreisen berechnen; können Kantenlängen, Flächen und Volumen an geraden Prismen und Zylindern berechnen.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 2:</strong> Das gerade Prisma</li>
+          <li><strong>Jahr 2:</strong> Volumen und Oberflächeninhalt beim geraden Prisma</li>
+          <li><strong>Jahr 2:</strong> Der Kreisumfang und die Kreisfläche</li>
+          <li><strong>Jahr 2:</strong> Der Kreissektor/Geraden und Kreise</li>
+          <li><strong>Jahr 2:</strong> Zylinder</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.2.A.2 j <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können Strecken, Flächen und Volumen an Pyramiden, Kegeln und Kugeln berechnen.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 2:</strong> Die Pyramide</li>
+          <li><strong>Jahr 3:</strong> Der Kegel und die Kugel</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.2.A.2 k <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können Ähnlichkeiten erkennen und bei ähnlichen Figuren und Körpern Längen, Flächeninhalte und Volumen berechnen.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 3:</strong> Ähnliche Figuren</li>
+          <li><strong>Jahr 3:</strong> Die Streckung/Ähnlichkeit bei Körpern</li>
+          <li><strong>Jahr 3:</strong> Der Schattenwurf</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.2.B.1 l <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können Probleme aus der kombinatorischen Geometrie untersuchen (z.B. Anzahl Raumdiagonalen in platonischen Körpern).“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 3:</strong> Regelmässige Körper</li>
+          <li><strong>Jahr 3:</strong> Der Fussball (Eulersche Polyederformel)</li>
+        </ul>
+      </div>
     </div>
 
     <div class="lp21-block">
-      <h2>MA.3 Grössen, Funktionen, Daten und Zufall</h2>
-      <p class="lp21-sub">Grössen, Masseinheiten und Sachrechnen</p>
-      <p class="lp21-chapters">Masseinheiten umrechnen · Grössen und Prozente · Preise – Aktionen – Mehrwertsteuer · Währungen und Budget · Weg – Zeit – Geschwindigkeit · Steigung und Gefälle · Jahreszins und Marchzins · Konsumkredit und Leasing · Der Schattenwurf · Mobilität</p>
-      <p class="lp21-sub">Funktionale Zusammenhänge und Zuordnungen</p>
-      <p class="lp21-chapters">Zuordnungen und Abhängigkeiten · Proportionalität · Umgekehrte Proportionalität · Geraden · Lineare und nicht lineare Funktionen · Vom Bild zum Term</p>
-      <p class="lp21-sub">Daten und Zufall</p>
-      <p class="lp21-chapters">Daten darstellen · Regelmässigkeiten des Zufalls · Baumdarstellungen · Statistische Kennwerte · Simulationen/Statistik praktisch · Kombinatorik · Die Umfrage</p>
+      <h2>M.3 Grössen, Funktionen, Daten und Zufall</h2>
+      <p class="lp21-sub">A Operieren und Benennen, B Erforschen und Argumentieren, C Mathematisieren und Darstellen</p>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.3.A.2 e <span class="lp21-zyklus">Zyklus 2</span></div>
+        <p class="lp21-desc">„können Grössen schätzen, messen und in benachbarte Masseinheiten umwandeln: l, dl; m, cm, mm; kg, g.“</p>
+        <ul class="lp21-list">
+          <li><strong>Basiswissen:</strong> Masseinheiten umrechnen</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.3.C.1 d <span class="lp21-zyklus">Zyklus 2</span></div>
+        <p class="lp21-desc">„können Zufallsexperimente durchführen, Ergebnisse protokollieren und interpretieren (z.B. 50 mal zwei Würfel werfen).“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 1:</strong> Regelmässigkeiten des Zufalls</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.3.C.1 f <span class="lp21-zyklus">Zyklus 2</span></div>
+        <p class="lp21-desc">„können Datensätze nach Kriterien auswerten und in Datensätzen Mittelwert, Maximum und Minimum bestimmen.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 1:</strong> Daten darstellen</li>
+          <li><strong>Jahr 2:</strong> Statistische Kennwerte</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.3.A.2 h <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können Grössen (Geld, Längen, Gewicht bzw. Masse, Zeit, Volumen) schätzen, bestimmen, vergleichen, runden, mit ihnen rechnen, in benachbarte Masseinheiten umwandeln.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 1:</strong> Grössen und Prozente</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.3.A.2 k <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können Geschwindigkeiten umwandeln (z.B. von 200m/10s in 72 km/h).“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 2:</strong> Weg – Zeit – Geschwindigkeit</li>
+          <li><strong>Jahr 3:</strong> Mobilität</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.3.A.3 g, i <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„verstehen Prozentangaben als proportionale Zuordnungen und führen Prozentrechnungen aus … können Sachaufgaben mit Prozentangaben lösen (z.B. zu Steigung und Zins).“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 2:</strong> Preise – Aktionen – Mehrwertsteuer</li>
+          <li><strong>Jahr 2:</strong> Währungen und Budget</li>
+          <li><strong>Jahr 2:</strong> Steigung und Gefälle</li>
+          <li><strong>Jahr 3:</strong> Jahreszins und Marchzins</li>
+          <li><strong>Jahr 3:</strong> Konsumkredit und Leasing</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.3.A.3 j, k <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können zu einer Funktionsgleichung Wertepaare bestimmen und in einem Koordinatensystem einzeichnen … können zu linearen Funktionen den Funktionsgraphen zeichnen, die Steigung, den y-Achsenabschnitt und die Nullstelle bestimmen.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 3:</strong> Geraden</li>
+          <li><strong>Jahr 3:</strong> Lineare und nicht lineare Funktionen</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.3.B.1 b–e <span class="lp21-zyklus">Zyklus 2/3</span></div>
+        <p class="lp21-desc">„können Anzahlen und Preise variieren und Auswirkungen untersuchen … können zu Beziehungen zwischen Grössen Fragen formulieren, erforschen, und funktionale Zusammenhänge überprüfen.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 2:</strong> Zuordnungen und Abhängigkeiten</li>
+          <li><strong>Jahr 2:</strong> Proportionalität</li>
+          <li><strong>Jahr 2:</strong> Umgekehrte Proportionalität</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.3.B.2 c, d <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können auszählbare Kombinationen und Permutationen erforschen … können in auszählbaren Variationen und Kombinationen alle Möglichkeiten systematisch aufschreiben.“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 3:</strong> Kombinatorik</li>
+        </ul>
+      </div>
+
+      <div class="lp21-comp">
+        <div class="lp21-code">M.3.C.1 h <span class="lp21-zyklus">Zyklus 3</span></div>
+        <p class="lp21-desc">„können mehrstufige Zufallsexperimente mit Würfeln, Münzen oder Karten durchführen und mögliche Ereignisse darstellen (z.B. ein Baumdiagramm zum dreimaligen Werfen einer Münze zeichnen).“</p>
+        <ul class="lp21-list">
+          <li><strong>Jahr 2:</strong> Baumdarstellungen, Wiederholung und Vertiefung</li>
+          <li><strong>Jahr 2:</strong> Simulationen/Statistik praktisch</li>
+          <li><strong>Jahr 3:</strong> Die Umfrage</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="lp21-block">
+      <h2>Fachbegriffe (Basiswissen)</h2>
+      <p class="lp21-sub">Das Kapitel „Fachbegriffe“ übt Begriffe aus dem Handlungsaspekt A („Operieren und Benennen“) über alle drei Kompetenzbereiche M.1/M.2/M.3 hinweg und lässt sich daher keinem einzelnen Code eindeutig zuordnen – es festigt die „verstehen und verwenden die Begriffe …“-Teile der Zyklen 2 und 3.</p>
     </div>
 
     <div class="lp21-block lp21-missing">

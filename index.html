@@ -12,6 +12,7 @@
     --accent: #2563eb; --accent-dark: #1d4ed8; --danger: #dc2626; --success: #16a34a;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  button, .duell-half, .vk-quad { touch-action: manipulation; }
   .hidden { display: none !important; }
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   .view { max-width: 900px; margin: 0 auto; padding: 16px; padding-bottom: 60px; }
@@ -51,6 +52,14 @@
 
   .chapter-list { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
   .chapter-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .tn-ex-row.selected { background: #eef2ff; }
+  .tn-ex-badge { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--border); color: var(--muted); font-weight: 800; font-size: 0.8rem; flex-shrink: 0; }
+  .tn-ex-row.selected .tn-ex-badge { background: var(--accent); color: white; }
+  .tn-ex-chapter { color: var(--muted); font-size: 0.78rem; }
+  .tn-rank-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-bottom: 1px solid var(--border); }
+  .tn-rank-pos { font-weight: 800; font-size: 1.1rem; width: 28px; flex-shrink: 0; }
+  .tn-rank-name { flex: 1; font-weight: 700; }
+  .tn-rank-total { font-weight: 800; color: var(--accent); }
   .chapter-row:last-child { border-bottom: none; }
   .chapter-row.locked { color: var(--muted); cursor: default; }
   .chapter-row.mixed { background: #fffbeb; font-weight: 700; }
@@ -136,8 +145,8 @@
   /* Duell play: geteilter Bildschirm, oben 180° gedreht */
   .duell-play { max-width: none; padding: 0; margin: 0; }
   .duell-half { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; overflow: hidden; }
-  .duell-top { transform: rotate(180deg); background: #fef2f2; }
-  .duell-bottom { background: #eff6ff; }
+  .duell-top { transform: rotate(180deg); background: #fecaca; }
+  .duell-bottom { background: #bfdbfe; }
   .duell-inner { width: 100%; max-width: 480px; text-align: center; }
   .duell-name { font-weight: 800; font-size: 1.1rem; margin-bottom: 4px; }
   .duell-score { font-weight: 700; color: var(--success); margin-bottom: 8px; }
@@ -157,10 +166,10 @@
   .vk-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 3px; background: #0f172a; overflow: hidden; }
   .vk-quad { display: flex; align-items: center; justify-content: center; padding: 6px; overflow: hidden; }
   .vk-quad.vk-flip { transform: rotate(180deg); }
-  .vk-quad.vk-p0 { background: #eff6ff; }
-  .vk-quad.vk-p1 { background: #fef2f2; }
-  .vk-quad.vk-p2 { background: #f0fdf4; }
-  .vk-quad.vk-p3 { background: #fefce8; }
+  .vk-quad.vk-p0 { background: #bfdbfe; }
+  .vk-quad.vk-p1 { background: #fecaca; }
+  .vk-quad.vk-p2 { background: #bbf7d0; }
+  .vk-quad.vk-p3 { background: #fef08a; }
   .vk-inner { width: 100%; max-width: 260px; text-align: center; }
   .vk-name { font-weight: 800; font-size: 0.95rem; margin-bottom: 2px; }
   .vk-score { font-weight: 700; color: var(--success); font-size: 0.85rem; margin-bottom: 6px; }
@@ -207,6 +216,7 @@
       <button class="cat-tile cat-jahr2" data-cat="jahr2"><span class="ti">2️⃣</span>Mathematik 2. Jahr</button>
       <button class="cat-tile cat-jahr3" data-cat="jahr3"><span class="ti">3️⃣</span>Mathematik 3. Jahr</button>
     </div>
+    <button class="btn btn-big btn-vk" id="goTournamentBtn" style="margin-top:16px;">🏆 Turniermodus</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
   </div>
 
@@ -663,6 +673,62 @@
     </div>
   </div>
 
+  <!-- TURNIER SETUP -->
+  <div id="tournamentSetupView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>🏆 Turniermodus einrichten</h1>
+    <h2 class="sub">4 Runden mit je einer eigenen Übung aus dem Basiswissen. Pro Runde gewinnt, wer zuerst 5 Punkte hat. Am Ende zählt die Gesamtpunktzahl aus allen Runden.</h2>
+
+    <div class="setup-card">
+      <label class="field-label">Anzahl Spieler</label>
+      <div class="choice-row">
+        <button class="choice-btn active" data-tnplayers="2">2 Spieler</button>
+        <button class="choice-btn" data-tnplayers="4">4 Spieler</button>
+      </div>
+    </div>
+
+    <div class="setup-card">
+      <label class="field-label">Spielernamen</label>
+      <div class="vk-name-inputs">
+        <input type="text" id="tn_name0" placeholder="Spieler 1" maxlength="14">
+        <input type="text" id="tn_name1" placeholder="Spieler 2" maxlength="14">
+        <input type="text" id="tn_name2" placeholder="Spieler 3" maxlength="14" class="tn-name34 hidden">
+        <input type="text" id="tn_name3" placeholder="Spieler 4" maxlength="14" class="tn-name34 hidden">
+      </div>
+    </div>
+
+    <div class="setup-card">
+      <label class="field-label">4 Übungen auswählen (Basiswissen) – Auswahlreihenfolge = Rundenreihenfolge</label>
+      <div class="chapter-list" id="tn_exercisePicker"></div>
+    </div>
+
+    <button class="btn btn-big btn-vk" id="startTournamentBtn">Turnier starten</button>
+  </div>
+
+  <!-- TURNIER RUNDENWECHSEL -->
+  <div id="tournamentRoundEndView" class="view hidden">
+    <h1>🏆 Runde beendet</h1>
+    <div class="result-card">
+      <div class="result-winner" id="tn_roundEnd_title"></div>
+      <div class="result-scores" id="tn_roundEnd_scores"></div>
+    </div>
+    <div class="result-card" id="tn_roundEnd_nextCard">
+      <label class="field-label">Nächste Runde</label>
+      <div class="result-winner" id="tn_roundEnd_nextTitle" style="font-size:1.2rem;"></div>
+    </div>
+    <button class="btn btn-big btn-vk" id="tn_roundEnd_continueBtn">Weiter</button>
+  </div>
+
+  <!-- TURNIER ENDERGEBNIS -->
+  <div id="tournamentResultView" class="view hidden">
+    <h1>🏆 Turnier-Ergebnis</h1>
+    <div class="chapter-list" id="tn_result_ranking"></div>
+    <div class="row" style="margin-top:14px;">
+      <button class="btn btn-duell" style="flex:1;" id="tn_result_againBtn">Neues Turnier</button>
+      <button class="btn btn-secondary" style="flex:1;" data-back-home>Zur Startseite</button>
+    </div>
+  </div>
+
   <!-- LEHRPLAN 21 -->
   <div id="lp21View" class="view hidden">
     <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
@@ -1081,7 +1147,11 @@ const SHAPES = [
   { name: "Raute (Rhombus)", axis: 2, rot: 2, points: "100,30 140,100 100,170 60,100" },
   { name: "Parallelogramm", axis: 0, rot: 2, points: "60,50 170,50 140,150 30,150" },
   { name: "regelmässiges Fünfeck", axis: 5, rot: 5, points: regPoly(5, 100, 105, 78, -90) },
-  { name: "regelmässiges Sechseck", axis: 6, rot: 6, points: regPoly(6, 100, 100, 78, 0) }
+  { name: "regelmässiges Sechseck", axis: 6, rot: 6, points: regPoly(6, 100, 100, 78, 0) },
+  ...[
+    ["Siebeneck", 7], ["Achteck", 8], ["Neuneck", 9], ["Zehneck", 10], ["Elfeck", 11], ["Zwölfeck", 12],
+    ["Dreizehneck", 13], ["Vierzehneck", 14], ["Fünfzehneck", 15], ["Sechzehneck", 16], ["Siebzehneck", 17], ["Achtzehneck", 18]
+  ].map(([name, n]) => ({ name: `regelmässiges ${name}`, axis: n, rot: n, points: regPoly(n, 100, 100, 78, -90) }))
 ];
 function shapeSVG(shape) { return `<svg viewBox="0 0 200 200" class="mt-shape"><polygon points="${shape.points}" fill="#dbeafe" stroke="#2563eb" stroke-width="4"/></svg>`; }
 function coordinateGridSVG(x, y) {
@@ -1104,7 +1174,7 @@ function generateRotSymmetry() { const s = SHAPES[rnd(0, SHAPES.length - 1)]; re
 function generateAxisReflectionX() { const x = rndNonZero(-10, 10), y = rndNonZero(-10, 10); return { visual: null, prompt: `Spiegle P(${x}|${y}) an der x-Achse. Wie lautet die y-Koordinate des Bildpunkts P'?`, answerType: "number", correct: -y }; }
 function generateAxisReflectionY() { const x = rndNonZero(-10, 10), y = rndNonZero(-10, 10); return { visual: null, prompt: `Spiegle P(${x}|${y}) an der y-Achse. Wie lautet die x-Koordinate des Bildpunkts P'?`, answerType: "number", correct: -x }; }
 function generatePointReflection() { const x = rndNonZero(-10, 10), y = rndNonZero(-10, 10); return { visual: null, prompt: `Spiegle P(${x}|${y}) am Ursprung O. Wie lautet der Bildpunkt P'?`, answerType: "pair", pairStyle: "coordinate", correct: [-x, -y] }; }
-function generatePowerCalc() { const base = rnd(2, 9), exp = rnd(2, 3); return { visual: null, prompt: `Berechne: ${base}^${exp} =`, answerType: "number", correct: Math.pow(base, exp) }; }
+function generatePowerCalc() { const base = rnd(2, 9), exp = rnd(2, 4); return { visual: null, prompt: `Berechne: ${base}^${exp} =`, answerType: "number", correct: Math.pow(base, exp) }; }
 function generatePowerRule() { const base = rnd(2, 9), e1 = rnd(2, 4), e2 = rnd(2, 4); return { visual: null, prompt: `Vereinfache: ${base}^${e1} · ${base}^${e2} = ${base}^?`, answerType: "number", correct: e1 + e2 }; }
 function generateOrderOfOperations() {
   const withBrackets = Math.random() < 0.4;
@@ -1189,6 +1259,38 @@ function generateGgt() {
   return { visual: null, prompt: `Wie lautet der grösste gemeinsame Teiler (ggT) von ${a} und ${b}?`, answerType: "number", correct: g };
 }
 function generateKgvBW() { const a = rnd(2, 15), b = rnd(2, 15); return { visual: null, prompt: `Wie lautet das kleinste gemeinsame Vielfache (kgV) von ${a} und ${b}?`, answerType: "number", correct: lcmFn(a, b) }; }
+
+const PROPORTIONALITY_SCENARIOS = [
+  { text: "Die Anzahl gekaufter Äpfel und der Gesamtpreis (bei gleichbleibendem Preis pro Apfel).", type: "proportional" },
+  { text: "Die Anzahl Liter Benzin an der Tankstelle und die Gesamtkosten (bei gleichbleibendem Preis pro Liter).", type: "proportional" },
+  { text: "Die Fahrzeit bei konstanter Geschwindigkeit und die zurückgelegte Strecke.", type: "proportional" },
+  { text: "Die Anzahl Stunden Arbeit und der Lohn (bei gleichbleibendem Stundenlohn).", type: "proportional" },
+  { text: "Die Anzahl Arbeiter:innen und die Zeit, die sie für eine gleich grosse Arbeit benötigen (bei gleicher Leistung pro Person).", type: "umgekehrt proportional" },
+  { text: "Die Geschwindigkeit eines Autos und die Fahrzeit für eine feste Strecke.", type: "umgekehrt proportional" },
+  { text: "Die Anzahl Gäste an einer Party und die Anzahl Pizzastücke pro Person (bei gleich vielen Pizzen insgesamt).", type: "umgekehrt proportional" },
+  { text: "Die Anzahl Tage und die tägliche Sparrate, um einen festen Gesamtbetrag zusammenzubekommen.", type: "umgekehrt proportional" },
+  { text: "Das Alter einer Person und ihre Körpergrösse.", type: "nicht proportional" },
+  { text: "Die Seitenlänge eines Quadrats und sein Flächeninhalt.", type: "nicht proportional" },
+  { text: "Die Anzahl Jahre und der Kontostand bei einem Sparkonto mit Zinseszins.", type: "nicht proportional" },
+  { text: "Die Grösse eines Kindes und sein Alter in den ersten 18 Lebensjahren.", type: "nicht proportional" },
+  { text: "Die Anzahl Kinobesuche und die Gesamtkosten (bei gleichbleibendem Ticketpreis).", type: "proportional" },
+  { text: "Die Masse eines Gegenstands aus einem bestimmten Material und sein Volumen (bei gleichbleibender Dichte).", type: "proportional" },
+  { text: "Die Anzahl Kopien und die Kosten (bei gleichbleibendem Preis pro Kopie).", type: "proportional" },
+  { text: "Die Anzahl gekaufter Kilogramm Äpfel und die Anzahl Franken auf der Rechnung (bei gleichbleibendem Kilopreis).", type: "proportional" },
+  { text: "Die Anzahl Kassen, die in einem Supermarkt geöffnet sind, und die Wartezeit pro Kunde (bei gleich vielen Kunden insgesamt).", type: "umgekehrt proportional" },
+  { text: "Die Anzahl Malerinnen und die Zeit, die sie zusammen für das Streichen einer Wand benötigen (bei gleicher Leistung pro Person).", type: "umgekehrt proportional" },
+  { text: "Die Anzahl Freund:innen, die sich einen Kuchen fester Grösse teilen, und die Grösse des Stücks pro Person.", type: "umgekehrt proportional" },
+  { text: "Der Druck eines Gases und sein Volumen bei gleichbleibender Temperatur (Gesetz von Boyle-Mariotte).", type: "umgekehrt proportional" },
+  { text: "Die Seitenlänge eines Würfels und sein Volumen.", type: "nicht proportional" },
+  { text: "Die Anzahl Jahre und der zurückgelegte Bremsweg eines Autos bei gleichbleibender Geschwindigkeit.", type: "nicht proportional" },
+  { text: "Die Fallzeit eines Gegenstands und die zurückgelegte Fallstrecke (freier Fall).", type: "nicht proportional" },
+  { text: "Das Alter eines Baumes und sein Stammumfang.", type: "nicht proportional" }
+];
+function generateProportionalityType() {
+  const s = PROPORTIONALITY_SCENARIOS[rnd(0, PROPORTIONALITY_SCENARIOS.length - 1)];
+  const options = ["proportional", "umgekehrt proportional", "nicht proportional"].slice().sort(() => Math.random() - 0.5);
+  return { visual: null, prompt: `${s.text} Wie hängen die beiden Grössen zusammen?`, answerType: "mc", options, correct: s.type };
+}
 function generateAdd() { const a = rnd(10, 999), b = rnd(10, 999); return { visual: null, prompt: `${a} + ${b} =`, answerType: "number", correct: a + b }; }
 function generateSub() { const a = rnd(10, 999); const b = rnd(10, a); return { visual: null, prompt: `${a} − ${b} =`, answerType: "number", correct: a - b }; }
 function generateMul() { const a = rnd(2, 20), b = rnd(2, 20); return { visual: null, prompt: `${a} × ${b} =`, answerType: "number", correct: a * b }; }
@@ -1216,18 +1318,38 @@ function generateRectArea() { const l = rnd(3, 20), b = rnd(3, 20); return { vis
 function generateTriArea() { const g = rnd(4, 20), h = rnd(2, 16); return { visual: null, prompt: `Berechne die Fläche eines Dreiecks mit Grundseite ${g} cm und Höhe ${h} cm (in cm²).`, answerType: "number", correct: Math.round(g * h / 2 * 100) / 100 }; }
 function generateBoxVolume() { const l = rnd(2, 12), b = rnd(2, 12), h = rnd(2, 12); return { visual: null, prompt: `Berechne das Volumen eines Quaders mit den Kanten ${l} cm, ${b} cm und ${h} cm (in cm³).`, answerType: "number", correct: l * b * h }; }
 
+const NGON_NAMES = { 3: "drei", 4: "vier", 5: "fünf", 6: "sechs", 7: "sieben", 8: "acht", 9: "neun", 10: "zehn", 11: "elf", 12: "zwölf" };
+function nGonPrismSolid(n) { return { name: `${n}-eckiges Prisma (${NGON_NAMES[n]}eckige Grundfläche)`, faces: n + 2, edges: 3 * n, vertices: 2 * n }; }
+function nGonPyramidSolid(n) { return { name: `${n}-eckige Pyramide (${NGON_NAMES[n]}eckige Grundfläche)`, faces: n + 1, edges: 2 * n, vertices: n + 1 }; }
 const SOLIDS_4A = [
   { name: "Würfel", faces: 6, edges: 12, vertices: 8 },
   { name: "Quader", faces: 6, edges: 12, vertices: 8 },
-  { name: "Dreiecksprisma", faces: 5, edges: 9, vertices: 6 },
-  { name: "quadratische Pyramide", faces: 5, edges: 8, vertices: 5 },
-  { name: "Tetraeder (Dreieckspyramide)", faces: 4, edges: 6, vertices: 4 }
+  { name: "Tetraeder (Dreieckspyramide)", faces: 4, edges: 6, vertices: 4 },
+  ...[3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(nGonPrismSolid),
+  ...[3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(nGonPyramidSolid)
 ];
 function generateSolidFaces() { const s = SOLIDS_4A[rnd(0, SOLIDS_4A.length - 1)]; return { visual: null, prompt: `Wie viele Flächen hat ein ${s.name}?`, answerType: "number", correct: s.faces }; }
 function generateSolidEdges() { const s = SOLIDS_4A[rnd(0, SOLIDS_4A.length - 1)]; return { visual: null, prompt: `Wie viele Kanten hat ein ${s.name}?`, answerType: "number", correct: s.edges }; }
 function generateSolidVertices() { const s = SOLIDS_4A[rnd(0, SOLIDS_4A.length - 1)]; return { visual: null, prompt: `Wie viele Ecken hat ein ${s.name}?`, answerType: "number", correct: s.vertices }; }
 
-function generateDiceProb() { const target = rnd(0, 1) === 0 ? "eine gerade Zahl" : "eine ungerade Zahl"; return { visual: null, prompt: `Du wirfst einen Würfel. Wie gross ist die Wahrscheinlichkeit für ${target}? (nicht kürzen)`, answerType: "pair", pairStyle: "fraction", correct: [3, 6] }; }
+const DICE_PROB_SCENARIOS = [
+  { text: "eine gerade Zahl", n: 3 }, { text: "eine ungerade Zahl", n: 3 },
+  { text: "eine 6", n: 1 }, { text: "eine 1", n: 1 },
+  { text: "eine Zahl grösser als 4", n: 2 }, { text: "eine Zahl kleiner als 3", n: 2 },
+  { text: "eine Primzahl", n: 3 }, { text: "eine durch 3 teilbare Zahl", n: 2 },
+  { text: "eine Zahl mindestens 5", n: 2 }, { text: "eine Zahl höchstens 2", n: 2 },
+  { text: "eine 1 oder eine 6", n: 2 }, { text: "eine Zahl grösser als 2", n: 4 },
+  { text: "eine Zahl kleiner als 5", n: 4 }, { text: "keine 6", n: 5 },
+  { text: "keine 1", n: 5 }, { text: "eine gerade Primzahl", n: 1 },
+  { text: "eine ungerade Zahl grösser als 3", n: 1 }, { text: "eine Quadratzahl", n: 2 },
+  { text: "eine 4 oder eine 5", n: 2 }, { text: "eine Zahl über 3", n: 3 },
+  { text: "eine 2 oder eine 3", n: 2 }, { text: "eine ungerade Primzahl", n: 2 },
+  { text: "eine Zahl, die nicht durch 3 teilbar ist", n: 4 }, { text: "eine Zahl zwischen 1 und 6 (exklusiv)", n: 4 }
+];
+function generateDiceProb() {
+  const s = DICE_PROB_SCENARIOS[rnd(0, DICE_PROB_SCENARIOS.length - 1)];
+  return { visual: null, prompt: `Du wirfst einen Würfel. Wie gross ist die Wahrscheinlichkeit für ${s.text}? (nicht kürzen)`, answerType: "pair", pairStyle: "fraction", correct: [s.n, 6] };
+}
 function generateBagProb() {
   const rot = rnd(1, 6), blau = rnd(1, 6);
   const total = rot + blau;
@@ -1256,11 +1378,25 @@ function generateRectPerimeter() { const l = rnd(3, 25), b = rnd(3, 25); return 
 function generateRectArea7a() { const l = rnd(3, 25), b = rnd(3, 25); return { visual: null, prompt: `Berechne die Fläche eines Rechtecks mit Länge ${l} cm und Breite ${b} cm (in cm²).`, answerType: "number", correct: l * b }; }
 
 const QUAD_FACTS = [
-  { name: "Quadrat", rightAngles: 4, parallelPairs: 2 }, { name: "Rechteck", rightAngles: 4, parallelPairs: 2 },
-  { name: "Parallelogramm", rightAngles: 0, parallelPairs: 2 }, { name: "Raute", rightAngles: 0, parallelPairs: 2 }, { name: "Trapez", rightAngles: 0, parallelPairs: 1 }
+  { name: "Quadrat", rightAngles: 4, parallelPairs: 2, equalSidePairs: 2, symmetryAxes: 4 },
+  { name: "Rechteck", rightAngles: 4, parallelPairs: 2, equalSidePairs: 2, symmetryAxes: 2 },
+  { name: "Parallelogramm", rightAngles: 0, parallelPairs: 2, equalSidePairs: 2, symmetryAxes: 0 },
+  { name: "Raute", rightAngles: 0, parallelPairs: 2, equalSidePairs: 2, symmetryAxes: 2 },
+  { name: "Trapez", rightAngles: 0, parallelPairs: 1, equalSidePairs: 0, symmetryAxes: 0 },
+  { name: "Drachenviereck", rightAngles: 0, parallelPairs: 0, equalSidePairs: 0, symmetryAxes: 1 },
+  { name: "unregelmässiges Viereck", rightAngles: 0, parallelPairs: 0, equalSidePairs: 0, symmetryAxes: 0 }
 ];
-function generateQuadRightAngles() { const q = QUAD_FACTS[rnd(0, QUAD_FACTS.length - 1)]; return { visual: null, prompt: `Wie viele rechte Winkel hat ein ${q.name} (im Allgemeinen)?`, answerType: "number", correct: q.rightAngles }; }
-function generateQuadParallelSides() { const q = QUAD_FACTS[rnd(0, QUAD_FACTS.length - 1)]; return { visual: null, prompt: `Wie viele Paare paralleler Seiten hat ein ${q.name} (im Allgemeinen)?`, answerType: "number", correct: q.parallelPairs }; }
+const QUAD_PROPERTY_TYPES = [
+  { key: "rightAngles", label: "rechte Winkel" },
+  { key: "parallelPairs", label: "Paare paralleler Seiten" },
+  { key: "equalSidePairs", label: "Paare gegenüberliegender, gleich langer Seiten" },
+  { key: "symmetryAxes", label: "Symmetrieachsen" }
+];
+function generateQuadProperty() {
+  const q = QUAD_FACTS[rnd(0, QUAD_FACTS.length - 1)];
+  const p = QUAD_PROPERTY_TYPES[rnd(0, QUAD_PROPERTY_TYPES.length - 1)];
+  return { visual: null, prompt: `Wie viele ${p.label} hat ein ${q.name} (im Allgemeinen)?`, answerType: "number", correct: q[p.key] };
+}
 
 function generateTriangleAngleSum() { const a = rnd(20, 120), b = rnd(20, 150 - a > 20 ? 150 - a : 20); const c = 180 - a - b; return { visual: null, prompt: `In einem Dreieck sind zwei Winkel ${a}° und ${b}° gross. Wie gross ist der dritte Winkel?`, answerType: "number", correct: c }; }
 function generateQuadAngleSum() { let a, b, c, d; do { a = rnd(40, 140); b = rnd(40, 140); c = rnd(40, 140); d = 360 - a - b - c; } while (d < 20 || d > 160); return { visual: null, prompt: `In einem Viereck sind drei Winkel ${a}°, ${b}° und ${c}° gross. Wie gross ist der vierte Winkel?`, answerType: "number", correct: d }; }
@@ -1303,31 +1439,28 @@ function cubeShapeSVG(vertices, color) {
 }
 const CUBE_SHAPES = [
   { vertices: ["E", "F", "H", "G"], name: "Quadrat", sides: 4, rightAngles: 4, equalSides: true, color: "#2563eb" },
-  { vertices: ["A", "B", "F"], name: "rechtwinkliges Dreieck", sides: 3, rightAngles: 1, equalSides: false, color: "#16a34a" },
+  { vertices: ["A", "B", "F"], name: "rechtwinklig-gleichschenkliges Dreieck", sides: 3, rightAngles: 1, equalSides: false, color: "#16a34a" },
   { vertices: ["B", "C", "E"], name: "gleichseitiges Dreieck", sides: 3, rightAngles: 0, equalSides: true, color: "#f59e0b" },
-  { vertices: ["A", "B", "H", "G"], name: "Rechteck", sides: 4, rightAngles: 4, equalSides: false, color: "#db2777" }
+  { vertices: ["A", "B", "H", "G"], name: "Rechteck", sides: 4, rightAngles: 4, equalSides: false, color: "#db2777" },
+  { vertices: ["B", "C", "F"], name: "rechtwinklig-ungleichschenkliges Dreieck", sides: 3, rightAngles: 1, equalSides: false, color: "#0891b2" },
+  { vertices: ["B", "D", "E"], name: "rechtwinklig-ungleichschenkliges Dreieck", sides: 3, rightAngles: 1, equalSides: false, color: "#7c3aed" }
 ];
+const CUBE_SHAPE_NAMES = ["Quadrat", "Rechteck", "gleichseitiges Dreieck", "rechtwinklig-gleichschenkliges Dreieck", "rechtwinklig-ungleichschenkliges Dreieck"];
 function pickCubeShape() { return CUBE_SHAPES[rnd(0, CUBE_SHAPES.length - 1)]; }
-function generateCubeShapeName() {
+function generateCubeShapeProperty() {
   const shp = pickCubeShape();
-  const options = ["Quadrat", "Rechteck", "gleichseitiges Dreieck", "rechtwinkliges Dreieck"].slice().sort(() => Math.random() - 0.5);
-  return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Welche Form hat die markierte Fläche im Würfel?`, answerType: "mc", options, correct: shp.name };
-}
-function generateCubeShapeCorners() {
-  const shp = pickCubeShape();
-  return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Wie viele Ecken hat die markierte Fläche im Würfel?`, answerType: "number", correct: shp.sides };
-}
-function generateCubeShapeRightAngles() {
-  const shp = pickCubeShape();
-  return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Wie viele rechte Winkel hat die markierte Fläche im Würfel?`, answerType: "number", correct: shp.rightAngles };
-}
-function generateCubeShapeEqualSides() {
-  const shp = pickCubeShape();
+  const qType = rnd(0, 3);
+  if (qType === 0) {
+    const options = CUBE_SHAPE_NAMES.slice().sort(() => Math.random() - 0.5);
+    return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Welche Form hat die markierte Fläche im Würfel?`, answerType: "mc", options, correct: shp.name };
+  }
+  if (qType === 1) return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Wie viele Ecken hat die markierte Fläche im Würfel?`, answerType: "number", correct: shp.sides };
+  if (qType === 2) return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Wie viele rechte Winkel hat die markierte Fläche im Würfel?`, answerType: "number", correct: shp.rightAngles };
   return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Sind alle Seiten der markierten Fläche gleich lang?`, answerType: "boolean", correct: shp.equalSides ? 1 : 0 };
 }
 
-function generateCubeVolume() { const a = rnd(2, 15); return { visual: null, prompt: `Berechne das Volumen eines Würfels mit Kantenlänge ${a} cm (in cm³).`, answerType: "number", correct: a * a * a }; }
-function generateCubeSurface() { const a = rnd(2, 15); return { visual: null, prompt: `Berechne den Oberflächeninhalt eines Würfels mit Kantenlänge ${a} cm (in cm²).`, answerType: "number", correct: 6 * a * a }; }
+function generateCubeVolume() { const a = rnd(2, 25); return { visual: null, prompt: `Berechne das Volumen eines Würfels mit Kantenlänge ${a} cm (in cm³).`, answerType: "number", correct: a * a * a }; }
+function generateCubeSurface() { const a = rnd(2, 25); return { visual: null, prompt: `Berechne den Oberflächeninhalt eines Würfels mit Kantenlänge ${a} cm (in cm²).`, answerType: "number", correct: 6 * a * a }; }
 
 /* ---- Mathematik 2. Jahr: Generatoren ---- */
 function simplifyFraction(n, d) { const g = gcdFn(Math.abs(n), Math.abs(d)); return [n / g, d / g]; }
@@ -1360,7 +1493,7 @@ function generateSequence() {
   const terms = [start, start + diff, start + 2 * diff, start + 3 * diff];
   return { visual: null, prompt: `Wie lautet das nächste Glied der Zahlenfolge: ${terms.join(", ")}, ?`, answerType: "number", correct: start + 4 * diff };
 }
-function generateSquareRoot() { const roots = [2,3,4,5,6,7,8,9,10,11,12,13,14,15]; const r = roots[rnd(0, roots.length - 1)]; return { visual: null, prompt: `Berechne: √${r * r} =`, answerType: "number", correct: r }; }
+function generateSquareRoot() { const r = rnd(2, 25); return { visual: null, prompt: `Berechne: √${r * r} =`, answerType: "number", correct: r }; }
 
 function generatePythagorasHyp() { const a = rnd(3, 20), b = rnd(3, 20); return { visual: null, prompt: `Ein rechtwinkliges Dreieck hat die Katheten ${a} cm und ${b} cm. Wie lang ist die Hypotenuse? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.sqrt(a * a + b * b) * 10) / 10 }; }
 function generatePythagorasLeg() {
@@ -1389,11 +1522,11 @@ function generateDiscount() { const preis = rnd(20, 300), rabatt = rnd(5, 60); r
 function generateVAT() { const preisExkl = rnd(20, 300), mwst = [2.6, 3.8, 8.1][rnd(0, 2)]; return { visual: null, prompt: `Ein Artikel kostet ${preisExkl} Fr. exkl. MWST. Der MWST-Satz beträgt ${mwst}%. Wie viel kostet er inkl. MWST? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(preisExkl * (1 + mwst / 100) * 100) / 100 }; }
 function generateCurrency() { const betrag = rnd(10, 500), kurs = (rnd(85, 110) / 100); return { visual: null, prompt: `Wie viel Euro erhältst du für ${betrag} CHF bei einem Kurs von 1 CHF = ${kurs} EUR? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(betrag * kurs * 100) / 100 }; }
 
-function generateCircleCircumference() { const r = rnd(2, 20); return { visual: null, prompt: `Berechne den Umfang eines Kreises mit Radius ${r} cm. (auf 1 Nachkommastelle runden, π ≈ 3.14159)`, answerType: "number", correct: Math.round(2 * Math.PI * r * 10) / 10 }; }
-function generateCircleArea() { const r = rnd(2, 20); return { visual: null, prompt: `Berechne die Fläche eines Kreises mit Radius ${r} cm. (auf 1 Nachkommastelle runden, π ≈ 3.14159)`, answerType: "number", correct: Math.round(Math.PI * r * r * 10) / 10 }; }
+function generateCircleCircumference() { const r = rnd(2, 30); return { visual: null, prompt: `Berechne den Umfang eines Kreises mit Radius ${r} cm. (auf 1 Nachkommastelle runden, π ≈ 3.14159)`, answerType: "number", correct: Math.round(2 * Math.PI * r * 10) / 10 }; }
+function generateCircleArea() { const r = rnd(2, 30); return { visual: null, prompt: `Berechne die Fläche eines Kreises mit Radius ${r} cm. (auf 1 Nachkommastelle runden, π ≈ 3.14159)`, answerType: "number", correct: Math.round(Math.PI * r * r * 10) / 10 }; }
 function generateCircleSector() { const r = rnd(3, 20), winkel = rnd(20, 340); return { visual: null, prompt: `Berechne die Fläche eines Kreissektors mit Radius ${r} cm und Mittelpunktswinkel ${winkel}°. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((winkel / 360) * Math.PI * r * r * 10) / 10 }; }
 
-function generateTreeCount() { const n = rnd(2, 4), k = rnd(2, 6); return { visual: null, prompt: `Du triffst ${n} unabhängige Entscheidungen mit je ${k} Möglichkeiten. Wie viele verschiedene Kombinationen gibt es insgesamt?`, answerType: "number", correct: Math.pow(k, n) }; }
+function generateTreeCount() { const n = rnd(2, 5), k = rnd(2, 8); return { visual: null, prompt: `Du triffst ${n} unabhängige Entscheidungen mit je ${k} Möglichkeiten. Wie viele verschiedene Kombinationen gibt es insgesamt?`, answerType: "number", correct: Math.pow(k, n) }; }
 function generateMode() { const pool = [rnd(1,10), rnd(1,10), rnd(1,10)]; const vals = []; const modeVal = pool[0]; for (let i=0;i<3;i++) vals.push(modeVal); for (let i=0;i<3;i++) vals.push(rnd(1,10)); for (let j = vals.length - 1; j > 0; j--) { const k = rnd(0, j); [vals[j], vals[k]] = [vals[k], vals[j]]; } const counts = {}; vals.forEach(v => counts[v] = (counts[v]||0)+1); let best = vals[0]; Object.keys(counts).forEach(k => { if (counts[k] > counts[best]) best = Number(k); }); return { visual: null, prompt: `Bestimme den Modus (häufigster Wert) dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: Number(best) }; }
 function generateRelativeFrequency() { const total = rnd(20, 200); const abs = rnd(1, total); return { visual: null, prompt: `Bei ${total} Versuchen trat ein Ereignis ${abs} Mal auf. Wie gross ist die relative Häufigkeit in %? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((abs / total) * 100 * 10) / 10 }; }
 
@@ -1442,10 +1575,10 @@ function generateScientificNotation() {
   const expPool = [-5, -4, -3, -2, 2, 3, 4, 5, 6];
   const exp = expPool[rnd(0, expPool.length - 1)];
   const plain = sciToPlainString(mantissaStr, exp);
-  return { visual: null, prompt: `Schreibe ${plain} in wissenschaftlicher Schreibweise (Beispiel: 4.5×10^4).`, answerType: "sci", correct: { m: mantissa, e: exp } };
+  return { visual: null, prompt: `Schreibe ${plain} in wissenschaftlicher Schreibweise (z.B. 4.5 ×10^ 4).`, answerType: "pair", pairStyle: "scientific", correct: [mantissa, exp] };
 }
 function generateNegativeExponent() {
-  const base = rnd(2, 6), exp = rnd(2, 3);
+  const base = rnd(2, 9), exp = rnd(2, 4);
   return { visual: null, prompt: `Berechne: ${base}^-${exp} = (als Bruch)`, answerType: "pair", pairStyle: "fraction", correct: [1, Math.pow(base, exp)] };
 }
 function generateJahreszins() {
@@ -1462,7 +1595,7 @@ function generateMarchzins() {
   return { visual: null, prompt: `Kapital: ${k} CHF, Zinssatz: ${p}%, Anlagedauer: ${d} Tage. Wie viel Marchzins (in CHF) resultiert? (Bankjahr = 360 Tage, auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(k * p / 100 * d / 360 * 100) / 100 };
 }
 function generateConeVolume() { const r = rnd(2, 12), h = rnd(3, 20); return { visual: null, prompt: `Berechne das Volumen eines Kegels mit Radius ${r} cm und Höhe ${h} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.PI * r * r * h / 3 * 10) / 10 }; }
-function generateSphereVolume() { const r = rnd(2, 15); return { visual: null, prompt: `Berechne das Volumen einer Kugel mit Radius ${r} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((4 / 3) * Math.PI * r * r * r * 10) / 10 }; }
+function generateSphereVolume() { const r = rnd(2, 25); return { visual: null, prompt: `Berechne das Volumen einer Kugel mit Radius ${r} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((4 / 3) * Math.PI * r * r * r * 10) / 10 }; }
 function generateEquationBothSides() {
   const a = rnd(2, 9); let c = rnd(2, 9); if (c === a) c++;
   const x = rndNonZero(-10, 10), b = rnd(-20, 20);
@@ -1470,7 +1603,7 @@ function generateEquationBothSides() {
   return { visual: null, prompt: `Löse die Gleichung: ${a}x ${b >= 0 ? "+" : "−"} ${Math.abs(b)} = ${c}x ${d >= 0 ? "+" : "−"} ${Math.abs(d)}. x = ?`, answerType: "number", correct: x };
 }
 function generateSimpleQuadratic() {
-  const x = rnd(2, 12);
+  const x = rnd(2, 25);
   return { visual: null, prompt: `Löse die Gleichung: x² = ${x * x}. Wie gross ist die positive Lösung x?`, answerType: "number", correct: x };
 }
 function generateLinearSystem() {
@@ -1486,8 +1619,14 @@ function generateLinearSystem() {
   return { visual: null, prompt: `Löse das Gleichungssystem: ${fmt(a1, b1, c1)} und ${fmt(a2, b2, c2)}. Wie lautet die Lösung (x|y)?`, answerType: "pair", pairStyle: "coordinate", correct: [x, y] };
 }
 function generatePermutations() {
-  const n = rnd(3, 6); let f = 1; for (let i = 2; i <= n; i++) f *= i;
-  return { visual: null, prompt: `Auf wie viele verschiedene Arten können ${n} Personen in einer Reihe aufgestellt werden?`, answerType: "number", correct: f };
+  const n = rnd(4, 10);
+  if (Math.random() < 0.4) {
+    let f = 1; for (let i = 2; i <= n; i++) f *= i;
+    return { visual: null, prompt: `Auf wie viele verschiedene Arten können ${n} Personen in einer Reihe aufgestellt werden?`, answerType: "number", correct: f };
+  }
+  const k = rnd(2, n - 1);
+  let f = 1; for (let i = n; i > n - k; i--) f *= i;
+  return { visual: null, prompt: `Von ${n} Personen sollen ${k} für die ersten ${k} Plätze eines Wettbewerbs ausgewählt und in eine Reihenfolge gebracht werden. Wie viele verschiedene Möglichkeiten gibt es?`, answerType: "number", correct: f };
 }
 function generateStretchVolume() {
   const kOptions = [0.5, 1.5, 2, 2.5, 3];
@@ -1513,12 +1652,15 @@ function generateCreditRate() {
   const kosten = Math.round(k * (rnd(3, 15) / 100));
   return { visual: null, prompt: `Ein Kredit über ${k} CHF wird in ${months} gleichen Monatsraten zurückbezahlt. Zusätzlich fallen ${kosten} CHF Zinsen und Kosten an. Wie hoch ist die monatliche Rate (in CHF)? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round((k + kosten) / months * 100) / 100 };
 }
+function nGonAntiprismSolid(n) { return { name: `${n}-eckiges Antiprisma`, faces: 2 * n + 2, edges: 4 * n, vertices: 2 * n }; }
 const PLATONIC_SOLIDS = [
   { name: "Tetraeder", faces: 4, edges: 6, vertices: 4 },
   { name: "Würfel (Hexaeder)", faces: 6, edges: 12, vertices: 8 },
   { name: "Oktaeder", faces: 8, edges: 12, vertices: 6 },
   { name: "Dodekaeder", faces: 12, edges: 30, vertices: 20 },
-  { name: "Ikosaeder", faces: 20, edges: 30, vertices: 12 }
+  { name: "Ikosaeder", faces: 20, edges: 30, vertices: 12 },
+  ...[3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(nGonPrismSolid),
+  ...[3, 4, 5, 6, 7, 8].map(nGonAntiprismSolid)
 ];
 function generatePlatonicFaces() { const s = PLATONIC_SOLIDS[rnd(0, PLATONIC_SOLIDS.length - 1)]; return { visual: null, prompt: `Wie viele Flächen hat ein ${s.name}?`, answerType: "number", correct: s.faces }; }
 function generatePlatonicEdges() { const s = PLATONIC_SOLIDS[rnd(0, PLATONIC_SOLIDS.length - 1)]; return { visual: null, prompt: `Wie viele Kanten hat ein ${s.name}?`, answerType: "number", correct: s.edges }; }
@@ -1714,6 +1856,7 @@ const EXERCISE_INFO = {
   "bw-fach-1": { d: "Ordne Fachbegriffe des 1. Jahres ihrer richtigen Erklärung zu (und umgekehrt).", g: "Grundlegendes mathematisches Vokabular sicher verstehen und anwenden." },
   "bw-fach-2": { d: "Ordne Fachbegriffe bis und mit 2. Jahr ihrer richtigen Erklärung zu (und umgekehrt).", g: "Mathematisches Vokabular bis zum 2. Jahr sicher verstehen und anwenden." },
   "bw-fach-3": { d: "Ordne Fachbegriffe bis und mit 3. Jahr ihrer richtigen Erklärung zu (und umgekehrt).", g: "Das gesamte mathematische Vokabular der Sek 1 sicher verstehen und anwenden." },
+  "bw-prop-1": { d: "Beurteile bei einer Alltagssituation, ob zwei Grössen proportional, umgekehrt proportional oder nicht proportional zusammenhängen.", g: "Proportionale, umgekehrt proportionale und nicht-proportionale Zusammenhänge unterscheiden können." },
   "1a-1": { d: "Bestimme die Anzahl Symmetrieachsen einer Figur.", g: "Achsensymmetrie an Figuren erkennen." },
   "1b-1": { d: "Bestimme die Drehsymmetrie-Ordnung einer Figur.", g: "Drehsymmetrie an Figuren erkennen." },
   "1c-x": { d: "Spiegle einen Punkt an der x-Achse.", g: "Achsenspiegelung an der x-Achse berechnen können." },
@@ -1751,15 +1894,15 @@ const EXERCISE_INFO = {
   "6c-div": { d: "Dividiere ganze Zahlen mit Vorzeichen.", g: "Vorzeichenregeln bei der Division anwenden." },
   "7a-umfang": { d: "Berechne den Umfang eines Rechtecks.", g: "Umfangsformel des Rechtecks anwenden." },
   "7a-flaeche": { d: "Berechne die Fläche eines Rechtecks.", g: "Flächenformel des Rechtecks anwenden." },
-  "7b-1": { d: "Bestimme, wie viele rechte Winkel ein Viereck hat.", g: "Eigenschaften verschiedener Vierecksformen kennen." },
-  "7b-2": { d: "Bestimme, wie viele Paare paralleler Seiten ein Viereck hat.", g: "Eigenschaften verschiedener Vierecksformen kennen." },
+  "7b-1": { d: "Bestimme eine Eigenschaft (rechte Winkel, parallele Seiten, gleich lange Seiten oder Symmetrieachsen) eines Vierecks.", g: "Eigenschaften verschiedener Vierecksformen kennen." },
+  "7b-2": { d: "Bestimme eine Eigenschaft (rechte Winkel, parallele Seiten, gleich lange Seiten oder Symmetrieachsen) eines Vierecks.", g: "Eigenschaften verschiedener Vierecksformen kennen." },
   "7c-1": { d: "Berechne den fehlenden Winkel in einem Dreieck.", g: "Winkelsumme im Dreieck (180°) anwenden." },
   "8a-1": { d: "Fasse gleichartige Terme zusammen.", g: "Termumformungen mit Variablen durchführen können." },
   "8b-1": { d: "Löse eine lineare Gleichung nach x auf.", g: "Lineare Gleichungen lösen können." },
-  "9a-form": { d: "Erkenne die Form einer im Würfel markierten Fläche (Quadrat, Rechteck, gleichseitiges oder rechtwinkliges Dreieck).", g: "Vierecke und Dreiecke innerhalb eines Würfels erkennen und benennen können." },
-  "9a-ecken": { d: "Bestimme die Anzahl Ecken einer im Würfel markierten Fläche.", g: "Vierecke und Dreiecke innerhalb eines Würfels anhand ihrer Eckenzahl unterscheiden können." },
-  "9a-winkel": { d: "Bestimme die Anzahl rechter Winkel einer im Würfel markierten Fläche.", g: "Eigenschaften (rechte Winkel) von Vierecken und Dreiecken im Würfel erkennen können." },
-  "9a-seiten": { d: "Beurteile, ob alle Seiten einer im Würfel markierten Fläche gleich lang sind.", g: "Seitenlängen von Vierecken und Dreiecken im Würfel vergleichen können." },
+  "9a-form": { d: "Beantworte Fragen (Form, Eckenzahl, rechte Winkel oder Seitenlängen) zu einer im Würfel markierten Fläche.", g: "Vierecke und Dreiecke innerhalb eines Würfels erkennen und benennen können." },
+  "9a-ecken": { d: "Beantworte Fragen (Form, Eckenzahl, rechte Winkel oder Seitenlängen) zu einer im Würfel markierten Fläche.", g: "Vierecke und Dreiecke innerhalb eines Würfels anhand ihrer Eckenzahl unterscheiden können." },
+  "9a-winkel": { d: "Beantworte Fragen (Form, Eckenzahl, rechte Winkel oder Seitenlängen) zu einer im Würfel markierten Fläche.", g: "Eigenschaften (rechte Winkel) von Vierecken und Dreiecken im Würfel erkennen können." },
+  "9a-seiten": { d: "Beantworte Fragen (Form, Eckenzahl, rechte Winkel oder Seitenlängen) zu einer im Würfel markierten Fläche.", g: "Seitenlängen von Vierecken und Dreiecken im Würfel vergleichen können." },
   "9b-vol": { d: "Berechne das Volumen eines Würfels.", g: "Volumenformel des Würfels anwenden." },
   "9b-surf": { d: "Berechne die Oberfläche eines Würfels.", g: "Oberflächenformel des Würfels anwenden." },
   "m2-1a-comp": { d: "Vergleiche zwei Brüche.", g: "Brüche der Grösse nach vergleichen können." },
@@ -1872,6 +2015,9 @@ const BASISWISSEN_CHAPTERS = [
     ex("bw-fach-1", "Fachbegriffe 1. Jahr", () => generateFachbegriff(1), "Überlege dir, in welchem Zusammenhang der Begriff im Unterricht vorkam, oder erkenne die passende Beschreibung."),
     ex("bw-fach-2", "Fachbegriffe bis 2. Jahr", () => generateFachbegriff(2), "Überlege dir, in welchem Zusammenhang der Begriff im Unterricht vorkam, oder erkenne die passende Beschreibung."),
     ex("bw-fach-3", "Fachbegriffe bis 3. Jahr", () => generateFachbegriff(3), "Überlege dir, in welchem Zusammenhang der Begriff im Unterricht vorkam, oder erkenne die passende Beschreibung.")
+  ]),
+  chapter("bw-proportion", "Proportionalität erkennen", [
+    ex("bw-prop-1", "Proportional oder nicht?", generateProportionalityType, "Verdoppelt sich die erste Grösse und auch die zweite verdoppelt sich → proportional. Verdoppelt sich die erste und die zweite halbiert sich → umgekehrt proportional. Ändert sich das Verhältnis unregelmässig (z.B. bei einem Quadrat oder mit Alter) → nicht proportional.")
   ])
 ];
 
@@ -1939,8 +2085,8 @@ const JAHR1_CHAPTERS = [
     ex("7a-flaeche", "Fläche berechnen", generateRectArea7a, "Fläche = Länge × Breite.")
   ]),
   chapter("7b", "Vielfalt der Vierecksformen", [
-    ex("7b-1", "Rechte Winkel zählen", generateQuadRightAngles, "Überlege dir die typische Form: Quadrat und Rechteck haben 4 rechte Winkel, die anderen Vierecke im Allgemeinen keine."),
-    ex("7b-2", "Parallele Seiten zählen", generateQuadParallelSides, "Quadrat, Rechteck, Parallelogramm und Raute haben 2 Paare paralleler Seiten, ein Trapez nur 1 Paar.")
+    ex("7b-1", "Vierecke: Eigenschaften bestimmen", generateQuadProperty, "Überlege dir die typische Form: Quadrat und Rechteck haben je 4 rechte Winkel und 2 Paare paralleler, gleich langer Seiten. Parallelogramm und Raute haben keine rechten Winkel, aber 2 Paare parallele Seiten. Ein Trapez hat nur 1 Paar paralleler Seiten. Drachenviereck und unregelmässiges Viereck haben meist keine dieser Eigenschaften."),
+    ex("7b-2", "Vierecke: Eigenschaften erkennen", generateQuadProperty, "Überlege dir die typische Form: Quadrat und Rechteck haben je 4 rechte Winkel und 2 Paare paralleler, gleich langer Seiten. Parallelogramm und Raute haben keine rechten Winkel, aber 2 Paare parallele Seiten. Ein Trapez hat nur 1 Paar paralleler Seiten. Drachenviereck und unregelmässiges Viereck haben meist keine dieser Eigenschaften.")
   ]),
   chapter("7c", "Dreiecke", [
     ex("7c-1", "Winkelsumme im Dreieck", generateTriangleAngleSum, "Die Winkelsumme im Dreieck ist immer 180°. Ziehe die beiden bekannten Winkel von 180° ab.")
@@ -1952,10 +2098,10 @@ const JAHR1_CHAPTERS = [
     ex("8b-1", "Lineare Gleichung lösen", generateLinearEquation, "Bringe zuerst die Zahl ohne x auf die andere Seite, dann teile durch die Zahl vor dem x.")
   ]),
   chapter("9a", "Körper untersuchen und skizzieren", [
-    ex("9a-form", "Form erkennen", generateCubeShapeName, "Verbinden Kanten des Würfels nur Eckpunkte, entsteht oft ein Dreieck oder Viereck über eine Flächendiagonale – zähl die Ecken und vergleiche die Seitenlängen, um die Form zu bestimmen."),
-    ex("9a-ecken", "Ecken zählen", generateCubeShapeCorners, "Zähle, wie viele Eckpunkte die markierte Fläche hat: 3 = Dreieck, 4 = Viereck."),
-    ex("9a-winkel", "Rechte Winkel zählen", generateCubeShapeRightAngles, "Ein Winkel zwischen zwei Kanten des Würfels (z.B. an einer Ecke) ist immer rechtwinklig; ein Winkel entlang einer Flächendiagonale meist nicht."),
-    ex("9a-seiten", "Seitenlängen vergleichen", generateCubeShapeEqualSides, "Würfelkanten sind alle gleich lang, Flächendiagonalen sind alle gleich lang (aber länger als eine Kante) – mischt eine Fläche beide, sind die Seiten nicht alle gleich lang.")
+    ex("9a-form", "Form erkennen", generateCubeShapeProperty, "Verbinden Kanten des Würfels nur Eckpunkte, entsteht oft ein Dreieck oder Viereck über eine Flächen- oder Raumdiagonale – zähl die Ecken, prüfe die rechten Winkel und vergleiche die Seitenlängen, um die Form zu bestimmen."),
+    ex("9a-ecken", "Ecken zählen", generateCubeShapeProperty, "Zähle, wie viele Eckpunkte die markierte Fläche hat: 3 = Dreieck, 4 = Viereck."),
+    ex("9a-winkel", "Rechte Winkel zählen", generateCubeShapeProperty, "Ein Winkel zwischen zwei Kanten des Würfels (z.B. an einer Ecke) ist immer rechtwinklig; ein Winkel entlang einer Flächen- oder Raumdiagonale meist nicht."),
+    ex("9a-seiten", "Seitenlängen vergleichen", generateCubeShapeProperty, "Würfelkanten sind alle gleich lang, Flächendiagonalen sind alle gleich lang (aber länger als eine Kante), Raumdiagonalen sind nochmals länger – mischt eine Fläche mehrere davon, sind die Seiten nicht alle gleich lang.")
   ]),
   chapter("9b", "Volumen und Oberflächeninhalt", [
     ex("9b-vol", "Volumen Würfel", generateCubeVolume, "Volumen des Würfels = Kantenlänge × Kantenlänge × Kantenlänge."),
@@ -2189,10 +2335,11 @@ function renderPairBuffer(side) {
 function handlePairKey(side, key) {
   if (key === "ok") { submitAnswer(side); return; }
   const which = activePart[side];
+  const task = currentTaskFor(side);
   let val = pairParts(side)[which];
   if (key === "back") val = val.slice(0, -1);
   else if (key === "-") val = val.startsWith("-") ? val.slice(1) : "-" + val;
-  else if (key === ".") { /* Brüche/Koordinaten sind ganzzahlig */ }
+  else if (key === ".") { if (task && task.pairStyle === "scientific" && which === "a" && !val.includes(".")) val += "."; /* Mantisse erlaubt ein Komma, Brüche/Koordinaten/Exponent sind ganzzahlig */ }
   else val += key;
   setPairPart(side, which, val);
   renderPairBuffer(side);
@@ -2222,13 +2369,6 @@ function checkAnswer(task, bufferStr) {
     return !isNaN(a) && !isNaN(b) && Math.abs(a - task.correct[0]) < 0.01 && Math.abs(b - task.correct[1]) < 0.01;
   }
   if (task.answerType === "text") return String(bufferStr).trim().toLowerCase() === String(task.correct).trim().toLowerCase();
-  if (task.answerType === "sci") {
-    const s = String(bufferStr).trim().replace(",", ".");
-    const m2 = s.match(/^(-?\d+(?:\.\d+)?)\s*(?:[x×*]\s*10\s*\^?|e)\s*(-?\d+)$/i);
-    if (!m2) return false;
-    const mVal = parseFloat(m2[1]), eVal = parseInt(m2[2], 10);
-    return Math.abs(mVal - task.correct.m) < 0.05 && eVal === task.correct.e;
-  }
   if (task.answerType === "factors") {
     const nums = String(bufferStr).split(/[^0-9]+/).filter(Boolean).map(Number).sort((a, b) => a - b);
     const correct = [...task.correct].sort((a, b) => a - b);
@@ -2248,12 +2388,13 @@ function setWidgetMode(prefix, answerType, pairStyle) {
   if (disp) disp.classList.add("hidden");
   if (answerType === "none") return;
   if (answerType === "boolean") { bw.classList.remove("hidden"); return; }
-  if (answerType === "text" || answerType === "factors" || answerType === "sci") { tw.classList.remove("hidden"); return; }
+  if (answerType === "text" || answerType === "factors") { tw.classList.remove("hidden"); return; }
   if (answerType === "mc") { mw.classList.remove("hidden"); return; }
   if (answerType === "pair") {
     pw.classList.remove("hidden"); kp.classList.remove("hidden");
     const boxesEl = document.getElementById(`${prefix}_pairBoxes`), sepEl = document.getElementById(`${prefix}_pairSep`);
     if (pairStyle === "fraction") { boxesEl.className = "pair-boxes style-fraction"; sepEl.textContent = ""; }
+    else if (pairStyle === "scientific") { boxesEl.className = "pair-boxes style-coord style-sci"; sepEl.textContent = "×10^"; }
     else { boxesEl.className = "pair-boxes style-coord"; sepEl.textContent = "|"; }
     return;
   }
@@ -2378,7 +2519,8 @@ function shareCanvasAsImage(canvas, filename) {
 }
 document.getElementById("solo_camBtn").addEventListener("click", () => {
   const lines = [
-    soloExercise.title,
+    `Kapitel: ${navChapter ? navChapter.title : "–"}`,
+    `Übung: ${soloExercise.title}`,
     document.getElementById("solo_result_score").textContent,
     document.getElementById("solo_result_detail").textContent
   ];
@@ -2420,9 +2562,10 @@ document.getElementById("handicapSlider").addEventListener("input", (e) => {
 
 document.getElementById("startDuellBtn").addEventListener("click", () => {
   if (!duellSettings.timeLimitOn && !duellSettings.scoreLimitOn) { openConfirm("Bitte mindestens Zeitlimit oder Punktelimit aktivieren.", null, "OK"); return; }
+  tournament = null;
   startDuell();
 });
-document.getElementById("result_replayBtn").addEventListener("click", () => startDuell());
+document.getElementById("result_replayBtn").addEventListener("click", () => { tournament = null; startDuell(); });
 
 function startDuell() {
   duellScores = { top: 0, bottom: 0 };
@@ -2475,6 +2618,28 @@ function renderDuell() {
     }
   });
 }
+let sameTaskCountdownIv = null;
+function clearSameTaskCountdown() { if (sameTaskCountdownIv) { clearInterval(sameTaskCountdownIv); sameTaskCountdownIv = null; } }
+function startSameTaskCountdown(sides, onDone) {
+  clearSameTaskCountdown();
+  let n = 3;
+  sides.forEach(side => {
+    const prefix = `duell_${side}`;
+    setWidgetMode(prefix, "none");
+    const visualEl = document.getElementById(`${prefix}_visual`);
+    if (visualEl) visualEl.innerHTML = "";
+    const promptEl = document.getElementById(`${prefix}_prompt`);
+    if (promptEl) promptEl.textContent = `Nächste Aufgabe in ${n} …`;
+  });
+  sameTaskCountdownIv = setInterval(() => {
+    n--;
+    if (n <= 0) { clearSameTaskCountdown(); onDone(); return; }
+    sides.forEach(side => {
+      const promptEl = document.getElementById(`duell_${side}_prompt`);
+      if (promptEl) promptEl.textContent = `Nächste Aufgabe in ${n} …`;
+    });
+  }, 500);
+}
 function nextRound(side) {
   if (duellSettings.sameTask) {
     const nt = currentExercise.generate();
@@ -2495,8 +2660,12 @@ function submitAnswer(side) {
   if (ok) {
     duellScores[side]++;
     flash(inputElId, "correct-flash");
-    nextRound(side);
-    renderDuell();
+    if (duellSettings.sameTask) {
+      startSameTaskCountdown(["top", "bottom"], () => { nextRound(side); renderDuell(); });
+    } else {
+      nextRound(side);
+      renderDuell();
+    }
   } else {
     flash(inputElId, "wrong-flash");
     if (duellSettings.penalizeMistakes) {
@@ -2514,12 +2683,14 @@ function submitAnswer(side) {
 function checkScoreLimit() {
   if (duellSettings.scoreLimitOn && (duellScores.top >= duellSettings.scoreLimit || duellScores.bottom >= duellSettings.scoreLimit)) finishDuell();
 }
-function stopDuellTimerIfRunning() { if (duellRunning) { clearInterval(duellInterval); duellRunning = false; } clearTimeout(handicapTimers.top); clearTimeout(handicapTimers.bottom); }
+function stopDuellTimerIfRunning() { if (duellRunning) { clearInterval(duellInterval); duellRunning = false; } clearTimeout(handicapTimers.top); clearTimeout(handicapTimers.bottom); clearSameTaskCountdown(); }
 document.getElementById("duell_stopBtn").addEventListener("click", () => { openConfirm("Duell wirklich vorzeitig beenden?", () => finishDuell(), "Beenden"); });
 function finishDuell() {
   clearInterval(duellInterval);
   duellRunning = false;
   clearTimeout(handicapTimers.top); clearTimeout(handicapTimers.bottom);
+  clearSameTaskCountdown();
+  if (tournament) { tnHandleRoundEnd([duellScores.bottom, duellScores.top]); return; }
   const topName = document.getElementById("duell_top_name").textContent, bottomName = document.getElementById("duell_bottom_name").textContent;
   let winnerText;
   if (duellScores.top === duellScores.bottom) winnerText = "Unentschieden!";
@@ -2540,6 +2711,7 @@ const VK_TARGET_SCORE = 5;
 
 document.getElementById("goVkSetupBtn").addEventListener("click", () => showView("vkSetup"));
 document.getElementById("startVkBtn").addEventListener("click", () => {
+  tournament = null;
   for (let i = 0; i < 4; i++) {
     const val = document.getElementById(`vk_name${i}`).value.trim();
     vkNames[i] = val || `Spieler ${i + 1}`;
@@ -2575,8 +2747,7 @@ function vkSubmitAnswer(side) {
     flash(inputElId, "correct-flash");
     for (let i = 0; i < 4; i++) inputBuffers[`vk${i}`] = "";
     if (vkScores[idx] >= VK_TARGET_SCORE) { finishVierkampf(); return; }
-    vkNextTask();
-    renderVk();
+    startSameTaskCountdown(["vk0", "vk1", "vk2", "vk3"], () => { vkNextTask(); renderVk(); });
   } else {
     flash(inputElId, "wrong-flash");
     inputBuffers[side] = "";
@@ -2586,13 +2757,123 @@ function vkSubmitAnswer(side) {
 document.getElementById("vk_stopBtn").addEventListener("click", () => { openConfirm("Vierkampf wirklich vorzeitig beenden?", () => finishVierkampf(), "Beenden"); });
 function finishVierkampf() {
   vkRunning = false;
+  clearSameTaskCountdown();
+  if (tournament) { tnHandleRoundEnd(vkScores.slice(0, tournament.playerCount)); return; }
   const ranking = vkNames.map((name, i) => ({ name, score: vkScores[i] })).sort((a, b) => b.score - a.score);
   const winnerText = ranking[0].score === ranking[1].score ? "Unentschieden an der Spitze!" : `${ranking[0].name} gewinnt! 🎉`;
   document.getElementById("vk_result_winner").textContent = winnerText;
   document.getElementById("vk_result_scores").textContent = ranking.map(r => `${r.name}: ${r.score} Punkte`).join(" · ");
   showView("vkResult");
 }
-document.getElementById("vk_result_replayBtn").addEventListener("click", () => startVierkampf());
+document.getElementById("vk_result_replayBtn").addEventListener("click", () => { tournament = null; startVierkampf(); });
+
+/* =========================================================================
+   TURNIERMODUS – 2 oder 4 Spieler, 4 Runden mit je einer Basiswissen-Übung
+   ========================================================================= */
+let tournament = null;
+let tnPlayerCount = 2;
+let tnSelectedExercises = [];
+
+function tnAllBasiswissenExercises() {
+  const list = [];
+  BASISWISSEN_CHAPTERS.forEach(ch => {
+    ch.exercises.forEach(e => list.push({ id: e.id, title: e.title, chapterTitle: ch.title, generate: e.generate, help: e.help, calc: e.calc }));
+  });
+  return list;
+}
+function renderTnExercisePicker() {
+  const list = tnAllBasiswissenExercises();
+  const el = document.getElementById("tn_exercisePicker");
+  el.innerHTML = list.map(e => {
+    const idx = tnSelectedExercises.findIndex(s => s.id === e.id);
+    const selected = idx > -1;
+    return `<div class="chapter-row tn-ex-row ${selected ? "selected" : ""}" data-id="${e.id}">
+      <span class="tn-ex-badge">${selected ? (idx + 1) : ""}</span>
+      <span class="chapter-title">${escapeHtml(e.title)}<br><span class="tn-ex-chapter">${escapeHtml(e.chapterTitle)}</span></span>
+    </div>`;
+  }).join("");
+}
+document.getElementById("tn_exercisePicker").addEventListener("click", (e) => {
+  const row = e.target.closest(".tn-ex-row");
+  if (!row) return;
+  const id = row.dataset.id;
+  const idx = tnSelectedExercises.findIndex(s => s.id === id);
+  if (idx > -1) { tnSelectedExercises.splice(idx, 1); }
+  else {
+    if (tnSelectedExercises.length >= 4) { openConfirm("Es können maximal 4 Übungen ausgewählt werden. Bitte zuerst eine Auswahl entfernen.", null, "OK"); return; }
+    const found = tnAllBasiswissenExercises().find(x => x.id === id);
+    tnSelectedExercises.push(found);
+  }
+  renderTnExercisePicker();
+});
+document.querySelectorAll('.choice-btn[data-tnplayers]').forEach(btn => btn.addEventListener("click", () => {
+  tnPlayerCount = Number(btn.dataset.tnplayers);
+  document.querySelectorAll('.choice-btn[data-tnplayers]').forEach(b => b.classList.toggle("active", b === btn));
+  document.querySelectorAll('.tn-name34').forEach(el => el.classList.toggle("hidden", tnPlayerCount !== 4));
+}));
+document.getElementById("goTournamentBtn").addEventListener("click", () => {
+  tournament = null;
+  tnSelectedExercises = [];
+  tnPlayerCount = 2;
+  document.querySelectorAll('.choice-btn[data-tnplayers]').forEach(b => b.classList.toggle("active", b.dataset.tnplayers === "2"));
+  document.querySelectorAll('.tn-name34').forEach(el => el.classList.add("hidden"));
+  ["tn_name0", "tn_name1", "tn_name2", "tn_name3"].forEach(id => { document.getElementById(id).value = ""; });
+  renderTnExercisePicker();
+  showView("tournamentSetup");
+});
+document.getElementById("startTournamentBtn").addEventListener("click", () => {
+  if (tnSelectedExercises.length !== 4) { openConfirm("Bitte genau 4 Übungen auswählen.", null, "OK"); return; }
+  const names = [];
+  for (let i = 0; i < tnPlayerCount; i++) names.push(document.getElementById(`tn_name${i}`).value.trim() || `Spieler ${i + 1}`);
+  tournament = { playerCount: tnPlayerCount, names, rounds: tnSelectedExercises.slice(), roundIndex: 0, totals: new Array(tnPlayerCount).fill(0) };
+  tnStartRound();
+});
+function tnStartRound() {
+  const roundEx = tournament.rounds[tournament.roundIndex];
+  currentExercise = roundEx;
+  navChapter = { id: "turnier", title: `Turniermodus – Runde ${tournament.roundIndex + 1} von 4` };
+  if (tournament.playerCount === 2) {
+    duellSettings = Object.assign({}, duellSettings, { sameTask: true, timeLimitOn: false, scoreLimitOn: true, scoreLimit: 5, penalizeMistakes: false, handicapOn: false });
+    document.getElementById("dn_bottom").value = tournament.names[0];
+    document.getElementById("dn_top").value = tournament.names[1];
+    startDuell();
+  } else {
+    vkNames = tournament.names.slice();
+    startVierkampf();
+  }
+}
+function tnHandleRoundEnd(roundScores) {
+  const roundEx = tournament.rounds[tournament.roundIndex];
+  roundScores.forEach((s, i) => { tournament.totals[i] += s; });
+  document.getElementById("tn_roundEnd_title").textContent = `Runde ${tournament.roundIndex + 1} von 4 beendet – ${roundEx.title}`;
+  document.getElementById("tn_roundEnd_scores").textContent = tournament.names.map((n, i) => `${n}: +${roundScores[i]} (Total: ${tournament.totals[i]})`).join(" · ");
+  tournament.roundIndex++;
+  const nextCard = document.getElementById("tn_roundEnd_nextCard"), continueBtn = document.getElementById("tn_roundEnd_continueBtn");
+  if (tournament.roundIndex < 4) {
+    const nextEx = tournament.rounds[tournament.roundIndex];
+    nextCard.classList.remove("hidden");
+    document.getElementById("tn_roundEnd_nextTitle").textContent = `Runde ${tournament.roundIndex + 1}: ${nextEx.title}`;
+    continueBtn.textContent = "Weiter zur nächsten Runde";
+    continueBtn.onclick = () => tnStartRound();
+  } else {
+    nextCard.classList.add("hidden");
+    continueBtn.textContent = "Zur Endrangliste";
+    continueBtn.onclick = () => tnShowFinalResult();
+  }
+  showView("tournamentRoundEnd");
+}
+function tnShowFinalResult() {
+  const ranking = tournament.names.map((name, i) => ({ name, total: tournament.totals[i] })).sort((a, b) => b.total - a.total);
+  document.getElementById("tn_result_ranking").innerHTML = ranking.map((r, i) => `
+    <div class="tn-rank-row">
+      <span class="tn-rank-pos">${i + 1}.</span>
+      <span class="tn-rank-name">${escapeHtml(r.name)}</span>
+      <span class="tn-rank-total">${r.total} Punkte</span>
+    </div>`).join("");
+  tournament = null;
+  showView("tournamentResult");
+}
+document.getElementById("tn_result_againBtn").addEventListener("click", () => document.getElementById("goTournamentBtn").click());
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });

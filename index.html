@@ -1665,6 +1665,27 @@ function generateFractionCompare() {
   return { visual: null, prompt: `Stimmt die Aussage: ${an}/${ad} > ${bn}/${bd} ?`, answerType: "boolean", correct: (an / ad) > (bn / bd) ? 1 : 0 };
 }
 function generateMixedToImproper() { const w = rnd(1, 8), n = rnd(1, 6), d = rnd(n + 1, 9); return { visual: null, prompt: `Wandle die gemischte Zahl ${w} ${n}/${d} in einen unechten Bruch um.`, answerType: "pair", pairStyle: "fraction", correct: [w * d + n, d] }; }
+const FRACTION_DECIMAL_PERCENT_VALUES = [
+  { num: 1, den: 2, dec: 0.5, pct: 50 }, { num: 1, den: 4, dec: 0.25, pct: 25 }, { num: 3, den: 4, dec: 0.75, pct: 75 },
+  { num: 1, den: 5, dec: 0.2, pct: 20 }, { num: 2, den: 5, dec: 0.4, pct: 40 }, { num: 3, den: 5, dec: 0.6, pct: 60 }, { num: 4, den: 5, dec: 0.8, pct: 80 },
+  { num: 1, den: 10, dec: 0.1, pct: 10 }, { num: 3, den: 10, dec: 0.3, pct: 30 }, { num: 7, den: 10, dec: 0.7, pct: 70 }, { num: 9, den: 10, dec: 0.9, pct: 90 },
+  { num: 1, den: 8, dec: 0.125, pct: 12.5 }, { num: 3, den: 8, dec: 0.375, pct: 37.5 }, { num: 5, den: 8, dec: 0.625, pct: 62.5 }, { num: 7, den: 8, dec: 0.875, pct: 87.5 },
+  { num: 1, den: 20, dec: 0.05, pct: 5 }, { num: 3, den: 20, dec: 0.15, pct: 15 },
+  { num: 1, den: 25, dec: 0.04, pct: 4 }, { num: 1, den: 50, dec: 0.02, pct: 2 }, { num: 1, den: 100, dec: 0.01, pct: 1 }
+];
+function generateFractionDecimalPercent() {
+  const v = FRACTION_DECIMAL_PERCENT_VALUES[rnd(0, FRACTION_DECIMAL_PERCENT_VALUES.length - 1)];
+  const types = ["bruch", "dezimal", "prozent"];
+  const from = types[rnd(0, 2)];
+  let to = types[rnd(0, 2)];
+  while (to === from) to = types[rnd(0, 2)];
+  const labels = { bruch: `${v.num}/${v.den}`, dezimal: `${v.dec}`, prozent: `${v.pct}%` };
+  const targetName = { bruch: "einen Bruch", dezimal: "eine Dezimalzahl", prozent: "eine Prozentzahl" };
+  const prompt = `Wandle ${labels[from]} in ${targetName[to]} um.` + (to === "prozent" ? " (nur Zahl, ohne %)" : "");
+  if (to === "bruch") return { visual: null, prompt, answerType: "pair", pairStyle: "fraction", correct: [v.num, v.den] };
+  if (to === "dezimal") return { visual: null, prompt, answerType: "number", correct: v.dec };
+  return { visual: null, prompt, answerType: "number", correct: v.pct };
+}
 function generateFractionAdd() {
   const ad = rnd(2, 8), bd = rnd(2, 8), an = rnd(1, ad - 1), bn = rnd(1, bd - 1);
   const commonD = ad * bd, num = an * bd + bn * ad;
@@ -2324,7 +2345,8 @@ const JAHR1_CHAPTERS = [
 const JAHR2_CHAPTERS = [
   chapter("1a", "Brüche", [
     ex("m2-1a-comp", "Brüche vergleichen", generateFractionCompare, "Bringe beide Brüche gedanklich auf den gleichen Nenner oder rechne sie in Dezimalzahlen um, dann vergleiche."),
-    ex("m2-1a-mixed", "Gemischte Zahl → unechter Bruch", generateMixedToImproper, "Multipliziere die ganze Zahl mit dem Nenner und addiere den Zähler. Der Nenner bleibt gleich.")
+    ex("m2-1a-mixed", "Gemischte Zahl → unechter Bruch", generateMixedToImproper, "Multipliziere die ganze Zahl mit dem Nenner und addiere den Zähler. Der Nenner bleibt gleich."),
+    ex("m2-1a-fdp", "Bruch, Dezimalzahl, Prozent umwandeln", generateFractionDecimalPercent, "Bruch → Dezimalzahl: Zähler durch Nenner teilen. Dezimalzahl → Prozent: mit 100 multiplizieren. Prozent → Bruch: die Prozentzahl über 100 schreiben und kürzen.")
   ]),
   chapter("1b", "Grundoperationen mit Brüchen", [
     ex("m2-1b-add", "Brüche addieren", generateFractionAdd, "Bringe beide Brüche auf einen gemeinsamen Nenner (z.B. das Produkt der Nenner), addiere die Zähler, kürze am Schluss."),

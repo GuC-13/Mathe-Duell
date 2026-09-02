@@ -81,6 +81,13 @@
 
   /* Duell-Setup */
   .setup-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .setup-accordion { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px; }
+  .setup-accordion > summary { padding: 16px; cursor: pointer; font-weight: 600; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+  .setup-accordion > summary::-webkit-details-marker { display: none; }
+  .setup-accordion > summary::after { content: "▸"; color: var(--muted); }
+  .setup-accordion[open] > summary::after { content: "▾"; }
+  .setup-accordion[open] > summary { border-bottom: 1px solid var(--border); }
+  .setup-accordion-body { padding: 16px; }
   .field-label { font-size: 0.85rem; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; }
   input[type="text"], input[type="number"] { border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 1rem; width: 100%; }
   .choice-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -153,6 +160,11 @@
   .duell-prompt { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; }
   .duell-input { font-size: 1.5rem; font-weight: 800; background: white; border-radius: 10px; padding: 10px; min-height: 48px; margin-bottom: 8px; border: 1px solid var(--border); }
   .duell-divider { height: 56px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; gap: 20px; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.2rem; }
+  .stall-timer { color: #fbbf24; font-size: 1rem; }
+  .buzz-wrap { text-align: center; margin: 16px 0; }
+  .buzz-btn { width: 110px; height: 110px; border-radius: 50%; font-size: 1.05rem; font-weight: 700; line-height: 1.3; border: none; background: linear-gradient(145deg,#f59e0b,#d97706); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+  .buzz-btn:disabled { opacity: 0.35; }
+  .buzz-status { margin-top: 10px; font-weight: 600; color: var(--muted); }
   .duell-divider button { background: #ef4444; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-weight: 700; }
   #duellPlayView { display: flex; flex-direction: column; height: 100vh; }
   .duell-bool-wrap { display: flex; gap: 10px; margin-bottom: 8px; }
@@ -321,6 +333,7 @@
     </div>
     <div class="row" style="margin-top:10px;">
       <button class="btn btn-duell" style="flex:1;" id="solo_result_againBtn">Nochmals üben</button>
+      <button class="btn btn-secondary" style="flex:1;" data-back-tochapter>← Zum Kapitel</button>
       <button class="btn btn-secondary" style="flex:1;" data-back-home>Zur Startseite</button>
     </div>
   </div>
@@ -331,51 +344,18 @@
     <h1 id="duell_exercise_title">⚔️ Duell einrichten</h1>
 
     <div class="setup-card">
+      <label class="field-label">Spielmodus</label>
+      <div class="choice-row">
+        <button class="choice-btn active" data-duellmode="normal">Normal</button>
+        <button class="choice-btn" data-duellmode="buzzer">🔔 Buzzer</button>
+      </div>
+    </div>
+
+    <div class="setup-card" id="aufgabenCard">
       <label class="field-label">Aufgaben</label>
       <div class="choice-row">
         <button class="choice-btn active" data-sametask="1">Gleiche Aufgaben für beide</button>
         <button class="choice-btn" data-sametask="0">Unterschiedliche Aufgaben</button>
-      </div>
-
-      <div class="toggle-line">
-        <label class="field-label" style="margin:0;">Zeitlimit</label>
-        <label class="switch"><input type="checkbox" id="sw_timeLimit" checked><span class="slider"></span></label>
-      </div>
-      <div class="choice-row" id="durationRow">
-        <button class="choice-btn" data-duration="60">1 Min.</button>
-        <button class="choice-btn active" data-duration="120">2 Min.</button>
-        <button class="choice-btn" data-duration="180">3 Min.</button>
-        <button class="choice-btn" data-duration="300">5 Min.</button>
-      </div>
-
-      <div class="toggle-line">
-        <label class="field-label" style="margin:0;">Punktelimit</label>
-        <label class="switch"><input type="checkbox" id="sw_scoreLimit"><span class="slider"></span></label>
-      </div>
-      <div id="scoreLimitRow" class="hidden" style="margin-bottom:14px;">
-        <input type="number" id="scoreLimitInput" value="10" min="1">
-      </div>
-
-      <div class="toggle-line">
-        <label class="field-label" style="margin:0;">Punkt für Gegner bei falscher Antwort</label>
-        <label class="switch"><input type="checkbox" id="sw_penalize"><span class="slider"></span></label>
-      </div>
-    </div>
-
-    <div class="setup-card">
-      <div class="toggle-line">
-        <label class="field-label" style="margin:0;">Handicap (Verzögerung für stärkeren Spieler)</label>
-        <label class="switch"><input type="checkbox" id="sw_handicap"><span class="slider"></span></label>
-      </div>
-      <div id="handicapOptions" class="hidden">
-        <label class="field-label">Welche Seite wird verzögert?</label>
-        <div class="choice-row">
-          <button class="choice-btn active" data-handicapside="bottom">Team Blau (unten)</button>
-          <button class="choice-btn" data-handicapside="top">Team Rot (oben)</button>
-        </div>
-        <label class="field-label">Verzögerung: <span id="handicapMsLabel">1 Sek.</span></label>
-        <input type="range" id="handicapSlider" class="range-slider" min="1000" max="10000" step="500" value="1000">
-        <div class="range-scale"><span>1 Sek.</span><span>10 Sek.</span></div>
       </div>
     </div>
 
@@ -386,6 +366,71 @@
       <label class="field-label">Name Spieler oben (gegenübersitzend, gespiegelt, Team Rot)</label>
       <input type="text" id="dn_top" placeholder="Team Rot" maxlength="16">
     </div>
+
+    <details class="setup-accordion">
+      <summary>⚙️ Weitere Einstellungen (Zeit, Punkte, Handicap)</summary>
+      <div class="setup-accordion-body">
+        <div class="toggle-line">
+          <label class="field-label" style="margin:0;">Zeitlimit</label>
+          <label class="switch"><input type="checkbox" id="sw_timeLimit" checked><span class="slider"></span></label>
+        </div>
+        <div class="choice-row" id="durationRow">
+          <button class="choice-btn" data-duration="60">1 Min.</button>
+          <button class="choice-btn active" data-duration="120">2 Min.</button>
+          <button class="choice-btn" data-duration="180">3 Min.</button>
+          <button class="choice-btn" data-duration="300">5 Min.</button>
+        </div>
+
+        <div class="toggle-line">
+          <label class="field-label" style="margin:0;">Punktelimit</label>
+          <label class="switch"><input type="checkbox" id="sw_scoreLimit"><span class="slider"></span></label>
+        </div>
+        <div id="scoreLimitRow" class="hidden" style="margin-bottom:14px;">
+          <input type="number" id="scoreLimitInput" value="10" min="1">
+        </div>
+
+        <div class="toggle-line" id="penalizeRow">
+          <label class="field-label" style="margin:0;">Punkt für Gegner bei falscher Antwort</label>
+          <label class="switch"><input type="checkbox" id="sw_penalize"><span class="slider"></span></label>
+        </div>
+        <p id="penalizeAutoNote" class="hidden" style="font-size:0.82rem; color:var(--muted); margin:0 0 14px;">Bei "Gleiche Aufgaben für beide" automatisch aktiv: Ein Fehler gibt dem Gegner immer einen Punkt.</p>
+
+        <div id="stallGuardRow">
+          <label class="field-label">Bedenkzeit pro Aufgabe (bevor sie übersprungen wird)</label>
+          <div class="choice-row">
+            <button class="choice-btn" data-stallguard="30">30 Sek.</button>
+            <button class="choice-btn active" data-stallguard="60">1 Min.</button>
+            <button class="choice-btn" data-stallguard="90">1.5 Min.</button>
+            <button class="choice-btn" data-stallguard="120">2 Min.</button>
+          </div>
+        </div>
+
+        <div id="buzzAnswerRow" class="hidden">
+          <label class="field-label">Antwortzeit nach dem Buzzern</label>
+          <div class="choice-row">
+            <button class="choice-btn" data-buzzanswersec="5">5 Sek.</button>
+            <button class="choice-btn active" data-buzzanswersec="10">10 Sek.</button>
+            <button class="choice-btn" data-buzzanswersec="15">15 Sek.</button>
+            <button class="choice-btn" data-buzzanswersec="20">20 Sek.</button>
+          </div>
+        </div>
+
+        <div class="toggle-line">
+          <label class="field-label" style="margin:0;">Handicap (Verzögerung für stärkeren Spieler)</label>
+          <label class="switch"><input type="checkbox" id="sw_handicap"><span class="slider"></span></label>
+        </div>
+        <div id="handicapOptions" class="hidden">
+          <label class="field-label">Welche Seite wird verzögert?</label>
+          <div class="choice-row">
+            <button class="choice-btn active" data-handicapside="bottom">Team Blau (unten)</button>
+            <button class="choice-btn" data-handicapside="top">Team Rot (oben)</button>
+          </div>
+          <label class="field-label">Verzögerung: <span id="handicapMsLabel">1 Sek.</span></label>
+          <input type="range" id="handicapSlider" class="range-slider" min="1000" max="10000" step="500" value="1000">
+          <div class="range-scale"><span>1 Sek.</span><span>10 Sek.</span></div>
+        </div>
+      </div>
+    </details>
 
     <button class="btn btn-big btn-duell" id="startDuellBtn">Duell starten</button>
   </div>
@@ -398,6 +443,10 @@
         <div class="duell-score" id="duell_top_score">0 Punkte</div>
         <div id="duell_top_visual"></div>
         <div class="duell-prompt" id="duell_top_prompt"></div>
+        <div id="duell_top_buzzWrap" class="buzz-wrap hidden">
+          <button class="buzz-btn" data-side="top">🔔<br>Buzzer</button>
+          <div class="buzz-status"></div>
+        </div>
         <div class="duell-input" id="duell_top_input">&nbsp;</div>
         <div id="duell_top_pairWrap" class="pair-wrap hidden">
           <div class="pair-boxes style-coord" id="duell_top_pairBoxes">
@@ -431,6 +480,7 @@
     </div>
     <div class="duell-divider">
       <span id="duell_timer">02:00</span>
+      <span id="duell_stallTimer" class="stall-timer hidden"></span>
       <button id="duell_stopBtn">Beenden</button>
     </div>
     <div class="duell-half duell-bottom">
@@ -439,6 +489,10 @@
         <div class="duell-score" id="duell_bottom_score">0 Punkte</div>
         <div id="duell_bottom_visual"></div>
         <div class="duell-prompt" id="duell_bottom_prompt"></div>
+        <div id="duell_bottom_buzzWrap" class="buzz-wrap hidden">
+          <button class="buzz-btn" data-side="bottom">🔔<br>Buzzer</button>
+          <div class="buzz-status"></div>
+        </div>
         <div class="duell-input" id="duell_bottom_input">&nbsp;</div>
         <div id="duell_bottom_pairWrap" class="pair-wrap hidden">
           <div class="pair-boxes style-coord" id="duell_bottom_pairBoxes">
@@ -481,6 +535,7 @@
     </div>
     <div class="row">
       <button class="btn btn-duell" style="flex:1;" id="result_replayBtn">Nochmals spielen</button>
+      <button class="btn btn-secondary" style="flex:1;" data-back-tochapter>← Zum Kapitel</button>
       <button class="btn btn-secondary" style="flex:1;" data-back-home>Zur Startseite</button>
     </div>
   </div>
@@ -499,6 +554,31 @@
         <input type="text" id="vk_name3" placeholder="Spieler 4" maxlength="14">
       </div>
     </div>
+    <div class="setup-card">
+      <label class="field-label">Spielmodus</label>
+      <div class="choice-row">
+        <button class="choice-btn active" data-vk-mode="normal">Normal</button>
+        <button class="choice-btn" data-vk-mode="buzzer">🔔 Buzzer</button>
+      </div>
+    </div>
+    <div class="setup-card">
+      <label class="field-label">Bedenkzeit pro Aufgabe (bevor sie übersprungen wird)</label>
+      <div class="choice-row">
+        <button class="choice-btn" data-vk-stallguard="30">30 Sek.</button>
+        <button class="choice-btn active" data-vk-stallguard="60">1 Min.</button>
+        <button class="choice-btn" data-vk-stallguard="90">1.5 Min.</button>
+        <button class="choice-btn" data-vk-stallguard="120">2 Min.</button>
+      </div>
+      <div id="vkBuzzAnswerRow" class="hidden" style="margin-top:14px;">
+        <label class="field-label">Antwortzeit nach dem Buzzern</label>
+        <div class="choice-row">
+          <button class="choice-btn" data-vk-buzzanswersec="5">5 Sek.</button>
+          <button class="choice-btn active" data-vk-buzzanswersec="10">10 Sek.</button>
+          <button class="choice-btn" data-vk-buzzanswersec="15">15 Sek.</button>
+          <button class="choice-btn" data-vk-buzzanswersec="20">20 Sek.</button>
+        </div>
+      </div>
+    </div>
     <button class="btn btn-big btn-vk" id="startVkBtn">Vierkampf starten</button>
   </div>
 
@@ -511,6 +591,10 @@
           <div class="vk-score" id="duell_vk2_score"></div>
           <div id="duell_vk2_visual"></div>
           <div class="vk-prompt" id="duell_vk2_prompt"></div>
+          <div id="duell_vk2_buzzWrap" class="buzz-wrap hidden">
+            <button class="buzz-btn" data-side="vk2">🔔<br>Buzzer</button>
+            <div class="buzz-status"></div>
+          </div>
           <div class="vk-input" id="duell_vk2_input"> </div>
           <div id="duell_vk2_pairWrap" class="pair-wrap hidden">
             <div class="pair-boxes style-coord" id="duell_vk2_pairBoxes">
@@ -548,6 +632,10 @@
           <div class="vk-score" id="duell_vk3_score"></div>
           <div id="duell_vk3_visual"></div>
           <div class="vk-prompt" id="duell_vk3_prompt"></div>
+          <div id="duell_vk3_buzzWrap" class="buzz-wrap hidden">
+            <button class="buzz-btn" data-side="vk3">🔔<br>Buzzer</button>
+            <div class="buzz-status"></div>
+          </div>
           <div class="vk-input" id="duell_vk3_input"> </div>
           <div id="duell_vk3_pairWrap" class="pair-wrap hidden">
             <div class="pair-boxes style-coord" id="duell_vk3_pairBoxes">
@@ -585,6 +673,10 @@
           <div class="vk-score" id="duell_vk0_score"></div>
           <div id="duell_vk0_visual"></div>
           <div class="vk-prompt" id="duell_vk0_prompt"></div>
+          <div id="duell_vk0_buzzWrap" class="buzz-wrap hidden">
+            <button class="buzz-btn" data-side="vk0">🔔<br>Buzzer</button>
+            <div class="buzz-status"></div>
+          </div>
           <div class="vk-input" id="duell_vk0_input"> </div>
           <div id="duell_vk0_pairWrap" class="pair-wrap hidden">
             <div class="pair-boxes style-coord" id="duell_vk0_pairBoxes">
@@ -622,6 +714,10 @@
           <div class="vk-score" id="duell_vk1_score"></div>
           <div id="duell_vk1_visual"></div>
           <div class="vk-prompt" id="duell_vk1_prompt"></div>
+          <div id="duell_vk1_buzzWrap" class="buzz-wrap hidden">
+            <button class="buzz-btn" data-side="vk1">🔔<br>Buzzer</button>
+            <div class="buzz-status"></div>
+          </div>
           <div class="vk-input" id="duell_vk1_input"> </div>
           <div id="duell_vk1_pairWrap" class="pair-wrap hidden">
             <div class="pair-boxes style-coord" id="duell_vk1_pairBoxes">
@@ -656,6 +752,7 @@
     </div>
     <div class="vk-divider">
       <span id="vk_status">Erster bis 5 Punkte gewinnt</span>
+      <span id="vk_stallTimer" class="stall-timer hidden"></span>
       <button id="vk_stopBtn">Abbrechen</button>
     </div>
   </div>
@@ -669,6 +766,7 @@
     </div>
     <div class="row">
       <button class="btn btn-duell" style="flex:1;" id="vk_result_replayBtn">Nochmals spielen</button>
+      <button class="btn btn-secondary" style="flex:1;" data-back-tochapter>← Zum Kapitel</button>
       <button class="btn btn-secondary" style="flex:1;" data-back-home>Zur Startseite</button>
     </div>
   </div>
@@ -1123,6 +1221,7 @@ function showView(name) {
   document.getElementById(name + "View").classList.remove("hidden");
 }
 document.querySelectorAll("[data-back-home]").forEach(b => b.addEventListener("click", () => { stopDuellTimerIfRunning(); showView("home"); }));
+document.querySelectorAll("[data-back-tochapter]").forEach(b => b.addEventListener("click", () => { stopDuellTimerIfRunning(); showView(navChapter && navChapter.id !== "turnier" ? "chapter" : "home"); }));
 document.getElementById("lp21LinkBtn").addEventListener("click", () => showView("lp21"));
 document.getElementById("categoryView").querySelector("[data-back-home]");
 document.querySelectorAll("[data-back-category]").forEach(b => b.addEventListener("click", () => showView("category")));
@@ -1251,6 +1350,88 @@ const UNIT_SETS = [
   { from: "min", to: "h", factor: 1 / 60 }, { from: "h", to: "min", factor: 60 }
 ];
 function generateUnitConversion() { const s = UNIT_SETS[rnd(0, UNIT_SETS.length - 1)]; const val = rnd(1, 50); return { visual: null, prompt: `Wandle um: ${val} ${s.from} = ? ${s.to}`, answerType: "number", correct: Math.round(val * s.factor * 1000) / 1000 }; }
+const AREA_UNIT_SETS = [
+  { from: "mm²", to: "cm²", factor: 0.01 }, { from: "cm²", to: "mm²", factor: 100 },
+  { from: "cm²", to: "dm²", factor: 0.01 }, { from: "dm²", to: "cm²", factor: 100 },
+  { from: "dm²", to: "m²", factor: 0.01 }, { from: "m²", to: "dm²", factor: 100 },
+  { from: "m²", to: "a", factor: 0.01 }, { from: "a", to: "m²", factor: 100 },
+  { from: "a", to: "ha", factor: 0.01 }, { from: "ha", to: "a", factor: 100 },
+  { from: "ha", to: "km²", factor: 0.01 }, { from: "km²", to: "ha", factor: 100 }
+];
+function generateAreaUnitConversion() { const s = AREA_UNIT_SETS[rnd(0, AREA_UNIT_SETS.length - 1)]; const val = rnd(1, 50); return { visual: null, prompt: `Rechne um: ${val} ${s.from} = ? ${s.to}`, answerType: "number", correct: Math.round(val * s.factor * 1000) / 1000 }; }
+const VOLUME_UNIT_SETS = [
+  { from: "mm³", to: "cm³", factor: 0.001 }, { from: "cm³", to: "mm³", factor: 1000 },
+  { from: "cm³", to: "dm³", factor: 0.001 }, { from: "dm³", to: "cm³", factor: 1000 },
+  { from: "dm³", to: "m³", factor: 0.001 }, { from: "m³", to: "dm³", factor: 1000 },
+  { from: "dm³", to: "l", factor: 1 }, { from: "l", to: "dm³", factor: 1 },
+  { from: "cm³", to: "ml", factor: 1 }, { from: "ml", to: "cm³", factor: 1 }
+];
+function generateVolumeUnitConversion() { const s = VOLUME_UNIT_SETS[rnd(0, VOLUME_UNIT_SETS.length - 1)]; const val = rnd(1, 50); return { visual: null, prompt: `Rechne um: ${val} ${s.from} = ? ${s.to}`, answerType: "number", correct: Math.round(val * s.factor * 1000) / 1000 }; }
+function generateBinomialApplication() {
+  const bases = [20, 30, 40, 50, 60, 70, 80, 90, 100];
+  const base = bases[rnd(0, bases.length - 1)];
+  const delta = rnd(1, 9);
+  const kind = rnd(0, 2);
+  if (kind === 0) return { visual: null, prompt: `Berechne geschickt mit einer binomischen Formel: ${base + delta}² =`, answerType: "number", correct: (base + delta) * (base + delta) };
+  if (kind === 1) return { visual: null, prompt: `Berechne geschickt mit einer binomischen Formel: ${base - delta}² =`, answerType: "number", correct: (base - delta) * (base - delta) };
+  return { visual: null, prompt: `Berechne geschickt mit einer binomischen Formel: ${base - delta} × ${base + delta} =`, answerType: "number", correct: (base - delta) * (base + delta) };
+}
+function formatQuadraticTerm(coefX, constant) {
+  let s = "x²";
+  if (coefX !== 0) s += (coefX > 0 ? " + " : " − ") + (Math.abs(coefX) === 1 ? "" : Math.abs(coefX)) + "x";
+  if (constant !== 0) s += (constant > 0 ? " + " : " − ") + Math.abs(constant);
+  return s;
+}
+function generateBinomialExpansionMC() {
+  const b = rnd(2, 12);
+  const kind = rnd(0, 2);
+  let prompt, correct, wrongs;
+  if (kind === 0) {
+    prompt = `(x + ${b})² =`;
+    correct = formatQuadraticTerm(2 * b, b * b);
+    wrongs = [formatQuadraticTerm(0, b * b), formatQuadraticTerm(b, b * b), formatQuadraticTerm(-2 * b, b * b)];
+  } else if (kind === 1) {
+    prompt = `(x − ${b})² =`;
+    correct = formatQuadraticTerm(-2 * b, b * b);
+    wrongs = [formatQuadraticTerm(0, -b * b), formatQuadraticTerm(-b, b * b), formatQuadraticTerm(2 * b, b * b)];
+  } else {
+    prompt = `(x + ${b})(x − ${b}) =`;
+    correct = formatQuadraticTerm(0, -b * b);
+    wrongs = [formatQuadraticTerm(0, b * b), formatQuadraticTerm(2 * b, -b * b), formatQuadraticTerm(-2 * b, -b * b)];
+  }
+  const uniqueWrongs = [...new Set(wrongs)].filter(w => w !== correct);
+  while (uniqueWrongs.length < 3) uniqueWrongs.push(formatQuadraticTerm(rnd(-2 * b, 2 * b) || 1, b * b + rnd(1, 5)));
+  const options = [correct, ...uniqueWrongs.slice(0, 3)].sort(() => Math.random() - 0.5);
+  return { visual: null, prompt: `Multipliziere aus: ${prompt}`, answerType: "mc", options, correct };
+}
+function formatBinomFactor(p) {
+  return `(x ${p >= 0 ? "+" : "−"} ${Math.abs(p)})`;
+}
+function generateTrinomialFactorMC() {
+  const p = rnd(1, 9) * (Math.random() < 0.5 ? 1 : -1);
+  let q = rnd(1, 9) * (Math.random() < 0.5 ? 1 : -1);
+  if (p + q === 0) q += 1;
+  const trinomial = formatQuadraticTerm(p + q, p * q);
+  const correct = `${formatBinomFactor(p)}${formatBinomFactor(q)}`;
+  const wrongs = [
+    `${formatBinomFactor(-p)}${formatBinomFactor(q)}`,
+    `${formatBinomFactor(p)}${formatBinomFactor(-q)}`,
+    `${formatBinomFactor(-p)}${formatBinomFactor(-q)}`
+  ];
+  const uniqueWrongs = [...new Set(wrongs)].filter(w => w !== correct);
+  while (uniqueWrongs.length < 3) uniqueWrongs.push(`${formatBinomFactor(p + uniqueWrongs.length + 1)}${formatBinomFactor(q - uniqueWrongs.length - 1)}`);
+  const options = [correct, ...uniqueWrongs.slice(0, 3)].sort(() => Math.random() - 0.5);
+  return { visual: null, prompt: `Faktorisiere: ${trinomial} =`, answerType: "mc", options, correct };
+}
+function generateNegExponentRuleMC() {
+  const bases = ["a", "b", "x", "y"];
+  const base = bases[rnd(0, bases.length - 1)];
+  const n = rnd(2, 5);
+  const correct = `1 ÷ ${base}^${n}`;
+  const wrongs = [`-1 ÷ ${base}^${n}`, `1 ÷ ${base}^-${n}`, `-${base}^${n}`];
+  const options = [correct, ...wrongs].sort(() => Math.random() - 0.5);
+  return { visual: null, prompt: `Wie schreibt man ${base}^-${n} ohne negativen Exponenten?`, answerType: "mc", options, correct };
+}
 function generateGgt() {
   const g = rnd(2, 10);
   let m = rnd(1, 8), n = rnd(1, 8);
@@ -1461,6 +1642,13 @@ function generateCubeShapeProperty() {
 
 function generateCubeVolume() { const a = rnd(2, 25); return { visual: null, prompt: `Berechne das Volumen eines Würfels mit Kantenlänge ${a} cm (in cm³).`, answerType: "number", correct: a * a * a }; }
 function generateCubeSurface() { const a = rnd(2, 25); return { visual: null, prompt: `Berechne den Oberflächeninhalt eines Würfels mit Kantenlänge ${a} cm (in cm²).`, answerType: "number", correct: 6 * a * a }; }
+function generateCubeFormulaMC() {
+  const askVolume = Math.random() < 0.5;
+  const correct = askVolume ? "a × a × a" : "6 × a × a";
+  const wrongs = askVolume ? ["6 × a × a", "4 × a", "a × a"] : ["a × a × a", "4 × a × a", "12 × a"];
+  const options = [correct, ...wrongs].sort(() => Math.random() - 0.5);
+  return { visual: null, prompt: `Welche Formel berechnet ${askVolume ? "das Volumen" : "den Oberflächeninhalt"} eines Würfels mit Kantenlänge a?`, answerType: "mc", options, correct };
+}
 
 /* ---- Mathematik 2. Jahr: Generatoren ---- */
 function simplifyFraction(n, d) { const g = gcdFn(Math.abs(n), Math.abs(d)); return [n / g, d / g]; }
@@ -1525,6 +1713,19 @@ function generateCurrency() { const betrag = rnd(10, 500), kurs = (rnd(85, 110) 
 function generateCircleCircumference() { const r = rnd(2, 30); return { visual: null, prompt: `Berechne den Umfang eines Kreises mit Radius ${r} cm. (auf 1 Nachkommastelle runden, π ≈ 3.14159)`, answerType: "number", correct: Math.round(2 * Math.PI * r * 10) / 10 }; }
 function generateCircleArea() { const r = rnd(2, 30); return { visual: null, prompt: `Berechne die Fläche eines Kreises mit Radius ${r} cm. (auf 1 Nachkommastelle runden, π ≈ 3.14159)`, answerType: "number", correct: Math.round(Math.PI * r * r * 10) / 10 }; }
 function generateCircleSector() { const r = rnd(3, 20), winkel = rnd(20, 340); return { visual: null, prompt: `Berechne die Fläche eines Kreissektors mit Radius ${r} cm und Mittelpunktswinkel ${winkel}°. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((winkel / 360) * Math.PI * r * r * 10) / 10 }; }
+function generateCircleFormulaMC() {
+  const askUmfang = Math.random() < 0.5;
+  const correct = askUmfang ? "2 × π × r" : "π × r²";
+  const wrongs = askUmfang ? ["π × r²", "π × r", "2 × π × r²"] : ["2 × π × r", "π × r", "2 × π × r²"];
+  const options = [correct, ...wrongs].sort(() => Math.random() - 0.5);
+  return { visual: null, prompt: `Welche Formel berechnet ${askUmfang ? "den Umfang" : "die Fläche"} eines Kreises mit Radius r?`, answerType: "mc", options, correct };
+}
+function generateCircleSectorFormulaMC() {
+  const correct = "(α ÷ 360°) × π × r²";
+  const wrongs = ["π × r²", "2 × π × r", "(α ÷ 180°) × π × r²"];
+  const options = [correct, ...wrongs].sort(() => Math.random() - 0.5);
+  return { visual: null, prompt: `Welche Formel berechnet die Fläche eines Kreissektors mit Radius r und Mittelpunktswinkel α?`, answerType: "mc", options, correct };
+}
 
 function generateTreeCount() { const n = rnd(2, 5), k = rnd(2, 8); return { visual: null, prompt: `Du triffst ${n} unabhängige Entscheidungen mit je ${k} Möglichkeiten. Wie viele verschiedene Kombinationen gibt es insgesamt?`, answerType: "number", correct: Math.pow(k, n) }; }
 function generateMode() { const pool = [rnd(1,10), rnd(1,10), rnd(1,10)]; const vals = []; const modeVal = pool[0]; for (let i=0;i<3;i++) vals.push(modeVal); for (let i=0;i<3;i++) vals.push(rnd(1,10)); for (let j = vals.length - 1; j > 0; j--) { const k = rnd(0, j); [vals[j], vals[k]] = [vals[k], vals[j]]; } const counts = {}; vals.forEach(v => counts[v] = (counts[v]||0)+1); let best = vals[0]; Object.keys(counts).forEach(k => { if (counts[k] > counts[best]) best = Number(k); }); return { visual: null, prompt: `Bestimme den Modus (häufigster Wert) dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: Number(best) }; }
@@ -2054,7 +2255,9 @@ const JAHR1_CHAPTERS = [
   chapter("3c", "Flächen und Volumen", [
     ex("3c-rect", "Fläche Rechteck", generateRectArea, "Fläche des Rechtecks = Länge × Breite."),
     ex("3c-tri", "Fläche Dreieck", generateTriArea, "Fläche des Dreiecks = Grundseite × Höhe ÷ 2."),
-    ex("3c-box", "Volumen Quader", generateBoxVolume, "Volumen des Quaders = Länge × Breite × Höhe.")
+    ex("3c-box", "Volumen Quader", generateBoxVolume, "Volumen des Quaders = Länge × Breite × Höhe."),
+    ex("3c-area-units", "Flächenmasseinheiten umrechnen", generateAreaUnitConversion, "Die Flächenmasseinheiten sind alle 100-teilig: 1 cm² = 100 mm², 1 dm² = 100 cm², 1 m² = 100 dm², 1 a = 100 m², 1 ha = 100 a, 1 km² = 100 ha."),
+    ex("3c-vol-units", "Raum- und Hohlmasseinheiten umrechnen", generateVolumeUnitConversion, "Die Raummasseinheiten sind 1000-teilig: 1 cm³ = 1000 mm³, 1 dm³ = 1000 cm³, 1 m³ = 1000 dm³. Zudem gilt 1 dm³ = 1 l und 1 cm³ = 1 ml.")
   ]),
   chapter("4a", "Geometrische Körper und ihre Netze", [
     ex("4a-faces", "Flächen zählen", generateSolidFaces, "Zähle alle ebenen Begrenzungsflächen des Körpers."),
@@ -2105,7 +2308,8 @@ const JAHR1_CHAPTERS = [
   ]),
   chapter("9b", "Volumen und Oberflächeninhalt", [
     ex("9b-vol", "Volumen Würfel", generateCubeVolume, "Volumen des Würfels = Kantenlänge × Kantenlänge × Kantenlänge."),
-    ex("9b-surf", "Oberfläche Würfel", generateCubeSurface, "Oberfläche des Würfels = 6 × Kantenlänge².")
+    ex("9b-surf", "Oberfläche Würfel", generateCubeSurface, "Oberfläche des Würfels = 6 × Kantenlänge²."),
+    ex("9b-formula-mc", "Welche Formel stimmt?", generateCubeFormulaMC, "Volumen misst den Raum im Innern (3 Längen multipliziert), Oberfläche misst die Summe aller 6 Seitenflächen.")
   ])
 ];
 
@@ -2141,9 +2345,13 @@ const JAHR2_CHAPTERS = [
   chapter("5b", "Währungen und Budget", [ex("m2-5b-1", "Währung umrechnen", generateCurrency, "Multipliziere den Betrag mit dem Wechselkurs.", true)]),
   chapter("6a", "Der Kreisumfang und die Kreisfläche", [
     ex("m2-6a-u", "Kreisumfang berechnen", generateCircleCircumference, "Umfang = 2 × π × Radius.", true),
-    ex("m2-6a-a", "Kreisfläche berechnen", generateCircleArea, "Fläche = π × Radius².", true)
+    ex("m2-6a-a", "Kreisfläche berechnen", generateCircleArea, "Fläche = π × Radius².", true),
+    ex("m2-6a-formula-mc", "Welche Formel stimmt?", generateCircleFormulaMC, "Umfang misst die Länge der Kreislinie (einfache Länge), Fläche misst den Platz im Innern (Radius im Quadrat).")
   ]),
-  chapter("6b", "Der Kreissektor/Geraden und Kreise", [ex("m2-6b-1", "Kreissektor-Fläche", generateCircleSector, "Fläche des Sektors = (Mittelpunktswinkel ÷ 360°) × π × Radius².", true)]),
+  chapter("6b", "Der Kreissektor/Geraden und Kreise", [
+    ex("m2-6b-1", "Kreissektor-Fläche", generateCircleSector, "Fläche des Sektors = (Mittelpunktswinkel ÷ 360°) × π × Radius².", true),
+    ex("m2-6b-formula-mc", "Welche Formel stimmt?", generateCircleSectorFormulaMC, "Der Sektor ist ein Anteil des ganzen Kreises: Anteil = Mittelpunktswinkel ÷ 360°, davon die Kreisfläche π × r².")
+  ]),
   chapter("7a", "Baumdarstellungen, Wiederholung und Vertiefung", [ex("m2-7a-1", "Kombinationen zählen", generateTreeCount, "Bei einem Baumdiagramm multiplizierst du die Anzahl Möglichkeiten auf jeder Stufe: Möglichkeiten^Entscheidungen.")]),
   chapter("7b", "Statistische Kennwerte", [ex("m2-7b-1", "Modus bestimmen", generateMode, "Der Modus ist der Wert, der in der Liste am häufigsten vorkommt.")]),
   chapter("7c", "Simulationen/Statistik praktisch", [ex("m2-7c-1", "Relative Häufigkeit", generateRelativeFrequency, "Relative Häufigkeit = absolute Häufigkeit ÷ Gesamtzahl der Versuche × 100%.", true)]),
@@ -2168,9 +2376,15 @@ const JAHR3_CHAPTERS = [
   ]),
   chapter("3a", "Potenzen und Wurzeln", [
     ex("m3-3a-sci", "Wissenschaftliche Schreibweise", generateScientificNotation, "Verschiebe das Komma so, dass vor dem Komma genau eine Ziffer (1–9) steht. Die Anzahl verschobener Stellen ist der Exponent von 10 (nach rechts verschoben = negativ, nach links = positiv)."),
-    ex("m3-3a-negexp", "Potenzen mit negativen Exponenten", generateNegativeExponent, "a^-n = 1 ÷ (a^n). Rechne a^n aus, das Ergebnis kommt in den Nenner, im Zähler steht 1.")
+    ex("m3-3a-negexp", "Potenzen mit negativen Exponenten", generateNegativeExponent, "a^-n = 1 ÷ (a^n). Rechne a^n aus, das Ergebnis kommt in den Nenner, im Zähler steht 1."),
+    ex("m3-3a-negexp-mc", "Regel für negative Exponenten", generateNegExponentRuleMC, "a^-n = 1 ÷ (a^n). Der negative Exponent wird positiv, indem man in den Nenner eines Bruchs wechselt.")
   ]),
-  chapter("3b", "Vom Bild zum Term", [ex("m3-3b-1", "Musterfolge fortsetzen", generatePatternTerm, "Berechne die Zunahme pro Schritt (Differenz zwischen Schritt 2 und Schritt 1) und wende sie so oft wie nötig an, oder finde die Formel a×n + b aus den ersten drei Schritten.")]),
+  chapter("3b", "Vom Bild zum Term", [
+    ex("m3-3b-1", "Musterfolge fortsetzen", generatePatternTerm, "Berechne die Zunahme pro Schritt (Differenz zwischen Schritt 2 und Schritt 1) und wende sie so oft wie nötig an, oder finde die Formel a×n + b aus den ersten drei Schritten."),
+    ex("m3-3b-2", "Binomische Formeln anwenden", generateBinomialApplication, "Nutze die binomischen Formeln als Rechentrick: (a+b)² = a²+2ab+b², (a−b)² = a²−2ab+b², (a+b)(a−b) = a²−b². Wähle a als die runde Zehnerzahl."),
+    ex("m3-3b-3", "Binome ausmultiplizieren", generateBinomialExpansionMC, "Die drei binomischen Formeln: (x+b)² = x²+2bx+b², (x−b)² = x²−2bx+b², (x+b)(x−b) = x²−b². Achte besonders auf den mittleren Term und die Vorzeichen."),
+    ex("m3-3b-4", "Trinome faktorisieren", generateTrinomialFactorMC, "Suche zwei Zahlen, deren Summe der Koeffizient vor x ist und deren Produkt die Zahl ohne x ist. Diese Zahlen kommen in die beiden Klammern (x + Zahl).")
+  ]),
   chapter("4a", "Jahreszins und Marchzins", [
     ex("m3-4a-jz", "Jahreszins berechnen", generateJahreszins, "Jahreszins = Kapital × Zinssatz ÷ 100.", true),
     ex("m3-4a-mz", "Marchzins berechnen", generateMarchzins, "Marchzins = Kapital × Zinssatz ÷ 100 × Tage ÷ 360.", true)
@@ -2374,7 +2588,10 @@ function checkAnswer(task, bufferStr) {
     const correct = [...task.correct].sort((a, b) => a - b);
     return nums.length === correct.length && nums.every((v, i) => v === correct[i]);
   }
-  if (task.answerType === "term") return String(bufferStr).replace(/\s+/g, "").toLowerCase() === String(task.correct).replace(/\s+/g, "").toLowerCase();
+  if (task.answerType === "term") {
+    const normTerm = s => String(s).replace(/\s+/g, "").toLowerCase().replace(/^1([a-z])$/, "$1").replace(/^-1([a-z])$/, "-$1");
+    return normTerm(bufferStr) === normTerm(task.correct);
+  }
   if (task.answerType === "mc") return String(bufferStr) === String(task.correct);
   const val = parseFloat(bufferStr);
   return !isNaN(val) && Math.abs(val - task.correct) < 0.01;
@@ -2530,16 +2747,43 @@ document.getElementById("solo_camBtn").addEventListener("click", () => {
 /* =========================================================================
    DUELL-MODUS
    ========================================================================= */
-let duellSettings = { sameTask: true, timeLimitOn: true, duration: 120, scoreLimitOn: false, scoreLimit: 10, penalizeMistakes: false, handicapOn: false, handicapSide: "bottom", handicapMs: 1000 };
+let duellSettings = { sameTask: true, timeLimitOn: true, duration: 120, scoreLimitOn: false, scoreLimit: 10, penalizeMistakes: false, handicapOn: false, handicapSide: "bottom", handicapMs: 1000, stallGuardSec: 60, buzzMode: false, buzzAnswerSec: 10 };
+let duellBuzzWinner = null;
 let handicapTimers = { top: null, bottom: null };
 let duellTasks = { top: null, bottom: null };
 let duellScores = { top: 0, bottom: 0 };
 let duellTimeRemaining = 0, duellInterval = null, duellRunning = false;
 
 document.getElementById("goDuellSetupBtn").addEventListener("click", () => showView("duellSetup"));
+function updatePenalizeRowVisibility() {
+  document.getElementById("penalizeRow").classList.toggle("hidden", duellSettings.sameTask);
+  document.getElementById("penalizeAutoNote").classList.toggle("hidden", !duellSettings.sameTask);
+  document.getElementById("stallGuardRow").classList.toggle("hidden", !duellSettings.sameTask);
+}
 document.querySelectorAll('.choice-btn[data-sametask]').forEach(btn => btn.addEventListener("click", () => {
   duellSettings.sameTask = btn.dataset.sametask === "1";
   document.querySelectorAll('.choice-btn[data-sametask]').forEach(b => b.classList.toggle("active", b === btn));
+  updatePenalizeRowVisibility();
+}));
+updatePenalizeRowVisibility();
+document.querySelectorAll('.choice-btn[data-stallguard]').forEach(btn => btn.addEventListener("click", () => {
+  duellSettings.stallGuardSec = Number(btn.dataset.stallguard);
+  document.querySelectorAll('.choice-btn[data-stallguard]').forEach(b => b.classList.toggle("active", b === btn));
+}));
+document.querySelectorAll('.choice-btn[data-buzzanswersec]').forEach(btn => btn.addEventListener("click", () => {
+  duellSettings.buzzAnswerSec = Number(btn.dataset.buzzanswersec);
+  document.querySelectorAll('.choice-btn[data-buzzanswersec]').forEach(b => b.classList.toggle("active", b === btn));
+}));
+document.querySelectorAll('.choice-btn[data-duellmode]').forEach(btn => btn.addEventListener("click", () => {
+  duellSettings.buzzMode = btn.dataset.duellmode === "buzzer";
+  document.querySelectorAll('.choice-btn[data-duellmode]').forEach(b => b.classList.toggle("active", b === btn));
+  document.getElementById("aufgabenCard").classList.toggle("hidden", duellSettings.buzzMode);
+  document.getElementById("buzzAnswerRow").classList.toggle("hidden", !duellSettings.buzzMode);
+  if (duellSettings.buzzMode) {
+    duellSettings.sameTask = true;
+    document.querySelectorAll('.choice-btn[data-sametask]').forEach(b => b.classList.toggle("active", b.dataset.sametask === "1"));
+  }
+  updatePenalizeRowVisibility();
 }));
 document.querySelectorAll('.choice-btn[data-duration]').forEach(btn => btn.addEventListener("click", () => {
   duellSettings.duration = Number(btn.dataset.duration);
@@ -2617,6 +2861,14 @@ function renderDuell() {
       revealDuellSide(side);
     }
   });
+  duellBuzzWinner = null;
+  if (duellRunning && duellSettings.buzzMode) {
+    applyBuzzUI("top", "waiting"); applyBuzzUI("bottom", "waiting");
+  }
+  clearStallGuard();
+  if (duellRunning && duellSettings.sameTask && !duellSettings.handicapOn) {
+    startStallGuard("duell_stallTimer", duellTasks.top, ["top", "bottom"], () => { nextRound("top"); renderDuell(); }, duellSettings.stallGuardSec);
+  }
 }
 let sameTaskCountdownIv = null;
 function clearSameTaskCountdown() { if (sameTaskCountdownIv) { clearInterval(sameTaskCountdownIv); sameTaskCountdownIv = null; } }
@@ -2640,6 +2892,111 @@ function startSameTaskCountdown(sides, onDone) {
     });
   }, 500);
 }
+function formatCorrectAnswer(task) {
+  if (!task) return "";
+  if (task.answerType === "pair") {
+    if (task.pairStyle === "fraction") return `${task.correct[0]}/${task.correct[1]}`;
+    if (task.pairStyle === "scientific") return `${task.correct[0]}×10^${task.correct[1]}`;
+    return `${task.correct[0]}|${task.correct[1]}`;
+  }
+  if (task.answerType === "boolean") return task.correct ? "Wahr" : "Falsch";
+  return String(task.correct);
+}
+function startStallTimeoutCountdown(sides, task, onDone) {
+  clearSameTaskCountdown();
+  let n = 3;
+  const msg = `Zeit abgelaufen! Lösung: ${formatCorrectAnswer(task)}. Nächste Aufgabe in`;
+  sides.forEach(side => {
+    const prefix = `duell_${side}`;
+    setWidgetMode(prefix, "none");
+    const visualEl = document.getElementById(`${prefix}_visual`);
+    if (visualEl) visualEl.innerHTML = "";
+    const promptEl = document.getElementById(`${prefix}_prompt`);
+    if (promptEl) promptEl.textContent = `${msg} ${n} …`;
+  });
+  sameTaskCountdownIv = setInterval(() => {
+    n--;
+    if (n <= 0) { clearSameTaskCountdown(); onDone(); return; }
+    sides.forEach(side => {
+      const promptEl = document.getElementById(`duell_${side}_prompt`);
+      if (promptEl) promptEl.textContent = `${msg} ${n} …`;
+    });
+  }, 500);
+}
+let stallGuardIv = null;
+const STALL_GUARD_DEFAULT_SECONDS = 60;
+function clearStallGuard() {
+  if (stallGuardIv) { clearInterval(stallGuardIv); stallGuardIv = null; }
+  document.querySelectorAll(".stall-timer").forEach(el => el.classList.add("hidden"));
+}
+function startStallGuard(badgeId, task, sides, afterSkip, seconds) {
+  clearStallGuard();
+  let remaining = seconds || STALL_GUARD_DEFAULT_SECONDS;
+  const badge = document.getElementById(badgeId);
+  if (badge) { badge.classList.remove("hidden"); badge.textContent = `⏱ ${remaining}s`; }
+  stallGuardIv = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearStallGuard();
+      startStallTimeoutCountdown(sides, task, afterSkip);
+      return;
+    }
+    if (badge) badge.textContent = `⏱ ${remaining}s`;
+  }, 1000);
+}
+function applyBuzzUI(side, state, task) {
+  const buzzWrap = document.getElementById(`duell_${side}_buzzWrap`);
+  if (!buzzWrap) return;
+  const prefix = `duell_${side}`;
+  const btn = buzzWrap.querySelector(".buzz-btn");
+  const status = buzzWrap.querySelector(".buzz-status");
+  if (state === "waiting") {
+    buzzWrap.classList.remove("hidden");
+    btn.disabled = false;
+    status.textContent = "";
+    setWidgetMode(prefix, "none");
+  } else if (state === "answering") {
+    buzzWrap.classList.add("hidden");
+    setWidgetMode(prefix, task.answerType, task.pairStyle);
+    renderMcOptions(prefix, task);
+  } else if (state === "watching") {
+    buzzWrap.classList.remove("hidden");
+    btn.disabled = true;
+    status.textContent = "⏳ Jemand anderes antwortet …";
+    setWidgetMode(prefix, "none");
+  }
+}
+document.querySelectorAll('.buzz-btn[data-side]').forEach(btn => btn.addEventListener("click", () => handleBuzz(btn.dataset.side)));
+function handleBuzz(side) {
+  if (side.startsWith("vk")) { handleVkBuzz(Number(side.slice(2))); return; }
+  if (!duellRunning || !duellSettings.buzzMode || duellBuzzWinner) return;
+  duellBuzzWinner = side;
+  const other = side === "top" ? "bottom" : "top";
+  const task = duellTasks[side];
+  clearStallGuard();
+  applyBuzzUI(side, "answering", task);
+  applyBuzzUI(other, "watching", task);
+  startStallGuard("duell_stallTimer", task, ["top", "bottom"], () => {
+    duellScores[other]++;
+    duellBuzzWinner = null;
+    nextRound(other);
+    renderDuell();
+    checkScoreLimit();
+  }, duellSettings.buzzAnswerSec);
+}
+function handleVkBuzz(idx) {
+  if (!vkRunning || !vkBuzzMode || vkBuzzWinner !== null) return;
+  vkBuzzWinner = idx;
+  clearStallGuard();
+  for (let i = 0; i < 4; i++) applyBuzzUI(`vk${i}`, i === idx ? "answering" : "watching", vkTask);
+  startStallGuard("vk_stallTimer", vkTask, ["vk0", "vk1", "vk2", "vk3"], () => {
+    for (let i = 0; i < 4; i++) { if (i !== idx) vkScores[i]++; }
+    vkBuzzWinner = null;
+    if (vkScores.some(s => s >= VK_TARGET_SCORE)) { finishVierkampf(); return; }
+    vkNextTask();
+    renderVk();
+  }, vkBuzzAnswerSec);
+}
 function nextRound(side) {
   if (duellSettings.sameTask) {
     const nt = currentExercise.generate();
@@ -2654,6 +3011,8 @@ function submitAnswer(side) {
   if (side === "solo") { submitSolo(); return; }
   if (side.startsWith("vk")) { vkSubmitAnswer(side); return; }
   if (!duellRunning) return;
+  if (duellSettings.buzzMode && duellBuzzWinner !== side) return;
+  clearStallGuard();
   const task = duellTasks[side];
   const ok = checkAnswer(task, inputBuffers[side]);
   const inputElId = task.answerType === "mc" ? `duell_${side}_mcWrap` : `duell_${side}_input`;
@@ -2668,11 +3027,16 @@ function submitAnswer(side) {
     }
   } else {
     flash(inputElId, "wrong-flash");
-    if (duellSettings.penalizeMistakes) {
+    const shouldPenalize = duellSettings.sameTask || duellSettings.penalizeMistakes;
+    if (shouldPenalize) {
       const other = side === "top" ? "bottom" : "top";
       duellScores[other]++;
-      nextRound(side === "top" ? "bottom" : "top");
-      renderDuell();
+      if (duellSettings.sameTask) {
+        startSameTaskCountdown(["top", "bottom"], () => { nextRound(other); renderDuell(); });
+      } else {
+        nextRound(other);
+        renderDuell();
+      }
     } else {
       inputBuffers[side] = "";
       renderBuffer(side);
@@ -2683,13 +3047,14 @@ function submitAnswer(side) {
 function checkScoreLimit() {
   if (duellSettings.scoreLimitOn && (duellScores.top >= duellSettings.scoreLimit || duellScores.bottom >= duellSettings.scoreLimit)) finishDuell();
 }
-function stopDuellTimerIfRunning() { if (duellRunning) { clearInterval(duellInterval); duellRunning = false; } clearTimeout(handicapTimers.top); clearTimeout(handicapTimers.bottom); clearSameTaskCountdown(); }
+function stopDuellTimerIfRunning() { if (duellRunning) { clearInterval(duellInterval); duellRunning = false; } clearTimeout(handicapTimers.top); clearTimeout(handicapTimers.bottom); clearSameTaskCountdown(); clearStallGuard(); }
 document.getElementById("duell_stopBtn").addEventListener("click", () => { openConfirm("Duell wirklich vorzeitig beenden?", () => finishDuell(), "Beenden"); });
 function finishDuell() {
   clearInterval(duellInterval);
   duellRunning = false;
   clearTimeout(handicapTimers.top); clearTimeout(handicapTimers.bottom);
   clearSameTaskCountdown();
+  clearStallGuard();
   if (tournament) { tnHandleRoundEnd([duellScores.bottom, duellScores.top]); return; }
   const topName = document.getElementById("duell_top_name").textContent, bottomName = document.getElementById("duell_bottom_name").textContent;
   let winnerText;
@@ -2705,6 +3070,21 @@ function finishDuell() {
    ========================================================================= */
 let vkNames = ["Spieler 1", "Spieler 2", "Spieler 3", "Spieler 4"];
 let vkScores = [0, 0, 0, 0];
+let vkStallGuardSec = 60;
+let vkBuzzMode = false, vkBuzzAnswerSec = 10, vkBuzzWinner = null;
+document.querySelectorAll('.choice-btn[data-vk-mode]').forEach(btn => btn.addEventListener("click", () => {
+  vkBuzzMode = btn.dataset.vkMode === "buzzer";
+  document.querySelectorAll('.choice-btn[data-vk-mode]').forEach(b => b.classList.toggle("active", b === btn));
+  document.getElementById("vkBuzzAnswerRow").classList.toggle("hidden", !vkBuzzMode);
+}));
+document.querySelectorAll('.choice-btn[data-vk-buzzanswersec]').forEach(btn => btn.addEventListener("click", () => {
+  vkBuzzAnswerSec = Number(btn.dataset.vkBuzzanswersec);
+  document.querySelectorAll('.choice-btn[data-vk-buzzanswersec]').forEach(b => b.classList.toggle("active", b === btn));
+}));
+document.querySelectorAll('.choice-btn[data-vk-stallguard]').forEach(btn => btn.addEventListener("click", () => {
+  vkStallGuardSec = Number(btn.dataset.vkStallguard);
+  document.querySelectorAll('.choice-btn[data-vk-stallguard]').forEach(b => b.classList.toggle("active", b === btn));
+}));
 let vkTask = null;
 let vkRunning = false;
 const VK_TARGET_SCORE = 5;
@@ -2736,9 +3116,19 @@ function renderVk() {
     document.getElementById(`duell_${side}_score`).textContent = `${vkScores[i]} Punkte`;
     revealDuellSide(side);
   }
+  vkBuzzWinner = null;
+  if (vkRunning && vkBuzzMode) {
+    for (let i = 0; i < 4; i++) applyBuzzUI(`vk${i}`, "waiting");
+  }
+  clearStallGuard();
+  if (vkRunning) {
+    startStallGuard("vk_stallTimer", vkTask, ["vk0", "vk1", "vk2", "vk3"], () => { vkNextTask(); renderVk(); }, vkStallGuardSec);
+  }
 }
 function vkSubmitAnswer(side) {
   if (!vkRunning) return;
+  if (vkBuzzMode && vkBuzzWinner !== Number(side.slice(2))) return;
+  clearStallGuard();
   const idx = Number(side.slice(2));
   const ok = checkAnswer(vkTask, inputBuffers[side]);
   const inputElId = vkTask.answerType === "mc" ? `duell_${side}_mcWrap` : `duell_${side}_input`;
@@ -2750,14 +3140,18 @@ function vkSubmitAnswer(side) {
     startSameTaskCountdown(["vk0", "vk1", "vk2", "vk3"], () => { vkNextTask(); renderVk(); });
   } else {
     flash(inputElId, "wrong-flash");
-    inputBuffers[side] = "";
-    renderBuffer(side);
+    for (let i = 0; i < 4; i++) { if (i !== idx) vkScores[i]++; }
+    for (let i = 0; i < 4; i++) inputBuffers[`vk${i}`] = "";
+    renderVk();
+    if (vkScores.some(s => s >= VK_TARGET_SCORE)) { finishVierkampf(); return; }
+    startSameTaskCountdown(["vk0", "vk1", "vk2", "vk3"], () => { vkNextTask(); renderVk(); });
   }
 }
 document.getElementById("vk_stopBtn").addEventListener("click", () => { openConfirm("Vierkampf wirklich vorzeitig beenden?", () => finishVierkampf(), "Beenden"); });
 function finishVierkampf() {
   vkRunning = false;
   clearSameTaskCountdown();
+  clearStallGuard();
   if (tournament) { tnHandleRoundEnd(vkScores.slice(0, tournament.playerCount)); return; }
   const ranking = vkNames.map((name, i) => ({ name, score: vkScores[i] })).sort((a, b) => b.score - a.score);
   const winnerText = ranking[0].score === ranking[1].score ? "Unentschieden an der Spitze!" : `${ranking[0].name} gewinnt! 🎉`;

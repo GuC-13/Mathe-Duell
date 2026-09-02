@@ -212,6 +212,17 @@
   .vk-divider { height: 44px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; gap: 20px; font-weight: 700; font-size: 1rem; }
   .vk-divider button { background: #ef4444; color: white; border: none; border-radius: 8px; padding: 6px 12px; font-weight: 700; }
   .vk-name-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .vk-names-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .vk-names-row .vk-name-inputs { flex: 1; min-width: 220px; margin-bottom: 0; }
+  .vk-seat-preview { flex: 0 0 auto; }
+  .vk-seat-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; text-align: center; }
+  .vk-seat-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 3px; width: 160px; height: 120px; border-radius: 8px; overflow: hidden; }
+  .vk-seat-tile { display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; text-align: center; padding: 2px; word-break: break-word; }
+  .vk-seat-tile.vk-seat-p2, .vk-seat-tile.vk-seat-p3 { transform: rotate(180deg); }
+  .vk-seat-tile.vk-seat-p0 { background: #bfdbfe; }
+  .vk-seat-tile.vk-seat-p1 { background: #fecaca; }
+  .vk-seat-tile.vk-seat-p2 { background: #bbf7d0; }
+  .vk-seat-tile.vk-seat-p3 { background: #fef08a; }
 
   /* Result */
   .result-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 26px; text-align: center; margin-bottom: 16px; }
@@ -391,10 +402,10 @@
 
         <div class="toggle-line">
           <label class="field-label" style="margin:0;">Punktelimit</label>
-          <label class="switch"><input type="checkbox" id="sw_scoreLimit"><span class="slider"></span></label>
+          <label class="switch"><input type="checkbox" id="sw_scoreLimit" checked><span class="slider"></span></label>
         </div>
-        <div id="scoreLimitRow" class="hidden" style="margin-bottom:14px;">
-          <input type="number" id="scoreLimitInput" value="10" min="1">
+        <div id="scoreLimitRow" style="margin-bottom:14px;">
+          <input type="number" id="scoreLimitInput" value="5" min="1">
         </div>
 
         <div class="toggle-line" id="penalizeRow">
@@ -552,14 +563,25 @@
   <div id="vkSetupView" class="view hidden">
     <div class="row back-row"><button class="btn btn-secondary" data-back-mode>← Zurück</button></div>
     <h1 id="vk_exercise_title">🏁 Vierkampf einrichten</h1>
-    <h2 class="sub">4 Spieler, gleiche Aufgabe – wer zuerst richtig antwortet, bekommt den Punkt. Wer zuerst 5 Punkte hat, gewinnt.</h2>
+    <h2 class="sub">4 Spieler, gleiche Aufgabe – wer zuerst richtig antwortet, bekommt den Punkt.</h2>
     <div class="setup-card">
       <label class="field-label">Spielernamen</label>
-      <div class="vk-name-inputs">
-        <input type="text" id="vk_name0" placeholder="Spieler 1" maxlength="14">
-        <input type="text" id="vk_name1" placeholder="Spieler 2" maxlength="14">
-        <input type="text" id="vk_name2" placeholder="Spieler 3" maxlength="14">
-        <input type="text" id="vk_name3" placeholder="Spieler 4" maxlength="14">
+      <div class="vk-names-row">
+        <div class="vk-name-inputs">
+          <input type="text" id="vk_name0" placeholder="Spieler 1" maxlength="14">
+          <input type="text" id="vk_name1" placeholder="Spieler 2" maxlength="14">
+          <input type="text" id="vk_name2" placeholder="Spieler 3" maxlength="14">
+          <input type="text" id="vk_name3" placeholder="Spieler 4" maxlength="14">
+        </div>
+        <div class="vk-seat-preview">
+          <div class="vk-seat-label">So sitzt ihr am Tablet:</div>
+          <div class="vk-seat-grid">
+            <div class="vk-seat-tile vk-seat-p2" id="vkSeatPreview2">Spieler 3</div>
+            <div class="vk-seat-tile vk-seat-p3" id="vkSeatPreview3">Spieler 4</div>
+            <div class="vk-seat-tile vk-seat-p0" id="vkSeatPreview0">Spieler 1</div>
+            <div class="vk-seat-tile vk-seat-p1" id="vkSeatPreview1">Spieler 2</div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="setup-card">
@@ -569,24 +591,67 @@
         <button class="choice-btn" data-vk-mode="buzzer">🔔 Buzzer</button>
       </div>
     </div>
-    <div class="setup-card">
-      <label class="field-label">Bedenkzeit pro Aufgabe (bevor sie übersprungen wird)</label>
-      <div class="choice-row">
-        <button class="choice-btn" data-vk-stallguard="30">30 Sek.</button>
-        <button class="choice-btn active" data-vk-stallguard="60">1 Min.</button>
-        <button class="choice-btn" data-vk-stallguard="90">1.5 Min.</button>
-        <button class="choice-btn" data-vk-stallguard="120">2 Min.</button>
-      </div>
-      <div id="vkBuzzAnswerRow" class="hidden" style="margin-top:14px;">
-        <label class="field-label">Antwortzeit nach dem Buzzern</label>
-        <div class="choice-row">
-          <button class="choice-btn" data-vk-buzzanswersec="5">5 Sek.</button>
-          <button class="choice-btn active" data-vk-buzzanswersec="10">10 Sek.</button>
-          <button class="choice-btn" data-vk-buzzanswersec="15">15 Sek.</button>
-          <button class="choice-btn" data-vk-buzzanswersec="20">20 Sek.</button>
+
+    <details class="setup-accordion">
+      <summary>⚙️ Weitere Einstellungen (Zeit, Punkte, Handicap)</summary>
+      <div class="setup-accordion-body">
+        <div class="toggle-line">
+          <label class="field-label" style="margin:0;">Zeitlimit</label>
+          <label class="switch"><input type="checkbox" id="vk_sw_timeLimit"><span class="slider"></span></label>
+        </div>
+        <div class="choice-row hidden" id="vkDurationRow">
+          <button class="choice-btn" data-vk-duration="60">1 Min.</button>
+          <button class="choice-btn active" data-vk-duration="120">2 Min.</button>
+          <button class="choice-btn" data-vk-duration="180">3 Min.</button>
+          <button class="choice-btn" data-vk-duration="300">5 Min.</button>
+        </div>
+
+        <div class="toggle-line">
+          <label class="field-label" style="margin:0;">Punktelimit</label>
+          <label class="switch"><input type="checkbox" id="vk_sw_scoreLimit" checked><span class="slider"></span></label>
+        </div>
+        <div id="vkScoreLimitRow" style="margin-bottom:14px;">
+          <input type="number" id="vkScoreLimitInput" value="5" min="1">
+        </div>
+
+        <div id="vkStallGuardRow">
+          <label class="field-label">Bedenkzeit pro Aufgabe (bevor sie übersprungen wird)</label>
+          <div class="choice-row">
+            <button class="choice-btn" data-vk-stallguard="30">30 Sek.</button>
+            <button class="choice-btn active" data-vk-stallguard="60">1 Min.</button>
+            <button class="choice-btn" data-vk-stallguard="90">1.5 Min.</button>
+            <button class="choice-btn" data-vk-stallguard="120">2 Min.</button>
+          </div>
+        </div>
+        <div id="vkBuzzAnswerRow" class="hidden" style="margin-top:14px;">
+          <label class="field-label">Antwortzeit nach dem Buzzern</label>
+          <div class="choice-row">
+            <button class="choice-btn" data-vk-buzzanswersec="5">5 Sek.</button>
+            <button class="choice-btn active" data-vk-buzzanswersec="10">10 Sek.</button>
+            <button class="choice-btn" data-vk-buzzanswersec="15">15 Sek.</button>
+            <button class="choice-btn" data-vk-buzzanswersec="20">20 Sek.</button>
+          </div>
+        </div>
+
+        <div class="toggle-line" style="margin-top:14px;">
+          <label class="field-label" style="margin:0;">Handicap (Verzögerung für stärkeren Spieler)</label>
+          <label class="switch"><input type="checkbox" id="vk_sw_handicap"><span class="slider"></span></label>
+        </div>
+        <div id="vkHandicapOptions" class="hidden">
+          <label class="field-label">Welcher Spieler wird verzögert?</label>
+          <div class="choice-row">
+            <button class="choice-btn active" data-vk-handicapplayer="0" id="vkHandicapNameBtn0">Spieler 1</button>
+            <button class="choice-btn" data-vk-handicapplayer="1" id="vkHandicapNameBtn1">Spieler 2</button>
+            <button class="choice-btn" data-vk-handicapplayer="2" id="vkHandicapNameBtn2">Spieler 3</button>
+            <button class="choice-btn" data-vk-handicapplayer="3" id="vkHandicapNameBtn3">Spieler 4</button>
+          </div>
+          <label class="field-label">Verzögerung: <span id="vkHandicapMsLabel">1 Sek.</span></label>
+          <input type="range" id="vkHandicapSlider" class="range-slider" min="1000" max="10000" step="500" value="1000">
+          <div class="range-scale"><span>1 Sek.</span><span>10 Sek.</span></div>
         </div>
       </div>
-    </div>
+    </details>
+
     <button class="btn btn-big btn-vk" id="startVkBtn">Vierkampf starten</button>
   </div>
 
@@ -760,6 +825,7 @@
     </div>
     <div class="vk-divider">
       <span id="vk_status">Erster bis 5 Punkte gewinnt</span>
+      <span id="vk_timer" class="hidden">02:00</span>
       <span id="vk_stallTimer" class="stall-timer hidden"></span>
       <button id="vk_stopBtn">Abbrechen</button>
     </div>
@@ -2777,7 +2843,7 @@ document.getElementById("solo_camBtn").addEventListener("click", () => {
 /* =========================================================================
    DUELL-MODUS
    ========================================================================= */
-let duellSettings = { sameTask: true, timeLimitOn: true, duration: 120, scoreLimitOn: false, scoreLimit: 10, penalizeMistakes: false, handicapOn: false, handicapSide: "bottom", handicapMs: 1000, stallGuardSec: 60, buzzMode: false, buzzAnswerSec: 10 };
+let duellSettings = { sameTask: true, timeLimitOn: true, duration: 120, scoreLimitOn: true, scoreLimit: 5, penalizeMistakes: false, handicapOn: false, handicapSide: "bottom", handicapMs: 1000, stallGuardSec: 60, buzzMode: false, buzzAnswerSec: 10 };
 let duellBuzzWinner = null;
 let handicapTimers = { top: null, bottom: null };
 let duellTasks = { top: null, bottom: null };
@@ -2821,7 +2887,7 @@ document.querySelectorAll('.choice-btn[data-duration]').forEach(btn => btn.addEv
 }));
 document.getElementById("sw_timeLimit").addEventListener("change", (e) => { duellSettings.timeLimitOn = e.target.checked; document.getElementById("durationRow").classList.toggle("hidden", !e.target.checked); });
 document.getElementById("sw_scoreLimit").addEventListener("change", (e) => { duellSettings.scoreLimitOn = e.target.checked; document.getElementById("scoreLimitRow").classList.toggle("hidden", !e.target.checked); });
-document.getElementById("scoreLimitInput").addEventListener("input", (e) => { duellSettings.scoreLimit = Number(e.target.value) || 10; });
+document.getElementById("scoreLimitInput").addEventListener("input", (e) => { duellSettings.scoreLimit = Number(e.target.value) || 5; });
 document.getElementById("sw_penalize").addEventListener("change", (e) => { duellSettings.penalizeMistakes = e.target.checked; });
 document.getElementById("sw_handicap").addEventListener("change", (e) => { duellSettings.handicapOn = e.target.checked; document.getElementById("handicapOptions").classList.toggle("hidden", !e.target.checked); });
 document.querySelectorAll('.choice-btn[data-handicapside]').forEach(btn => btn.addEventListener("click", () => {
@@ -3022,7 +3088,7 @@ function handleVkBuzz(idx) {
   startStallGuard("vk_stallTimer", vkTask, ["vk0", "vk1", "vk2", "vk3"], () => {
     for (let i = 0; i < 4; i++) { if (i !== idx) vkScores[i]++; }
     vkBuzzWinner = null;
-    if (vkScores.some(s => s >= VK_TARGET_SCORE)) { finishVierkampf(); return; }
+    if (checkVkFinish()) return;
     vkNextTask();
     renderVk();
   }, vkBuzzAnswerSec);
@@ -3102,6 +3168,9 @@ let vkNames = ["Spieler 1", "Spieler 2", "Spieler 3", "Spieler 4"];
 let vkScores = [0, 0, 0, 0];
 let vkStallGuardSec = 60;
 let vkBuzzMode = false, vkBuzzAnswerSec = 10, vkBuzzWinner = null;
+let vkScoreLimitOn = true, vkScoreLimit = 5, vkTimeLimitOn = false, vkDuration = 120;
+let vkHandicapOn = false, vkHandicapPlayer = 0, vkHandicapMs = 1000, vkHandicapTimer = null;
+let vkTimeRemaining = 0, vkInterval = null;
 document.querySelectorAll('.choice-btn[data-vk-mode]').forEach(btn => btn.addEventListener("click", () => {
   vkBuzzMode = btn.dataset.vkMode === "buzzer";
   document.querySelectorAll('.choice-btn[data-vk-mode]').forEach(b => b.classList.toggle("active", b === btn));
@@ -3115,12 +3184,37 @@ document.querySelectorAll('.choice-btn[data-vk-stallguard]').forEach(btn => btn.
   vkStallGuardSec = Number(btn.dataset.vkStallguard);
   document.querySelectorAll('.choice-btn[data-vk-stallguard]').forEach(b => b.classList.toggle("active", b === btn));
 }));
+document.getElementById("vk_sw_timeLimit").addEventListener("change", (e) => { vkTimeLimitOn = e.target.checked; document.getElementById("vkDurationRow").classList.toggle("hidden", !e.target.checked); });
+document.querySelectorAll('.choice-btn[data-vk-duration]').forEach(btn => btn.addEventListener("click", () => {
+  vkDuration = Number(btn.dataset.vkDuration);
+  document.querySelectorAll('.choice-btn[data-vk-duration]').forEach(b => b.classList.toggle("active", b === btn));
+}));
+document.getElementById("vk_sw_scoreLimit").addEventListener("change", (e) => { vkScoreLimitOn = e.target.checked; document.getElementById("vkScoreLimitRow").classList.toggle("hidden", !e.target.checked); });
+document.getElementById("vkScoreLimitInput").addEventListener("input", (e) => { vkScoreLimit = Number(e.target.value) || 5; });
+document.getElementById("vk_sw_handicap").addEventListener("change", (e) => { vkHandicapOn = e.target.checked; document.getElementById("vkHandicapOptions").classList.toggle("hidden", !e.target.checked); });
+document.querySelectorAll('.choice-btn[data-vk-handicapplayer]').forEach(btn => btn.addEventListener("click", () => {
+  vkHandicapPlayer = Number(btn.dataset.vkHandicapplayer);
+  document.querySelectorAll('.choice-btn[data-vk-handicapplayer]').forEach(b => b.classList.toggle("active", b === btn));
+}));
+document.getElementById("vkHandicapSlider").addEventListener("input", (e) => {
+  vkHandicapMs = Number(e.target.value);
+  const secs = vkHandicapMs / 1000;
+  document.getElementById("vkHandicapMsLabel").textContent = `${Number.isInteger(secs) ? secs : secs.toFixed(1)} Sek.`;
+});
+function updateVkSeatPreview() {
+  for (let i = 0; i < 4; i++) {
+    const val = document.getElementById(`vk_name${i}`).value.trim() || `Spieler ${i + 1}`;
+    document.getElementById(`vkSeatPreview${i}`).textContent = val;
+    document.getElementById(`vkHandicapNameBtn${i}`).textContent = val;
+  }
+}
+["0", "1", "2", "3"].forEach(i => document.getElementById(`vk_name${i}`).addEventListener("input", updateVkSeatPreview));
 let vkTask = null;
 let vkRunning = false;
-const VK_TARGET_SCORE = 5;
 
-document.getElementById("goVkSetupBtn").addEventListener("click", () => showView("vkSetup"));
+document.getElementById("goVkSetupBtn").addEventListener("click", () => { showView("vkSetup"); updateVkSeatPreview(); });
 document.getElementById("startVkBtn").addEventListener("click", () => {
+  if (!vkTimeLimitOn && !vkScoreLimitOn) { openConfirm("Bitte mindestens Zeitlimit oder Punktelimit aktivieren.", null, "OK"); return; }
   tournament = null;
   for (let i = 0; i < 4; i++) {
     const val = document.getElementById(`vk_name${i}`).value.trim();
@@ -3128,27 +3222,61 @@ document.getElementById("startVkBtn").addEventListener("click", () => {
   }
   startVierkampf();
 });
+function vkStatusText() {
+  if (vkScoreLimitOn) return `Erster bis ${vkScoreLimit} Punkte gewinnt`;
+  return "Wer am Ende am meisten Punkte hat, gewinnt";
+}
 function startVierkampf() {
   vkScores = [0, 0, 0, 0];
   vkRunning = true;
   for (let i = 0; i < 4; i++) document.getElementById(`duell_vk${i}_name`).textContent = vkNames[i];
+  document.getElementById("vk_status").textContent = vkStatusText();
   vkNextTask();
   renderVk();
   showView("vkPlay");
+  vkTimeRemaining = vkTimeLimitOn ? vkDuration : 0;
+  const timerEl = document.getElementById("vk_timer");
+  timerEl.classList.toggle("hidden", !vkTimeLimitOn);
+  timerEl.textContent = formatTime(vkTimeRemaining);
+  clearInterval(vkInterval);
+  if (vkTimeLimitOn) {
+    vkInterval = setInterval(() => {
+      vkTimeRemaining--;
+      timerEl.textContent = formatTime(Math.max(0, vkTimeRemaining));
+      if (vkTimeRemaining <= 0) { finishVierkampf(); return; }
+    }, 1000);
+  }
 }
 function vkNextTask() {
   vkTask = currentExercise.generate();
   for (let i = 0; i < 4; i++) inputBuffers[`vk${i}`] = "";
 }
+function checkVkFinish() {
+  if (vkScoreLimitOn && vkScores.some(s => s >= vkScoreLimit)) { finishVierkampf(); return true; }
+  return false;
+}
 function renderVk() {
+  clearTimeout(vkHandicapTimer);
+  vkBuzzWinner = null;
   for (let i = 0; i < 4; i++) {
     const side = `vk${i}`;
     document.getElementById(`duell_${side}_score`).textContent = `${vkScores[i]} Punkte`;
-    revealDuellSide(side);
-  }
-  vkBuzzWinner = null;
-  if (vkRunning && vkBuzzMode) {
-    for (let i = 0; i < 4; i++) applyBuzzUI(`vk${i}`, "waiting");
+    const delayed = vkHandicapOn && vkHandicapPlayer === i;
+    if (delayed) {
+      document.getElementById(`duell_${side}_visual`).innerHTML = "";
+      document.getElementById(`duell_${side}_prompt`).textContent = "⏳ …";
+      setWidgetMode(`duell_${side}`, "none");
+      const buzzWrap = document.getElementById(`duell_${side}_buzzWrap`);
+      if (buzzWrap) buzzWrap.classList.add("hidden");
+      vkHandicapTimer = setTimeout(() => {
+        if (!vkRunning) return;
+        revealDuellSide(side);
+        if (vkBuzzMode) applyBuzzUI(side, "waiting");
+      }, vkHandicapMs);
+    } else {
+      revealDuellSide(side);
+      if (vkBuzzMode) applyBuzzUI(side, "waiting");
+    }
   }
   clearStallGuard();
   if (vkRunning) {
@@ -3166,20 +3294,22 @@ function vkSubmitAnswer(side) {
     vkScores[idx]++;
     flash(inputElId, "correct-flash");
     for (let i = 0; i < 4; i++) inputBuffers[`vk${i}`] = "";
-    if (vkScores[idx] >= VK_TARGET_SCORE) { finishVierkampf(); return; }
+    if (checkVkFinish()) return;
     startSameTaskCountdown(["vk0", "vk1", "vk2", "vk3"], () => { vkNextTask(); renderVk(); });
   } else {
     flash(inputElId, "wrong-flash");
     for (let i = 0; i < 4; i++) { if (i !== idx) vkScores[i]++; }
     for (let i = 0; i < 4; i++) inputBuffers[`vk${i}`] = "";
     renderVk();
-    if (vkScores.some(s => s >= VK_TARGET_SCORE)) { finishVierkampf(); return; }
+    if (checkVkFinish()) return;
     startSameTaskCountdown(["vk0", "vk1", "vk2", "vk3"], () => { vkNextTask(); renderVk(); });
   }
 }
 document.getElementById("vk_stopBtn").addEventListener("click", () => { openConfirm("Vierkampf wirklich vorzeitig beenden?", () => finishVierkampf(), "Beenden"); });
 function finishVierkampf() {
   vkRunning = false;
+  clearInterval(vkInterval);
+  clearTimeout(vkHandicapTimer);
   clearSameTaskCountdown();
   clearStallGuard();
   if (tournament) { tnHandleRoundEnd(vkScores.slice(0, tournament.playerCount)); return; }

@@ -240,7 +240,8 @@
 <div id="app">
 
   <!-- HOME: 4 Kategorien -->
-  <div id="homeView" class="view">
+  <div id="homeView" class="view" style="position:relative;">
+    <button id="goSearchBtn" aria-label="Übungen suchen" style="position:absolute; top:16px; right:16px; background:var(--card); border:1px solid var(--border); border-radius:50%; width:40px; height:40px; font-size:1.1rem; cursor:pointer;">🔍</button>
     <h1>➗ Mathe-Duell</h1>
     <div class="cat-grid">
       <button class="cat-tile cat-basiswissen" data-cat="basiswissen"><span class="ti">🧮</span>Basiswissen</button>
@@ -251,6 +252,14 @@
     <button class="btn btn-big btn-vk" id="goTournamentBtn" style="margin-top:16px;">🏆 Turniermodus</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
+  </div>
+
+  <!-- ÜBUNGS-SUCHE -->
+  <div id="exSearchView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>🔍 Übung suchen</h1>
+    <input type="text" id="exSearchInput" placeholder="z.B. Prozent, Bruch, Pythagoras …" style="width:100%; box-sizing:border-box; font-size:1.1rem; padding:12px 14px; border-radius:10px; border:1px solid var(--border); margin-bottom:16px;">
+    <div id="exSearchResults" class="chapter-list"></div>
   </div>
 
   <!-- KLASSENMODUS: Wahl Host/Beitreten -->
@@ -2810,6 +2819,43 @@ function selectExercise(exercise) {
   showView("modeChoice");
 }
 
+/* ================= Übungs-Suche ================= */
+const SEARCH_INDEX = CATEGORIES.flatMap(cat => cat.chapters.flatMap(ch => ch.exercises.map(ex => ({ ex, ch, cat }))));
+function exSearchRun(query) {
+  const q = query.trim().toLowerCase();
+  const resultsEl = document.getElementById("exSearchResults");
+  if (!q) { resultsEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:16px;">Suchbegriff eingeben, z.B. "Prozent".</p>'; return; }
+  const matches = SEARCH_INDEX.filter(item => {
+    if (item.ex.title.toLowerCase().includes(q)) return true;
+    const info = EXERCISE_INFO[item.ex.id];
+    return !!(info && ((info.d || "").toLowerCase().includes(q) || (info.g || "").toLowerCase().includes(q)));
+  });
+  if (!matches.length) { resultsEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:16px;">Keine Übungen gefunden.</p>'; return; }
+  resultsEl.innerHTML = matches.map((m, i) => `
+    <div class="chapter-row" data-idx="${i}">
+      <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+        <span class="chapter-title">${titleWithCalc(escapeHtml(m.ex.title), m.ex.calc)}</span>
+        <span style="font-size:0.75rem; color:var(--muted);">${escapeHtml(m.cat.title)} · ${escapeHtml(m.ch.title)}</span>
+      </div>
+      <span class="chapter-status">▶</span>
+    </div>`).join("");
+  resultsEl.onclick = (e) => {
+    const row = e.target.closest(".chapter-row");
+    if (!row) return;
+    const m = matches[Number(row.dataset.idx)];
+    navCategory = m.cat;
+    navChapter = m.ch;
+    selectExercise(m.ex);
+  };
+}
+document.getElementById("exSearchInput").addEventListener("input", (e) => exSearchRun(e.target.value));
+document.getElementById("goSearchBtn").addEventListener("click", () => {
+  showView("exSearch");
+  document.getElementById("exSearchInput").value = "";
+  exSearchRun("");
+  document.getElementById("exSearchInput").focus();
+});
+
 /* =========================================================================
    KEYPAD / EINGABE-WIDGETS (gemeinsam für Solo & Duell)
    ========================================================================= */
@@ -3983,7 +4029,7 @@ document.getElementById("klassenRankStopBtn").addEventListener("click", klassenA
 document.getElementById("klassenPlayerRankHomeBtn").addEventListener("click", () => { klassenStopListening(); showView("home"); });
 
 /* ---- Klassenmodus: Schüler-seitiger Spielablauf ---- */
-let klassenLastSeenPhase = null, klassenMode = "quiz", klassenExerciseId = null, klassenAnswerRevealed = false;
+let klassenLastSeenPhase = null, klassenMode = "quiz", klassenExerciseId = null, klassenAnswerRevealed = false, klassenLastAnswerCorrect = null;
 function klassenStudentHandleRoomUpdate(room) {
   klassenExerciseId = room.exerciseId;
   if (room.phase === "practice") {
@@ -4021,7 +4067,9 @@ function klassenLockAnswerUI(answered) {
 function klassenRevealAnswerToStudent() {
   const prefix = klassenHasAnsweredCurrent ? "✓ Antwort gesendet." : "⏱ Zeit abgelaufen.";
   const correctText = escapeHtml(formatCorrectAnswer(klassenStudentTask));
-  klassenSetAnsweredNote(`${prefix}<br><span style="font-size:1.6rem; font-weight:800; display:block; margin:8px 0;">Richtige Antwort: ${correctText}</span>Warte auf die nächste Aufgabe …`);
+  const icon = klassenLastAnswerCorrect ? "✅" : "❌";
+  const iconColor = klassenLastAnswerCorrect ? "var(--success)" : "var(--danger)";
+  klassenSetAnsweredNote(`${prefix}<br><span style="font-size:2.2rem; display:block; margin:10px 0 2px; color:${iconColor};">${icon}</span><span style="font-size:1.6rem; font-weight:800; display:block; margin:2px 0 8px;">Richtige Antwort: ${correctText}</span>Warte auf die nächste Aufgabe …`);
 }
 function klassenShowWaitingForNext() {
   clearInterval(klassenCountdownIv);
@@ -4076,7 +4124,7 @@ function klassenRenderStudentQuestion(room) {
   const tick = () => {
     const remaining = Math.max(0, timerSec - (Date.now() - startedAt) / 1000);
     document.getElementById("klassen_countdown").textContent = Math.ceil(remaining) + "s";
-    if (remaining <= 0) { clearInterval(klassenCountdownIv); if (!klassenHasAnsweredCurrent) klassenLockAnswerUI(false); }
+    if (remaining <= 0) { clearInterval(klassenCountdownIv); if (!klassenHasAnsweredCurrent) { klassenLastAnswerCorrect = false; klassenLockAnswerUI(false); } }
   };
   tick();
   klassenCountdownIv = setInterval(tick, 250);
@@ -4096,6 +4144,7 @@ async function klassenSubmitAnswer() {
   clearInterval(klassenCountdownIv);
   const task = klassenStudentTask;
   const ok = checkAnswer(task, inputBuffers.klassen);
+  klassenLastAnswerCorrect = ok;
   const roomSnap = await firebaseDb.collection("rooms").doc(klassenRoomPin).get();
   const room = roomSnap.data();
   const elapsedSec = (Date.now() - room.questionStartedAt) / 1000;

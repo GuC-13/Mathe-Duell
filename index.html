@@ -322,7 +322,11 @@
 
   <!-- KLASSENMODUS: Rangliste (Host) -->
   <div id="klassenHostRankView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="klassenRankStopBtn">Abbrechen</button></div>
     <h1 id="klassenRankTitle">🏆 Zwischenstand</h1>
+    <div class="setup-card" style="text-align:center;">
+      <p style="font-size:1.15rem; font-weight:700;">Richtige Antwort: <span id="klassenRankCorrectAnswer">–</span></p>
+    </div>
     <div id="klassenPodium" style="display:flex; flex-direction:column; gap:10px; margin:20px 0;"></div>
     <div id="klassenFullList" class="hidden" style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px;"></div>
     <div class="row">
@@ -332,19 +336,6 @@
     <button class="btn btn-secondary" style="margin-top:14px;" id="klassenRankHomeBtn">Zur Startseite</button>
     <div style="text-align:center; margin-top:16px;">
       <button id="klassenPracticeBtnRank" class="klassen-practice-link">🧠 Übung</button>
-    </div>
-  </div>
-
-  <!-- KLASSENMODUS: Zwischen den Fragen (Host bestimmt Tempo) -->
-  <div id="klassenHostBetweenView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" id="klassenBetweenStopBtn">Abbrechen</button></div>
-    <h1 id="klassenBetweenTitle">Frage beendet</h1>
-    <div class="setup-card" style="text-align:center;">
-      <p style="font-size:1.5rem; font-weight:800;">✅ <span id="klassenBetweenCorrect">0</span> von <span id="klassenBetweenTotal">0</span> richtig</p>
-    </div>
-    <button class="btn btn-big btn-duell" id="klassenNextQuestionBtn">Nächste Frage</button>
-    <div style="text-align:center; margin-top:16px;">
-      <button id="klassenPracticeBtn" class="klassen-practice-link">🧠 Übung</button>
     </div>
   </div>
 
@@ -401,7 +392,8 @@
       <div class="result-winner" id="klassenPlayerRankPlace"></div>
       <div class="result-scores" id="klassenPlayerRankScore"></div>
     </div>
-    <p style="text-align:center; color:var(--muted);">Warte auf die Lehrperson …</p>
+    <p id="klassenPlayerRankWaitNote" style="text-align:center; color:var(--muted);">Warte auf die Lehrperson …</p>
+    <button class="btn btn-big btn-duell hidden" id="klassenPlayerRankHomeBtn" style="margin-top:16px;">Zurück zum Start</button>
   </div>
 
   <!-- KLASSENMODUS: Beitreten (Schüler) -->
@@ -3649,6 +3641,7 @@ async function ensureFirebase() {
     await loadScriptOnce("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js");
     if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     firebaseDb = firebase.firestore();
+    firebaseDb.settings({ experimentalAutoDetectLongPolling: true });
     firebaseReady = true;
     return true;
   } catch (e) {
@@ -3817,9 +3810,10 @@ async function klassenHostNextQuestion() {
   await roomRef.update({ currentQuestionIndex: nextIndex, currentTask: task, questionStartedAt: startedAt, phase: "playing" });
   klassenHostRenderPlay(nextIndex, task, startedAt, room.timerSec, room.numQuestions);
 }
-let klassenCurrentHostIndex = -1, klassenQuestionEnding = false;
+let klassenCurrentHostIndex = -1, klassenQuestionEnding = false, klassenCurrentHostTask = null;
 function klassenHostRenderPlay(index, task, startedAt, timerSec, numQuestions) {
   klassenCurrentHostIndex = index;
+  klassenCurrentHostTask = task;
   klassenQuestionEnding = false;
   showView("klassenHostPlay");
   document.getElementById("klassenHostQNum").textContent = `Frage ${index + 1} von ${numQuestions}`;
@@ -3861,44 +3855,24 @@ function klassenHostQuestionEnd(index) {
   const questionNumber = index + 1;
   const isLast = questionNumber >= numQuestions;
   const hitInterval = rankInterval > 0 && questionNumber % rankInterval === 0;
-  if (isLast || hitInterval) klassenHostShowRanking(isLast);
-  else klassenHostShowBetween(index);
+  klassenHostShowRanking(isLast, isLast || hitInterval);
 }
-async function klassenHostShowBetween(index) {
-  clearInterval(klassenCountdownIv);
-  let correct = 0;
-  try {
-    const ansSnap = await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("questions").doc(String(index)).collection("answers").get();
-    ansSnap.forEach(d => { if (d.data().correct) correct++; });
-  } catch (e) { console.error("Klassenmodus: Antworten konnten nicht geladen werden.", e); }
-  let totalPlayers = 0;
-  try {
-    const playersSnap = await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").get();
-    totalPlayers = playersSnap.size;
-  } catch (e) { console.error("Klassenmodus: Spielerzahl konnte nicht geladen werden.", e); }
-  showView("klassenHostBetween");
-  document.getElementById("klassenBetweenTitle").textContent = `Frage ${index + 1} beendet`;
-  document.getElementById("klassenBetweenCorrect").textContent = String(correct);
-  document.getElementById("klassenBetweenTotal").textContent = String(totalPlayers);
-}
-document.getElementById("klassenNextQuestionBtn").addEventListener("click", () => klassenHostNextQuestion());
-let klassenPracticeReturn = null, klassenLastRankIsFinal = false;
-async function klassenStartPractice(returnType) {
-  klassenPracticeReturn = returnType;
+let klassenLastRankIsFinal = false, klassenLastRevealToStudents = false;
+async function klassenStartPractice() {
   try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "practice" }); } catch (e) { console.error("Klassenmodus: Übung konnte nicht gestartet werden.", e); }
   showView("klassenHostPractice");
 }
-document.getElementById("klassenPracticeBtn").addEventListener("click", () => klassenStartPractice("between"));
-document.getElementById("klassenPracticeBtnRank").addEventListener("click", () => klassenStartPractice("ranking"));
+document.getElementById("klassenPracticeBtnRank").addEventListener("click", klassenStartPractice);
 document.getElementById("klassenEndPracticeBtn").addEventListener("click", async () => {
   try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "playing" }); } catch (e) { console.error("Klassenmodus: Übung konnte nicht beendet werden.", e); }
-  if (klassenPracticeReturn === "ranking") klassenHostShowRanking(klassenLastRankIsFinal);
-  else klassenHostShowBetween(klassenCurrentHostIndex);
+  klassenHostShowRanking(klassenLastRankIsFinal, klassenLastRevealToStudents);
 });
-async function klassenHostShowRanking(isFinal) {
+async function klassenHostShowRanking(isFinal, revealToStudents) {
   klassenLastRankIsFinal = isFinal;
+  klassenLastRevealToStudents = revealToStudents;
   try {
-    await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: isFinal ? "finished" : "ranking" });
+    const newPhase = isFinal ? "finished" : (revealToStudents ? "ranking" : "playing");
+    await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: newPhase });
     const snap = await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").get();
     const players = [];
     snap.forEach(d => players.push({ id: d.id, ...d.data() }));
@@ -3910,6 +3884,7 @@ function klassenRenderHostRanking(players, isFinal) {
   clearInterval(klassenCountdownIv);
   showView("klassenHostRank");
   document.getElementById("klassenRankTitle").textContent = isFinal ? "🏆 Schlussrangliste" : "🏆 Zwischenstand";
+  document.getElementById("klassenRankCorrectAnswer").textContent = formatCorrectAnswer(klassenCurrentHostTask);
   const medals = ["🥇", "🥈", "🥉"];
   const top3 = players.slice(0, 3);
   document.getElementById("klassenPodium").innerHTML = top3.length
@@ -3933,7 +3908,8 @@ function klassenAbortGame() {
   }, "Beenden");
 }
 document.getElementById("klassenHostPlayStopBtn").addEventListener("click", klassenAbortGame);
-document.getElementById("klassenBetweenStopBtn").addEventListener("click", klassenAbortGame);
+document.getElementById("klassenRankStopBtn").addEventListener("click", klassenAbortGame);
+document.getElementById("klassenPlayerRankHomeBtn").addEventListener("click", () => { klassenStopListening(); showView("home"); });
 
 /* ---- Klassenmodus: Schüler-seitiger Spielablauf ---- */
 let klassenLastSeenPhase = null, klassenMode = "quiz", klassenExerciseId = null;
@@ -3956,9 +3932,12 @@ function klassenStudentHandleRoomUpdate(room) {
   }
   klassenLastSeenPhase = room.phase;
 }
-function klassenLockAnswerUI() {
+function klassenLockAnswerUI(answered) {
   setWidgetMode("duell_klassen", "none");
-  document.getElementById("klassenAnsweredNote").textContent = "✓ Antwort gesendet – warte auf die nächste Aufgabe …";
+  const correctText = formatCorrectAnswer(klassenStudentTask);
+  document.getElementById("klassenAnsweredNote").textContent = answered
+    ? `✓ Antwort gesendet. Richtige Antwort: ${correctText}. Warte auf die nächste Aufgabe …`
+    : `⏱ Zeit abgelaufen. Richtige Antwort: ${correctText}. Warte auf die nächste Aufgabe …`;
   document.getElementById("klassenAnsweredNote").classList.remove("hidden");
 }
 function klassenShowWaitingForNext() {
@@ -4015,7 +3994,7 @@ function klassenRenderStudentQuestion(room) {
   const tick = () => {
     const remaining = Math.max(0, timerSec - (Date.now() - startedAt) / 1000);
     document.getElementById("klassen_countdown").textContent = Math.ceil(remaining) + "s";
-    if (remaining <= 0) { clearInterval(klassenCountdownIv); if (!klassenHasAnsweredCurrent) klassenLockAnswerUI(); }
+    if (remaining <= 0) { clearInterval(klassenCountdownIv); if (!klassenHasAnsweredCurrent) klassenLockAnswerUI(false); }
   };
   tick();
   klassenCountdownIv = setInterval(tick, 250);
@@ -4039,7 +4018,7 @@ async function klassenSubmitAnswer() {
   const room = roomSnap.data();
   const elapsedSec = (Date.now() - room.questionStartedAt) / 1000;
   const points = ok ? Math.max(0, Math.round(1000 * (1 - Math.min(1, elapsedSec / room.timerSec)))) : 0;
-  klassenLockAnswerUI();
+  klassenLockAnswerUI(true);
   try {
     await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("questions").doc(String(room.currentQuestionIndex)).collection("answers").doc(klassenPlayerId).set({
       name: klassenPlayerName, correct: ok, points, submittedAt: Date.now()
@@ -4053,6 +4032,8 @@ async function klassenRenderStudentRanking(isFinal) {
   clearInterval(klassenCountdownIv);
   showView("klassenPlayerRank");
   document.getElementById("klassenPlayerRankTitle").textContent = isFinal ? "🏆 Schlussrangliste" : "🏆 Zwischenstand";
+  document.getElementById("klassenPlayerRankWaitNote").classList.toggle("hidden", isFinal);
+  document.getElementById("klassenPlayerRankHomeBtn").classList.toggle("hidden", !isFinal);
   try {
     const snap = await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").get();
     const players = [];

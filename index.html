@@ -249,26 +249,26 @@
       <button class="cat-tile cat-jahr3" data-cat="jahr3"><span class="ti">3️⃣</span>Mathematik 3. Jahr</button>
     </div>
     <button class="btn btn-big btn-vk" id="goTournamentBtn" style="margin-top:16px;">🏆 Turniermodus</button>
-    <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenmodus</button>
+    <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
   </div>
 
   <!-- KLASSENMODUS: Wahl Host/Beitreten -->
   <div id="klassenChoiceView" class="view hidden">
     <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
-    <h1>🏫 Klassenmodus</h1>
+    <h1>🏫 Klassenduell</h1>
     <h2 class="sub">Live-Quiz für die ganze Klasse. Jede Person braucht ein eigenes Gerät mit Internetverbindung.</h2>
     <div class="mode-choice-grid">
       <button class="btn btn-big btn-vk" id="goKlassenJoinBtn">🙋 Raum beitreten</button>
     </div>
-    <p style="color:var(--muted); font-size:0.9rem; margin-top:16px;">Möchtest du als Lehrperson einen Raum eröffnen? Wähle zuerst über eine Kategorie ein Thema/eine Übung aus und tippe dort auf "🏫 Klassenmodus".</p>
+    <p style="color:var(--muted); font-size:0.9rem; margin-top:16px;">Möchtest du als Lehrperson einen Raum eröffnen? Wähle zuerst über eine Kategorie ein Thema/eine Übung aus und tippe dort auf "🏫 Klassenduell".</p>
     <p id="klassenSetupNote" class="hidden" style="color:var(--muted); font-size:0.9rem; margin-top:16px;"></p>
   </div>
 
   <!-- KLASSENMODUS: Host-Setup (Thema bereits gewählt) -->
   <div id="klassenHostSetupView" class="view hidden">
     <div class="row back-row"><button class="btn btn-secondary" data-back-mode>← Zurück</button></div>
-    <h1>🏫 Klassenmodus einrichten</h1>
+    <h1>🏫 Klassenduell einrichten</h1>
     <div class="ex-desc-card" id="klassen_exercise_title"></div>
     <div class="setup-card">
       <label class="field-label">Anzahl Aufgaben: <span id="klassenNumqLabel">10</span></label>
@@ -317,6 +317,10 @@
     <div style="text-align:center; font-size:2.4rem; font-weight:800; margin:14px 0;" id="klassenHostCountdown"></div>
     <p style="text-align:center; color:var(--muted);"><span id="klassenHostAnsweredCount">0</span> von <span id="klassenHostTotalPlayers">0</span> haben geantwortet</p>
     <p style="text-align:center; font-weight:700;">✅ <span id="klassenHostCorrectCount">0</span> richtig &nbsp;·&nbsp; ❌ <span id="klassenHostWrongCount">0</span> falsch</p>
+    <div style="text-align:center;">
+      <button class="klassen-practice-link" id="klassenPendingToggleBtn">👀 Wer hat noch nicht geantwortet?</button>
+    </div>
+    <div id="klassenPendingList" class="hidden setup-card" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
     <button class="btn btn-secondary" style="display:block; margin:20px auto 0;" id="klassenSkipBtn">⏭️ Aufgabe überspringen</button>
   </div>
 
@@ -325,7 +329,8 @@
     <div class="row back-row"><button class="btn btn-secondary" id="klassenRankStopBtn">Abbrechen</button></div>
     <h1 id="klassenRankTitle">🏆 Zwischenstand</h1>
     <div class="setup-card" style="text-align:center;">
-      <p style="font-size:1.15rem; font-weight:700;">Richtige Antwort: <span id="klassenRankCorrectAnswer">–</span></p>
+      <p style="font-size:1rem; color:var(--muted); margin:0;">Richtige Antwort</p>
+      <p style="font-size:1.8rem; font-weight:800; margin:4px 0 0;" id="klassenRankCorrectAnswer">–</p>
     </div>
     <div id="klassenPodium" style="display:flex; flex-direction:column; gap:10px; margin:20px 0;"></div>
     <div id="klassenFullList" class="hidden" style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px;"></div>
@@ -392,6 +397,10 @@
       <div class="result-winner" id="klassenPlayerRankPlace"></div>
       <div class="result-scores" id="klassenPlayerRankScore"></div>
     </div>
+    <div class="setup-card">
+      <label class="field-label">Top 5</label>
+      <div id="klassenPlayerRankTop5" style="display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
     <p id="klassenPlayerRankWaitNote" style="text-align:center; color:var(--muted);">Warte auf die Lehrperson …</p>
     <button class="btn btn-big btn-duell hidden" id="klassenPlayerRankHomeBtn" style="margin-top:16px;">Zurück zum Start</button>
   </div>
@@ -447,7 +456,7 @@
       <button class="btn btn-big btn-vk" id="goVkSetupBtn">🏁 Vierkampf starten</button>
     </div>
     <div style="text-align:right; margin-top:28px;">
-      <button id="goKlassenHostSetupBtn" style="background:none; border:none; color:var(--muted); font-size:0.78rem; text-decoration:underline; cursor:pointer; padding:6px;">🏫 Klassenmodus (für Lehrpersonen)</button>
+      <button id="goKlassenHostSetupBtn" style="background:none; border:none; color:var(--muted); font-size:0.78rem; text-decoration:underline; cursor:pointer; padding:6px;">🏫 Klassenduell (für Lehrpersonen)</button>
     </div>
   </div>
 
@@ -552,11 +561,23 @@
     </div>
 
     <div class="setup-card">
-      <label class="field-label">Name Spieler unten (normale Ausrichtung, Team Blau)</label>
-      <input type="text" id="dn_bottom" placeholder="Team Blau" maxlength="16">
-      <div style="height:10px;"></div>
-      <label class="field-label">Name Spieler oben (gegenübersitzend, gespiegelt, Team Rot)</label>
-      <input type="text" id="dn_top" placeholder="Team Rot" maxlength="16">
+      <label class="field-label">Spielernamen</label>
+      <div class="vk-names-row">
+        <div style="flex:1; min-width:220px;">
+          <label class="field-label">Name Spieler unten (normale Ausrichtung, Team Blau)</label>
+          <input type="text" id="dn_bottom" placeholder="Team Blau" maxlength="16">
+          <div style="height:10px;"></div>
+          <label class="field-label">Name Spieler oben (gegenübersitzend, gespiegelt, Team Rot)</label>
+          <input type="text" id="dn_top" placeholder="Team Rot" maxlength="16">
+        </div>
+        <div class="vk-seat-preview">
+          <div class="vk-seat-label">So sitzt ihr am Tablet:</div>
+          <div style="display:flex; flex-direction:column; gap:3px; width:140px; height:120px; border-radius:8px; overflow:hidden;">
+            <div class="vk-seat-tile" id="duellSeatPreviewTop" style="flex:1; background:#fecaca; transform:rotate(180deg);">Team Rot</div>
+            <div class="vk-seat-tile" id="duellSeatPreviewBottom" style="flex:1; background:#bfdbfe;">Team Blau</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <details class="setup-accordion">
@@ -1412,6 +1433,12 @@
 
 </div>
 
+<div class="hidden" id="orientationBlockOverlay" style="position:fixed; inset:0; background:#0f172a; color:white; z-index:200; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;">
+  <div style="font-size:3.5rem; margin-bottom:16px;">📱↻</div>
+  <p style="font-size:1.3rem; font-weight:800; max-width:320px;">Bitte iPad hochkant halten</p>
+  <p style="color:#94a3b8; max-width:320px;">Das Duell ist für die Ausrichtung mit einer Person oben und einer unten gemacht.</p>
+</div>
+
 <div class="modal-overlay hidden" id="confirmOverlay">
   <div class="modal-box">
     <p id="confirmMessage" style="font-size:1.05rem; margin:0 0 16px;"></p>
@@ -1466,7 +1493,17 @@ document.getElementById("solo_skipBtn").addEventListener("click", () => {
 function showView(name) {
   document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
   document.getElementById(name + "View").classList.remove("hidden");
+  checkDuellOrientation();
 }
+function checkDuellOrientation() {
+  const overlay = document.getElementById("orientationBlockOverlay");
+  if (!overlay) return;
+  const duellActive = !document.getElementById("duellPlayView").classList.contains("hidden");
+  const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+  overlay.classList.toggle("hidden", !(duellActive && isLandscape));
+}
+window.addEventListener("resize", checkDuellOrientation);
+window.addEventListener("orientationchange", checkDuellOrientation);
 document.querySelectorAll("[data-back-home]").forEach(b => b.addEventListener("click", () => { stopDuellTimerIfRunning(); showView("home"); }));
 document.querySelectorAll("[data-back-tochapter]").forEach(b => b.addEventListener("click", () => { stopDuellTimerIfRunning(); showView(navChapter && navChapter.id !== "turnier" ? "chapter" : "home"); }));
 document.getElementById("lp21LinkBtn").addEventListener("click", () => showView("lp21"));
@@ -3082,6 +3119,12 @@ document.getElementById("handicapSlider").addEventListener("input", (e) => {
   document.getElementById("handicapMsLabel").textContent = `${Number.isInteger(secs) ? secs : secs.toFixed(1)} Sek.`;
 });
 
+function updateDuellSeatPreview() {
+  document.getElementById("duellSeatPreviewTop").textContent = document.getElementById("dn_top").value.trim() || "Team Rot";
+  document.getElementById("duellSeatPreviewBottom").textContent = document.getElementById("dn_bottom").value.trim() || "Team Blau";
+}
+document.getElementById("dn_top").addEventListener("input", updateDuellSeatPreview);
+document.getElementById("dn_bottom").addEventListener("input", updateDuellSeatPreview);
 document.getElementById("startDuellBtn").addEventListener("click", () => {
   if (!duellSettings.timeLimitOn && !duellSettings.scoreLimitOn) { openConfirm("Bitte mindestens Zeitlimit oder Punktelimit aktivieren.", null, "OK"); return; }
   tournament = null;
@@ -3670,9 +3713,9 @@ function klassenShowNote(text) {
   note.classList.remove("hidden");
 }
 async function klassenCheckReady() {
-  if (!isFirebaseConfigured()) { klassenShowNote("Der Klassenmodus ist auf dieser Seite noch nicht eingerichtet (fehlende Firebase-Konfiguration)."); return false; }
+  if (!isFirebaseConfigured()) { klassenShowNote("Das Klassenduell ist auf dieser Seite noch nicht eingerichtet (fehlende Firebase-Konfiguration)."); return false; }
   const ok = await ensureFirebase();
-  if (!ok) klassenShowNote("Verbindung zum Klassenmodus-Server konnte nicht hergestellt werden. Prüfe die Internetverbindung.");
+  if (!ok) klassenShowNote("Verbindung zum Klassenduell-Server konnte nicht hergestellt werden. Prüfe die Internetverbindung.");
   return ok;
 }
 document.getElementById("goKlassenBtn").addEventListener("click", async () => {
@@ -3716,7 +3759,7 @@ document.getElementById("klassenCreateRoomBtn").addEventListener("click", async 
     await firebaseDb.collection("rooms").doc(pin).set({
       createdAt: Date.now(), phase: "lobby", topic: currentExercise.title, exerciseId: currentExercise.id,
       numQuestions: klassenSettings.numQuestions, timerSec: klassenSettings.timerSec,
-      rankInterval: klassenSettings.rankInterval, currentQuestionIndex: -1
+      rankInterval: klassenSettings.rankInterval, currentQuestionIndex: -1, answerRevealed: false
     });
   } catch (e) {
     console.error("Klassenmodus: Raum konnte nicht erstellt werden.", e);
@@ -3753,7 +3796,7 @@ document.getElementById("klassenJoinBtn").addEventListener("click", async () => 
   errEl.classList.add("hidden");
   if (!pin || !name) { errEl.textContent = "Bitte PIN und Namen eingeben."; errEl.classList.remove("hidden"); return; }
   const ok = await ensureFirebase();
-  if (!ok) { errEl.textContent = "Keine Verbindung zum Klassenmodus-Server möglich."; errEl.classList.remove("hidden"); return; }
+  if (!ok) { errEl.textContent = "Keine Verbindung zum Klassenduell-Server möglich."; errEl.classList.remove("hidden"); return; }
   try {
     const roomRef = firebaseDb.collection("rooms").doc(pin);
     const roomDoc = await roomRef.get();
@@ -3765,6 +3808,7 @@ document.getElementById("klassenJoinBtn").addEventListener("click", async () => 
     klassenRoomPin = pin;
     klassenLastSeenQIndex = -1;
     klassenLastSeenPhase = null;
+    klassenAnswerRevealed = false;
     klassenMode = "quiz";
     document.getElementById("klassenWaitName").textContent = name;
     document.getElementById("klassenWaitPin").textContent = pin;
@@ -3807,10 +3851,10 @@ async function klassenHostNextQuestion() {
   const rawTask = currentExercise.generate();
   const task = JSON.parse(JSON.stringify(rawTask));
   const startedAt = Date.now();
-  await roomRef.update({ currentQuestionIndex: nextIndex, currentTask: task, questionStartedAt: startedAt, phase: "playing" });
+  await roomRef.update({ currentQuestionIndex: nextIndex, currentTask: task, questionStartedAt: startedAt, phase: "playing", answerRevealed: false });
   klassenHostRenderPlay(nextIndex, task, startedAt, room.timerSec, room.numQuestions);
 }
-let klassenCurrentHostIndex = -1, klassenQuestionEnding = false, klassenCurrentHostTask = null;
+let klassenCurrentHostIndex = -1, klassenQuestionEnding = false, klassenCurrentHostTask = null, klassenCurrentTotalPlayers = 0;
 function klassenHostRenderPlay(index, task, startedAt, timerSec, numQuestions) {
   klassenCurrentHostIndex = index;
   klassenCurrentHostTask = task;
@@ -3830,19 +3874,46 @@ function klassenHostRenderPlay(index, task, startedAt, timerSec, numQuestions) {
   };
   tick();
   klassenCountdownIv = setInterval(tick, 250);
+  klassenAnsweredPlayerIds = new Set();
+  document.getElementById("klassenPendingList").classList.toggle("hidden", !klassenPendingListOpen);
+  klassenRenderPendingList();
   if (klassenAnswersUnsub) klassenAnswersUnsub();
   klassenAnswersUnsub = firebaseDb.collection("rooms").doc(klassenRoomPin).collection("questions").doc(String(index)).collection("answers").onSnapshot(snap => {
     let correct = 0, wrong = 0;
-    snap.forEach(d => { if (d.data().correct) correct++; else wrong++; });
+    klassenAnsweredPlayerIds = new Set();
+    snap.forEach(d => { if (d.data().correct) correct++; else wrong++; klassenAnsweredPlayerIds.add(d.id); });
     document.getElementById("klassenHostAnsweredCount").textContent = String(snap.size);
     document.getElementById("klassenHostCorrectCount").textContent = String(correct);
     document.getElementById("klassenHostWrongCount").textContent = String(wrong);
+    klassenRenderPendingList();
+    if (!klassenQuestionEnding && klassenCurrentTotalPlayers > 0 && snap.size >= klassenCurrentTotalPlayers) {
+      clearInterval(klassenCountdownIv);
+      klassenHostQuestionEnd(index);
+    }
   }, err => console.error("Klassenmodus: Antworten konnten nicht geladen werden.", err));
   if (klassenPlayersUnsub) klassenPlayersUnsub();
   klassenPlayersUnsub = firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").onSnapshot(snap => {
+    klassenCurrentTotalPlayers = snap.size;
+    klassenAllPlayers = [];
+    snap.forEach(d => klassenAllPlayers.push({ id: d.id, name: d.data().name }));
     document.getElementById("klassenHostTotalPlayers").textContent = String(snap.size);
+    klassenRenderPendingList();
   }, err => console.error("Klassenmodus: Spielerzahl konnte nicht geladen werden.", err));
 }
+let klassenAllPlayers = [], klassenAnsweredPlayerIds = new Set(), klassenPendingListOpen = false;
+function klassenRenderPendingList() {
+  if (!klassenPendingListOpen) return;
+  const pending = klassenAllPlayers.filter(p => !klassenAnsweredPlayerIds.has(p.id));
+  const el = document.getElementById("klassenPendingList");
+  el.innerHTML = pending.length
+    ? pending.map(p => `<span class="choice-btn" style="cursor:default;">${escapeHtml(p.name)}</span>`).join("")
+    : "<p style='margin:0; color:var(--muted);'>Alle haben geantwortet.</p>";
+}
+document.getElementById("klassenPendingToggleBtn").addEventListener("click", () => {
+  klassenPendingListOpen = !klassenPendingListOpen;
+  document.getElementById("klassenPendingList").classList.toggle("hidden", !klassenPendingListOpen);
+  if (klassenPendingListOpen) klassenRenderPendingList();
+});
 document.getElementById("klassenSkipBtn").addEventListener("click", () => {
   clearInterval(klassenCountdownIv);
   klassenHostQuestionEnd(klassenCurrentHostIndex);
@@ -3872,7 +3943,7 @@ async function klassenHostShowRanking(isFinal, revealToStudents) {
   klassenLastRevealToStudents = revealToStudents;
   try {
     const newPhase = isFinal ? "finished" : (revealToStudents ? "ranking" : "playing");
-    await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: newPhase });
+    await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: newPhase, answerRevealed: true });
     const snap = await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").get();
     const players = [];
     snap.forEach(d => players.push({ id: d.id, ...d.data() }));
@@ -3901,7 +3972,7 @@ document.getElementById("klassenShowFullListBtn").addEventListener("click", () =
 });
 document.getElementById("klassenRankHomeBtn").addEventListener("click", () => { klassenStopListening(); showView("home"); });
 function klassenAbortGame() {
-  openConfirm("Klassenmodus wirklich abbrechen?", async () => {
+  openConfirm("Klassenduell wirklich abbrechen?", async () => {
     klassenStopListening();
     try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "finished" }); } catch (e) {}
     showView("home");
@@ -3912,7 +3983,7 @@ document.getElementById("klassenRankStopBtn").addEventListener("click", klassenA
 document.getElementById("klassenPlayerRankHomeBtn").addEventListener("click", () => { klassenStopListening(); showView("home"); });
 
 /* ---- Klassenmodus: Schüler-seitiger Spielablauf ---- */
-let klassenLastSeenPhase = null, klassenMode = "quiz", klassenExerciseId = null;
+let klassenLastSeenPhase = null, klassenMode = "quiz", klassenExerciseId = null, klassenAnswerRevealed = false;
 function klassenStudentHandleRoomUpdate(room) {
   klassenExerciseId = room.exerciseId;
   if (room.phase === "practice") {
@@ -3923,22 +3994,34 @@ function klassenStudentHandleRoomUpdate(room) {
     if (room.currentQuestionIndex !== klassenLastSeenQIndex) {
       klassenLastSeenQIndex = room.currentQuestionIndex;
       klassenHasAnsweredCurrent = false;
+      klassenAnswerRevealed = false;
       klassenRenderStudentQuestion(room);
     } else if (wasPractice) {
       klassenShowWaitingForNext();
+    } else if (room.answerRevealed && !klassenAnswerRevealed) {
+      klassenAnswerRevealed = true;
+      klassenRevealAnswerToStudent();
     }
   } else if (room.phase === "ranking" || room.phase === "finished") {
     klassenRenderStudentRanking(room.phase === "finished");
   }
   klassenLastSeenPhase = room.phase;
 }
+function klassenSetAnsweredNote(html) {
+  const el = document.getElementById("klassenAnsweredNote");
+  el.innerHTML = html;
+  el.classList.remove("hidden");
+}
 function klassenLockAnswerUI(answered) {
   setWidgetMode("duell_klassen", "none");
-  const correctText = formatCorrectAnswer(klassenStudentTask);
-  document.getElementById("klassenAnsweredNote").textContent = answered
-    ? `✓ Antwort gesendet. Richtige Antwort: ${correctText}. Warte auf die nächste Aufgabe …`
-    : `⏱ Zeit abgelaufen. Richtige Antwort: ${correctText}. Warte auf die nächste Aufgabe …`;
-  document.getElementById("klassenAnsweredNote").classList.remove("hidden");
+  klassenSetAnsweredNote(answered
+    ? "✓ Antwort gesendet – warte auf die nächste Aufgabe …"
+    : "⏱ Zeit abgelaufen – warte auf die nächste Aufgabe …");
+}
+function klassenRevealAnswerToStudent() {
+  const prefix = klassenHasAnsweredCurrent ? "✓ Antwort gesendet." : "⏱ Zeit abgelaufen.";
+  const correctText = escapeHtml(formatCorrectAnswer(klassenStudentTask));
+  klassenSetAnsweredNote(`${prefix}<br><span style="font-size:1.6rem; font-weight:800; display:block; margin:8px 0;">Richtige Antwort: ${correctText}</span>Warte auf die nächste Aufgabe …`);
 }
 function klassenShowWaitingForNext() {
   clearInterval(klassenCountdownIv);
@@ -3948,8 +4031,7 @@ function klassenShowWaitingForNext() {
   document.getElementById("duell_klassen_visual").innerHTML = "";
   document.getElementById("duell_klassen_prompt").textContent = "";
   setWidgetMode("duell_klassen", "none");
-  document.getElementById("klassenAnsweredNote").textContent = "Warte auf die nächste Aufgabe …";
-  document.getElementById("klassenAnsweredNote").classList.remove("hidden");
+  klassenSetAnsweredNote("Warte auf die nächste Aufgabe …");
 }
 function klassenEnterPracticeMode() {
   klassenMode = "practice";
@@ -4043,6 +4125,11 @@ async function klassenRenderStudentRanking(isFinal) {
     const me = players[myIndex];
     document.getElementById("klassenPlayerRankPlace").textContent = myIndex >= 0 ? `Platz ${myIndex + 1} von ${players.length}` : "–";
     document.getElementById("klassenPlayerRankScore").textContent = me ? `${me.score || 0} Punkte` : "";
+    const top5 = players.slice(0, 5);
+    document.getElementById("klassenPlayerRankTop5").innerHTML = top5.map((p, i) => {
+      const isMe = p.id === klassenPlayerId;
+      return `<div class="chapter-row"${isMe ? ' style="font-weight:800;"' : ""}><span>${i + 1}. ${escapeHtml(p.name)}${isMe ? " (du)" : ""}</span><span>${p.score || 0} Punkte</span></div>`;
+    }).join("");
   } catch (e) { console.error("Klassenmodus: Rangliste konnte nicht geladen werden.", e); }
 }
 

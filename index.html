@@ -29,6 +29,7 @@
 
   /* Home: 4 Kategorie-Boxen */
   .lp21-link { display: block; margin: 28px auto 0; background: none; border: none; color: var(--muted); font-size: 0.72rem; text-decoration: underline; cursor: pointer; padding: 6px; }
+  .klassen-practice-link { background: none; border: none; color: var(--muted); font-size: 0.85rem; text-decoration: underline; cursor: pointer; padding: 8px; }
   .lp21-intro { color: var(--muted); font-size: 0.9rem; margin-bottom: 8px; }
   .lp21-source { color: var(--muted); font-size: 0.72rem; margin-bottom: 20px; font-style: italic; }
   .lp21-block { margin-bottom: 26px; }
@@ -248,7 +249,184 @@
       <button class="cat-tile cat-jahr3" data-cat="jahr3"><span class="ti">3️⃣</span>Mathematik 3. Jahr</button>
     </div>
     <button class="btn btn-big btn-vk" id="goTournamentBtn" style="margin-top:16px;">🏆 Turniermodus</button>
+    <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenmodus</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
+  </div>
+
+  <!-- KLASSENMODUS: Wahl Host/Beitreten -->
+  <div id="klassenChoiceView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>🏫 Klassenmodus</h1>
+    <h2 class="sub">Live-Quiz für die ganze Klasse. Jede Person braucht ein eigenes Gerät mit Internetverbindung.</h2>
+    <div class="mode-choice-grid">
+      <button class="btn btn-big btn-vk" id="goKlassenJoinBtn">🙋 Raum beitreten</button>
+    </div>
+    <p style="color:var(--muted); font-size:0.9rem; margin-top:16px;">Möchtest du als Lehrperson einen Raum eröffnen? Wähle zuerst über eine Kategorie ein Thema/eine Übung aus und tippe dort auf "🏫 Klassenmodus".</p>
+    <p id="klassenSetupNote" class="hidden" style="color:var(--muted); font-size:0.9rem; margin-top:16px;"></p>
+  </div>
+
+  <!-- KLASSENMODUS: Host-Setup (Thema bereits gewählt) -->
+  <div id="klassenHostSetupView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-mode>← Zurück</button></div>
+    <h1>🏫 Klassenmodus einrichten</h1>
+    <div class="ex-desc-card" id="klassen_exercise_title"></div>
+    <div class="setup-card">
+      <label class="field-label">Anzahl Aufgaben: <span id="klassenNumqLabel">10</span></label>
+      <input type="range" id="klassenNumqSlider" class="range-slider" min="5" max="20" step="1" value="10">
+      <div class="range-scale"><span>5</span><span>20</span></div>
+      <label class="field-label">Zeit pro Aufgabe</label>
+      <div class="choice-row">
+        <button class="choice-btn" data-klassen-timer="15">15 Sek.</button>
+        <button class="choice-btn active" data-klassen-timer="30">30 Sek.</button>
+        <button class="choice-btn" data-klassen-timer="45">45 Sek.</button>
+        <button class="choice-btn" data-klassen-timer="60">60 Sek.</button>
+      </div>
+      <label class="field-label">Zwischenrangliste anzeigen</label>
+      <div class="choice-row">
+        <button class="choice-btn" data-klassen-rankint="1">Nach jeder Aufgabe</button>
+        <button class="choice-btn" data-klassen-rankint="3">Nach 3 Aufgaben</button>
+        <button class="choice-btn" data-klassen-rankint="5">Nach 5 Aufgaben</button>
+        <button class="choice-btn active" data-klassen-rankint="0">Nur am Schluss</button>
+      </div>
+    </div>
+    <button class="btn btn-big btn-duell" id="klassenCreateRoomBtn">Raum erstellen</button>
+  </div>
+
+  <!-- KLASSENMODUS: Host-Lobby -->
+  <div id="klassenHostView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="klassenHostCloseBtn">← Raum schliessen</button></div>
+    <h1>👩‍🏫 Raum eröffnet</h1>
+    <div class="setup-card" style="text-align:center;">
+      <label class="field-label">PIN für die Klasse</label>
+      <div id="klassenPinDisplay" style="font-size:3rem; font-weight:800; letter-spacing:0.15em; margin:10px 0;">----</div>
+      <p style="color:var(--muted); font-size:0.9rem;">Schüler:innen geben diese PIN unter "Raum beitreten" ein.</p>
+    </div>
+    <div class="setup-card">
+      <label class="field-label">Beigetretene Spieler:innen (<span id="klassenJoinCount">0</span>)</label>
+      <div id="klassenPlayerList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+    </div>
+    <button class="btn btn-big btn-duell" id="klassenStartBtn">Spiel starten</button>
+  </div>
+
+  <!-- KLASSENMODUS: Host-Spielbildschirm (Beamer) -->
+  <div id="klassenHostPlayView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="klassenHostPlayStopBtn">Abbrechen</button></div>
+    <h2 class="sub" id="klassenHostQNum"></h2>
+    <div id="klassenHostVisual" style="text-align:center;"></div>
+    <div class="task-prompt" style="text-align:center;" id="klassenHostPrompt"></div>
+    <div style="text-align:center; font-size:2.4rem; font-weight:800; margin:14px 0;" id="klassenHostCountdown"></div>
+    <p style="text-align:center; color:var(--muted);"><span id="klassenHostAnsweredCount">0</span> von <span id="klassenHostTotalPlayers">0</span> haben geantwortet</p>
+    <p style="text-align:center; font-weight:700;">✅ <span id="klassenHostCorrectCount">0</span> richtig &nbsp;·&nbsp; ❌ <span id="klassenHostWrongCount">0</span> falsch</p>
+    <button class="btn btn-secondary" style="display:block; margin:20px auto 0;" id="klassenSkipBtn">⏭️ Aufgabe überspringen</button>
+  </div>
+
+  <!-- KLASSENMODUS: Rangliste (Host) -->
+  <div id="klassenHostRankView" class="view hidden">
+    <h1 id="klassenRankTitle">🏆 Zwischenstand</h1>
+    <div id="klassenPodium" style="display:flex; flex-direction:column; gap:10px; margin:20px 0;"></div>
+    <div id="klassenFullList" class="hidden" style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px;"></div>
+    <div class="row">
+      <button class="btn btn-secondary" style="flex:1;" id="klassenShowFullListBtn">Ganze Liste zeigen</button>
+      <button class="btn btn-big btn-duell" style="flex:1;" id="klassenNextBtn">Weiter</button>
+    </div>
+    <button class="btn btn-secondary" style="margin-top:14px;" id="klassenRankHomeBtn">Zur Startseite</button>
+    <div style="text-align:center; margin-top:16px;">
+      <button id="klassenPracticeBtnRank" class="klassen-practice-link">🧠 Übung</button>
+    </div>
+  </div>
+
+  <!-- KLASSENMODUS: Zwischen den Fragen (Host bestimmt Tempo) -->
+  <div id="klassenHostBetweenView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="klassenBetweenStopBtn">Abbrechen</button></div>
+    <h1 id="klassenBetweenTitle">Frage beendet</h1>
+    <div class="setup-card" style="text-align:center;">
+      <p style="font-size:1.5rem; font-weight:800;">✅ <span id="klassenBetweenCorrect">0</span> von <span id="klassenBetweenTotal">0</span> richtig</p>
+    </div>
+    <button class="btn btn-big btn-duell" id="klassenNextQuestionBtn">Nächste Frage</button>
+    <div style="text-align:center; margin-top:16px;">
+      <button id="klassenPracticeBtn" class="klassen-practice-link">🧠 Übung</button>
+    </div>
+  </div>
+
+  <!-- KLASSENMODUS: Übung läuft (Host-Ansicht) -->
+  <div id="klassenHostPracticeView" class="view hidden">
+    <h1>🧠 Übung läuft</h1>
+    <p class="sub">Die Klasse übt gerade unabhängig voneinander (nicht gewertet). Sobald du bereit bist, geht es mit dem Quiz weiter.</p>
+    <button class="btn btn-big btn-duell" id="klassenEndPracticeBtn">Übung beenden &amp; weiter</button>
+  </div>
+
+  <!-- KLASSENMODUS: Spielbildschirm (Schüler) -->
+  <div id="klassenPlayView" class="view hidden">
+    <div class="row back-row"><span></span></div>
+    <h2 class="sub" id="klassen_qnum"></h2>
+    <div style="text-align:center; font-weight:800; font-size:1.3rem;" id="klassen_countdown"></div>
+    <div id="duell_klassen_visual"></div>
+    <div class="task-prompt" id="duell_klassen_prompt"></div>
+    <div class="answer-display" id="duell_klassen_input">&nbsp;</div>
+    <div id="duell_klassen_pairWrap" class="pair-wrap hidden">
+      <div class="pair-boxes style-coord" id="duell_klassen_pairBoxes">
+        <button class="pair-box" data-side="klassen" data-part="a" id="duell_klassen_pairA">?</button>
+        <div class="pair-sep" id="duell_klassen_pairSep">|</div>
+        <button class="pair-box" data-side="klassen" data-part="b" id="duell_klassen_pairB">?</button>
+      </div>
+    </div>
+    <div id="duell_klassen_varRow" class="var-row hidden">
+      <button data-side="klassen" data-key="x">x</button>
+      <button data-side="klassen" data-key="y">y</button>
+      <button data-side="klassen" data-key="a">a</button>
+      <button data-side="klassen" data-key="n">n</button>
+    </div>
+    <div id="duell_klassen_keypadWrap"><div class="keypad" data-side="klassen"></div></div>
+    <div id="duell_klassen_boolWrap" class="bool-wrap hidden">
+      <button class="bool-btn true-btn" data-side="klassen" data-bool="1">Wahr / Ja</button>
+      <button class="bool-btn false-btn" data-side="klassen" data-bool="0">Falsch / Nein</button>
+    </div>
+    <div id="duell_klassen_textWrap" class="text-wrap hidden">
+      <input type="text" id="duell_klassen_textInput">
+      <button data-side="klassen" data-textsubmit="1">✓</button>
+    </div>
+    <div id="duell_klassen_mcWrap" class="mc-wrap hidden">
+      <button class="mc-btn" data-side="klassen" data-mc="0"></button>
+      <button class="mc-btn" data-side="klassen" data-mc="1"></button>
+      <button class="mc-btn" data-side="klassen" data-mc="2"></button>
+      <button class="mc-btn" data-side="klassen" data-mc="3"></button>
+    </div>
+    <div id="klassenAnsweredNote" class="hidden" style="text-align:center; font-weight:700; margin-top:14px;">✓ Antwort gesendet – warte auf die nächste Aufgabe …</div>
+  </div>
+
+  <!-- KLASSENMODUS: Rangliste (Schüler) -->
+  <div id="klassenPlayerRankView" class="view hidden">
+    <h1 id="klassenPlayerRankTitle">🏆 Zwischenstand</h1>
+    <div class="result-card">
+      <div class="result-winner" id="klassenPlayerRankPlace"></div>
+      <div class="result-scores" id="klassenPlayerRankScore"></div>
+    </div>
+    <p style="text-align:center; color:var(--muted);">Warte auf die Lehrperson …</p>
+  </div>
+
+  <!-- KLASSENMODUS: Beitreten (Schüler) -->
+  <div id="klassenJoinView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-klassenchoice>← Zurück</button></div>
+    <h1>🙋 Raum beitreten</h1>
+    <div class="setup-card">
+      <label class="field-label">PIN</label>
+      <input type="text" id="klassenJoinPinInput" placeholder="z.B. 4821" maxlength="6" inputmode="numeric" style="font-size:1.3rem; text-align:center; letter-spacing:0.1em;">
+      <div style="height:12px;"></div>
+      <label class="field-label">Dein Name</label>
+      <input type="text" id="klassenJoinNameInput" placeholder="Name" maxlength="16">
+    </div>
+    <p id="klassenJoinError" class="hidden" style="color:var(--danger); font-size:0.9rem;"></p>
+    <button class="btn btn-big btn-vk" id="klassenJoinBtn">Beitreten</button>
+  </div>
+
+  <!-- KLASSENMODUS: Warteraum (Schüler) -->
+  <div id="klassenWaitView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="klassenWaitLeaveBtn">← Verlassen</button></div>
+    <h1>⏳ Warte auf die Lehrperson …</h1>
+    <div class="setup-card" style="text-align:center;">
+      <p style="font-size:1.1rem; font-weight:700;" id="klassenWaitName"></p>
+      <p style="color:var(--muted);">Raum <span id="klassenWaitPin"></span> · <span id="klassenWaitCount">0</span> Person(en) beigetreten</p>
+    </div>
   </div>
 
   <!-- KATEGORIE: Kapitel-Liste -->
@@ -275,6 +453,9 @@
       <button class="btn btn-big btn-solo" id="goSoloBtn">🧠 Solo üben</button>
       <button class="btn btn-big btn-duell" id="goDuellSetupBtn">⚔️ Duell starten</button>
       <button class="btn btn-big btn-vk" id="goVkSetupBtn">🏁 Vierkampf starten</button>
+    </div>
+    <div style="text-align:right; margin-top:28px;">
+      <button id="goKlassenHostSetupBtn" style="background:none; border:none; color:var(--muted); font-size:0.78rem; text-decoration:underline; cursor:pointer; padding:6px;">🏫 Klassenmodus (für Lehrpersonen)</button>
     </div>
   </div>
 
@@ -2530,6 +2711,15 @@ function makeMixedExercise(ch) {
     calc: ch.exercises.some(e => e.calc)
   };
 }
+function findExerciseById(id) {
+  const allChapters = [...BASISWISSEN_CHAPTERS, ...JAHR1_CHAPTERS, ...JAHR2_CHAPTERS, ...JAHR3_CHAPTERS];
+  for (const chapter of allChapters) {
+    const ex = chapter.exercises.find(e => e.id === id);
+    if (ex) return ex;
+    if (id === chapter.id + "-mixed") return makeMixedExercise(chapter);
+  }
+  return null;
+}
 
 /* ================= Home / Kategorie / Kapitel Navigation ================= */
 let navCategory = null, navChapter = null, currentExercise = null;
@@ -2606,7 +2796,7 @@ function keypadHTML(side) {
     <div class="keypad-row">${k("back","⌫")}${k("ok","✓","ok-key")}</div>`;
 }
 document.querySelectorAll(".keypad").forEach(el => { el.innerHTML = keypadHTML(el.dataset.side); });
-function currentTaskFor(side) { if (side === "solo") return soloCurrent; if (side.startsWith("vk")) return vkTask; return duellTasks[side]; }
+function currentTaskFor(side) { if (side === "solo") return soloCurrent; if (side === "klassen") return klassenStudentTask; if (side.startsWith("vk")) return vkTask; return duellTasks[side]; }
 document.addEventListener("click", (e) => {
   const pb = e.target.closest(".pair-box");
   if (pb) { activePart[pb.dataset.side] = pb.dataset.part; renderPairBuffer(pb.dataset.side); return; }
@@ -3105,6 +3295,7 @@ function nextRound(side) {
 }
 function submitAnswer(side) {
   if (side === "solo") { submitSolo(); return; }
+  if (side === "klassen") { klassenSubmitAnswer(); return; }
   if (side.startsWith("vk")) { vkSubmitAnswer(side); return; }
   if (!duellRunning) return;
   if (duellSettings.buzzMode && duellBuzzWinner !== side) return;
@@ -3428,6 +3619,451 @@ function tnShowFinalResult() {
   showView("tournamentResult");
 }
 document.getElementById("tn_result_againBtn").addEventListener("click", () => document.getElementById("goTournamentBtn").click());
+
+/* =========================================================================
+   KLASSENMODUS (Phase 1: Firebase-Anbindung + PIN-Beitritts-Fluss, ohne Spiellogik)
+   ========================================================================= */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyC6CidIBQ4YZmg-v7EVgr8penemrvusKRE",
+  authDomain: "mathe-duell-klassenmodus.firebaseapp.com",
+  projectId: "mathe-duell-klassenmodus",
+  storageBucket: "mathe-duell-klassenmodus.firebasestorage.app",
+  messagingSenderId: "913891950917",
+  appId: "1:913891950917:web:c98d999f19c0946e4cfe2c"
+};
+function isFirebaseConfigured() { return !!FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith("PASTE_HIER"); }
+let firebaseDb = null, firebaseReady = false;
+function loadScriptOnce(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const s = document.createElement("script");
+    s.src = src; s.onload = () => resolve(); s.onerror = () => reject(new Error("load failed: " + src));
+    document.head.appendChild(s);
+  });
+}
+async function ensureFirebase() {
+  if (firebaseReady) return true;
+  if (!isFirebaseConfigured()) return false;
+  try {
+    await loadScriptOnce("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
+    await loadScriptOnce("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js");
+    if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    firebaseDb = firebase.firestore();
+    firebaseReady = true;
+    return true;
+  } catch (e) {
+    console.error("Klassenmodus: Firebase konnte nicht geladen werden.", e);
+    return false;
+  }
+}
+let klassenRoomPin = null;
+let klassenPlayersUnsub = null, klassenAnswersUnsub = null, klassenRoomUnsub = null;
+let klassenCountdownIv = null;
+let klassenSettings = { numQuestions: 10, timerSec: 30, rankInterval: 0 };
+let klassenIsHost = false;
+let klassenPlayerId = null, klassenPlayerName = null;
+let klassenLastSeenQIndex = -1, klassenHasAnsweredCurrent = false, klassenStudentTask = null;
+activePart.klassen = "a";
+function klassenStopListening() {
+  if (klassenPlayersUnsub) { klassenPlayersUnsub(); klassenPlayersUnsub = null; }
+  if (klassenAnswersUnsub) { klassenAnswersUnsub(); klassenAnswersUnsub = null; }
+  if (klassenRoomUnsub) { klassenRoomUnsub(); klassenRoomUnsub = null; }
+  clearInterval(klassenCountdownIv); klassenCountdownIv = null;
+}
+function klassenGeneratePin() { return String(rnd(1000, 9999)); }
+function klassenShowNote(text) {
+  const note = document.getElementById("klassenSetupNote");
+  note.textContent = text;
+  note.classList.remove("hidden");
+}
+async function klassenCheckReady() {
+  if (!isFirebaseConfigured()) { klassenShowNote("Der Klassenmodus ist auf dieser Seite noch nicht eingerichtet (fehlende Firebase-Konfiguration)."); return false; }
+  const ok = await ensureFirebase();
+  if (!ok) klassenShowNote("Verbindung zum Klassenmodus-Server konnte nicht hergestellt werden. Prüfe die Internetverbindung.");
+  return ok;
+}
+document.getElementById("goKlassenBtn").addEventListener("click", async () => {
+  showView("klassenChoice");
+  const note = document.getElementById("klassenSetupNote");
+  const joinBtn = document.getElementById("goKlassenJoinBtn");
+  note.classList.add("hidden");
+  joinBtn.disabled = false;
+  const ok = await klassenCheckReady();
+  joinBtn.disabled = !ok;
+});
+document.getElementById("goKlassenHostSetupBtn").addEventListener("click", () => {
+  document.getElementById("klassen_exercise_title").innerHTML = titleWithCalc(escapeHtml(currentExercise.title), currentExercise.calc);
+  showView("klassenHostSetup");
+});
+document.getElementById("klassenNumqSlider").addEventListener("input", (e) => {
+  klassenSettings.numQuestions = Number(e.target.value);
+  document.getElementById("klassenNumqLabel").textContent = e.target.value;
+});
+document.querySelectorAll('.choice-btn[data-klassen-timer]').forEach(btn => btn.addEventListener("click", () => {
+  klassenSettings.timerSec = Number(btn.dataset.klassenTimer);
+  document.querySelectorAll('.choice-btn[data-klassen-timer]').forEach(b => b.classList.toggle("active", b === btn));
+}));
+document.querySelectorAll('.choice-btn[data-klassen-rankint]').forEach(btn => btn.addEventListener("click", () => {
+  klassenSettings.rankInterval = Number(btn.dataset.klassenRankint);
+  document.querySelectorAll('.choice-btn[data-klassen-rankint]').forEach(b => b.classList.toggle("active", b === btn));
+}));
+document.getElementById("klassenCreateRoomBtn").addEventListener("click", async () => {
+  const ok = await klassenCheckReady();
+  if (!ok) { openConfirm("Verbindung nicht möglich. Prüfe die Internetverbindung.", null, "OK"); return; }
+  klassenIsHost = true;
+  let pin = klassenGeneratePin(), exists = true, attempts = 0;
+  try {
+    do {
+      pin = klassenGeneratePin();
+      const doc = await firebaseDb.collection("rooms").doc(pin).get();
+      exists = doc.exists;
+      attempts++;
+    } while (exists && attempts < 5);
+    klassenRoomPin = pin;
+    await firebaseDb.collection("rooms").doc(pin).set({
+      createdAt: Date.now(), phase: "lobby", topic: currentExercise.title, exerciseId: currentExercise.id,
+      numQuestions: klassenSettings.numQuestions, timerSec: klassenSettings.timerSec,
+      rankInterval: klassenSettings.rankInterval, currentQuestionIndex: -1
+    });
+  } catch (e) {
+    console.error("Klassenmodus: Raum konnte nicht erstellt werden.", e);
+    openConfirm("Raum konnte nicht erstellt werden. Prüfe die Internetverbindung.", null, "OK");
+    return;
+  }
+  document.getElementById("klassenPinDisplay").textContent = pin;
+  document.getElementById("klassenPlayerList").innerHTML = "";
+  document.getElementById("klassenJoinCount").textContent = "0";
+  showView("klassenHost");
+  klassenStopListening();
+  klassenPlayersUnsub = firebaseDb.collection("rooms").doc(pin).collection("players").onSnapshot(snap => {
+    const names = [];
+    snap.forEach(d => names.push(d.data().name));
+    document.getElementById("klassenJoinCount").textContent = String(names.length);
+    document.getElementById("klassenPlayerList").innerHTML = names.map(n => `<span class="choice-btn active" style="cursor:default;">${escapeHtml(n)}</span>`).join("");
+  }, err => console.error("Klassenmodus: Spielerliste konnte nicht geladen werden.", err));
+});
+document.getElementById("klassenHostCloseBtn").addEventListener("click", () => {
+  klassenStopListening();
+  showView("home");
+});
+document.getElementById("goKlassenJoinBtn").addEventListener("click", () => {
+  document.getElementById("klassenJoinError").classList.add("hidden");
+  document.getElementById("klassenJoinPinInput").value = "";
+  document.getElementById("klassenJoinNameInput").value = "";
+  showView("klassenJoin");
+});
+document.querySelectorAll("[data-back-klassenchoice]").forEach(b => b.addEventListener("click", () => showView("klassenChoice")));
+document.getElementById("klassenJoinBtn").addEventListener("click", async () => {
+  const pin = document.getElementById("klassenJoinPinInput").value.trim();
+  const name = document.getElementById("klassenJoinNameInput").value.trim();
+  const errEl = document.getElementById("klassenJoinError");
+  errEl.classList.add("hidden");
+  if (!pin || !name) { errEl.textContent = "Bitte PIN und Namen eingeben."; errEl.classList.remove("hidden"); return; }
+  const ok = await ensureFirebase();
+  if (!ok) { errEl.textContent = "Keine Verbindung zum Klassenmodus-Server möglich."; errEl.classList.remove("hidden"); return; }
+  try {
+    const roomRef = firebaseDb.collection("rooms").doc(pin);
+    const roomDoc = await roomRef.get();
+    if (!roomDoc.exists) { errEl.textContent = "Diese PIN existiert nicht."; errEl.classList.remove("hidden"); return; }
+    klassenIsHost = false;
+    const playerRef = await roomRef.collection("players").add({ name, joinedAt: Date.now(), score: 0 });
+    klassenPlayerId = playerRef.id;
+    klassenPlayerName = name;
+    klassenRoomPin = pin;
+    klassenLastSeenQIndex = -1;
+    klassenLastSeenPhase = null;
+    klassenMode = "quiz";
+    document.getElementById("klassenWaitName").textContent = name;
+    document.getElementById("klassenWaitPin").textContent = pin;
+    showView("klassenWait");
+    klassenStopListening();
+    klassenPlayersUnsub = roomRef.collection("players").onSnapshot(snap => {
+      document.getElementById("klassenWaitCount").textContent = String(snap.size);
+    }, err => console.error("Klassenmodus: Warteraum-Update fehlgeschlagen.", err));
+    klassenRoomUnsub = roomRef.onSnapshot(snap => {
+      const room = snap.data();
+      if (room) klassenStudentHandleRoomUpdate(room);
+    }, err => console.error("Klassenmodus: Raum-Update fehlgeschlagen.", err));
+  } catch (e) {
+    console.error("Klassenmodus: Beitritt fehlgeschlagen.", e);
+    errEl.textContent = "Beitritt fehlgeschlagen. Prüfe die Internetverbindung.";
+    errEl.classList.remove("hidden");
+  }
+});
+document.getElementById("klassenWaitLeaveBtn").addEventListener("click", () => {
+  klassenStopListening();
+  showView("klassenChoice");
+});
+
+/* ---- Klassenmodus: Host-seitiger Spielablauf ---- */
+document.getElementById("klassenStartBtn").addEventListener("click", async () => {
+  try {
+    await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "playing" });
+    await klassenHostNextQuestion();
+  } catch (e) {
+    console.error("Klassenmodus: Spiel konnte nicht gestartet werden.", e);
+    openConfirm("Spiel konnte nicht gestartet werden.", null, "OK");
+  }
+});
+async function klassenHostNextQuestion() {
+  const roomRef = firebaseDb.collection("rooms").doc(klassenRoomPin);
+  const roomSnap = await roomRef.get();
+  const room = roomSnap.data();
+  const nextIndex = room.currentQuestionIndex + 1;
+  if (nextIndex >= room.numQuestions) { klassenHostShowRanking(true); return; }
+  const rawTask = currentExercise.generate();
+  const task = JSON.parse(JSON.stringify(rawTask));
+  const startedAt = Date.now();
+  await roomRef.update({ currentQuestionIndex: nextIndex, currentTask: task, questionStartedAt: startedAt, phase: "playing" });
+  klassenHostRenderPlay(nextIndex, task, startedAt, room.timerSec, room.numQuestions);
+}
+let klassenCurrentHostIndex = -1, klassenQuestionEnding = false;
+function klassenHostRenderPlay(index, task, startedAt, timerSec, numQuestions) {
+  klassenCurrentHostIndex = index;
+  klassenQuestionEnding = false;
+  showView("klassenHostPlay");
+  document.getElementById("klassenHostQNum").textContent = `Frage ${index + 1} von ${numQuestions}`;
+  document.getElementById("klassenHostVisual").innerHTML = task.visual || "";
+  document.getElementById("klassenHostPrompt").textContent = task.prompt;
+  document.getElementById("klassenHostAnsweredCount").textContent = "0";
+  document.getElementById("klassenHostCorrectCount").textContent = "0";
+  document.getElementById("klassenHostWrongCount").textContent = "0";
+  clearInterval(klassenCountdownIv);
+  const tick = () => {
+    const remaining = Math.max(0, timerSec - (Date.now() - startedAt) / 1000);
+    document.getElementById("klassenHostCountdown").textContent = Math.ceil(remaining) + "s";
+    if (remaining <= 0) { clearInterval(klassenCountdownIv); klassenHostQuestionEnd(index); }
+  };
+  tick();
+  klassenCountdownIv = setInterval(tick, 250);
+  if (klassenAnswersUnsub) klassenAnswersUnsub();
+  klassenAnswersUnsub = firebaseDb.collection("rooms").doc(klassenRoomPin).collection("questions").doc(String(index)).collection("answers").onSnapshot(snap => {
+    let correct = 0, wrong = 0;
+    snap.forEach(d => { if (d.data().correct) correct++; else wrong++; });
+    document.getElementById("klassenHostAnsweredCount").textContent = String(snap.size);
+    document.getElementById("klassenHostCorrectCount").textContent = String(correct);
+    document.getElementById("klassenHostWrongCount").textContent = String(wrong);
+  }, err => console.error("Klassenmodus: Antworten konnten nicht geladen werden.", err));
+  if (klassenPlayersUnsub) klassenPlayersUnsub();
+  klassenPlayersUnsub = firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").onSnapshot(snap => {
+    document.getElementById("klassenHostTotalPlayers").textContent = String(snap.size);
+  }, err => console.error("Klassenmodus: Spielerzahl konnte nicht geladen werden.", err));
+}
+document.getElementById("klassenSkipBtn").addEventListener("click", () => {
+  clearInterval(klassenCountdownIv);
+  klassenHostQuestionEnd(klassenCurrentHostIndex);
+});
+function klassenHostQuestionEnd(index) {
+  if (klassenQuestionEnding) return;
+  klassenQuestionEnding = true;
+  if (klassenAnswersUnsub) { klassenAnswersUnsub(); klassenAnswersUnsub = null; }
+  const { numQuestions, rankInterval } = klassenSettings;
+  const questionNumber = index + 1;
+  const isLast = questionNumber >= numQuestions;
+  const hitInterval = rankInterval > 0 && questionNumber % rankInterval === 0;
+  if (isLast || hitInterval) klassenHostShowRanking(isLast);
+  else klassenHostShowBetween(index);
+}
+async function klassenHostShowBetween(index) {
+  clearInterval(klassenCountdownIv);
+  let correct = 0;
+  try {
+    const ansSnap = await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("questions").doc(String(index)).collection("answers").get();
+    ansSnap.forEach(d => { if (d.data().correct) correct++; });
+  } catch (e) { console.error("Klassenmodus: Antworten konnten nicht geladen werden.", e); }
+  let totalPlayers = 0;
+  try {
+    const playersSnap = await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").get();
+    totalPlayers = playersSnap.size;
+  } catch (e) { console.error("Klassenmodus: Spielerzahl konnte nicht geladen werden.", e); }
+  showView("klassenHostBetween");
+  document.getElementById("klassenBetweenTitle").textContent = `Frage ${index + 1} beendet`;
+  document.getElementById("klassenBetweenCorrect").textContent = String(correct);
+  document.getElementById("klassenBetweenTotal").textContent = String(totalPlayers);
+}
+document.getElementById("klassenNextQuestionBtn").addEventListener("click", () => klassenHostNextQuestion());
+let klassenPracticeReturn = null, klassenLastRankIsFinal = false;
+async function klassenStartPractice(returnType) {
+  klassenPracticeReturn = returnType;
+  try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "practice" }); } catch (e) { console.error("Klassenmodus: Übung konnte nicht gestartet werden.", e); }
+  showView("klassenHostPractice");
+}
+document.getElementById("klassenPracticeBtn").addEventListener("click", () => klassenStartPractice("between"));
+document.getElementById("klassenPracticeBtnRank").addEventListener("click", () => klassenStartPractice("ranking"));
+document.getElementById("klassenEndPracticeBtn").addEventListener("click", async () => {
+  try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "playing" }); } catch (e) { console.error("Klassenmodus: Übung konnte nicht beendet werden.", e); }
+  if (klassenPracticeReturn === "ranking") klassenHostShowRanking(klassenLastRankIsFinal);
+  else klassenHostShowBetween(klassenCurrentHostIndex);
+});
+async function klassenHostShowRanking(isFinal) {
+  klassenLastRankIsFinal = isFinal;
+  try {
+    await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: isFinal ? "finished" : "ranking" });
+    const snap = await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").get();
+    const players = [];
+    snap.forEach(d => players.push({ id: d.id, ...d.data() }));
+    players.sort((a, b) => (b.score || 0) - (a.score || 0));
+    klassenRenderHostRanking(players, isFinal);
+  } catch (e) { console.error("Klassenmodus: Rangliste konnte nicht geladen werden.", e); }
+}
+function klassenRenderHostRanking(players, isFinal) {
+  clearInterval(klassenCountdownIv);
+  showView("klassenHostRank");
+  document.getElementById("klassenRankTitle").textContent = isFinal ? "🏆 Schlussrangliste" : "🏆 Zwischenstand";
+  const medals = ["🥇", "🥈", "🥉"];
+  const top3 = players.slice(0, 3);
+  document.getElementById("klassenPodium").innerHTML = top3.length
+    ? top3.map((p, i) => `<div class="setup-card" style="text-align:center; font-size:1.2rem; font-weight:800;">${medals[i]} ${escapeHtml(p.name)} — ${p.score || 0} Punkte</div>`).join("")
+    : "<p>Noch keine Punkte.</p>";
+  document.getElementById("klassenFullList").innerHTML = players.map((p, i) => `<div class="chapter-row"><span>${i + 1}. ${escapeHtml(p.name)}</span><span>${p.score || 0} Punkte</span></div>`).join("");
+  document.getElementById("klassenFullList").classList.add("hidden");
+  const nextBtn = document.getElementById("klassenNextBtn");
+  nextBtn.textContent = isFinal ? "Fertig" : "Nächste Aufgabe";
+  nextBtn.onclick = isFinal ? () => { klassenStopListening(); showView("home"); } : () => klassenHostNextQuestion();
+}
+document.getElementById("klassenShowFullListBtn").addEventListener("click", () => {
+  document.getElementById("klassenFullList").classList.toggle("hidden");
+});
+document.getElementById("klassenRankHomeBtn").addEventListener("click", () => { klassenStopListening(); showView("home"); });
+function klassenAbortGame() {
+  openConfirm("Klassenmodus wirklich abbrechen?", async () => {
+    klassenStopListening();
+    try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "finished" }); } catch (e) {}
+    showView("home");
+  }, "Beenden");
+}
+document.getElementById("klassenHostPlayStopBtn").addEventListener("click", klassenAbortGame);
+document.getElementById("klassenBetweenStopBtn").addEventListener("click", klassenAbortGame);
+
+/* ---- Klassenmodus: Schüler-seitiger Spielablauf ---- */
+let klassenLastSeenPhase = null, klassenMode = "quiz", klassenExerciseId = null;
+function klassenStudentHandleRoomUpdate(room) {
+  klassenExerciseId = room.exerciseId;
+  if (room.phase === "practice") {
+    if (klassenLastSeenPhase !== "practice") klassenEnterPracticeMode();
+  } else if (room.phase === "playing") {
+    const wasPractice = klassenLastSeenPhase === "practice";
+    if (wasPractice) klassenMode = "quiz";
+    if (room.currentQuestionIndex !== klassenLastSeenQIndex) {
+      klassenLastSeenQIndex = room.currentQuestionIndex;
+      klassenHasAnsweredCurrent = false;
+      klassenRenderStudentQuestion(room);
+    } else if (wasPractice) {
+      klassenShowWaitingForNext();
+    }
+  } else if (room.phase === "ranking" || room.phase === "finished") {
+    klassenRenderStudentRanking(room.phase === "finished");
+  }
+  klassenLastSeenPhase = room.phase;
+}
+function klassenLockAnswerUI() {
+  setWidgetMode("duell_klassen", "none");
+  document.getElementById("klassenAnsweredNote").textContent = "✓ Antwort gesendet – warte auf die nächste Aufgabe …";
+  document.getElementById("klassenAnsweredNote").classList.remove("hidden");
+}
+function klassenShowWaitingForNext() {
+  clearInterval(klassenCountdownIv);
+  showView("klassenPlay");
+  document.getElementById("klassen_qnum").textContent = "";
+  document.getElementById("klassen_countdown").textContent = "";
+  document.getElementById("duell_klassen_visual").innerHTML = "";
+  document.getElementById("duell_klassen_prompt").textContent = "";
+  setWidgetMode("duell_klassen", "none");
+  document.getElementById("klassenAnsweredNote").textContent = "Warte auf die nächste Aufgabe …";
+  document.getElementById("klassenAnsweredNote").classList.remove("hidden");
+}
+function klassenEnterPracticeMode() {
+  klassenMode = "practice";
+  klassenPracticeNextTask();
+}
+function klassenPracticeNextTask() {
+  clearInterval(klassenCountdownIv);
+  const ex = findExerciseById(klassenExerciseId);
+  const task = ex ? ex.generate() : generateAdd();
+  klassenStudentTask = task;
+  showView("klassenPlay");
+  document.getElementById("klassen_qnum").textContent = "🧠 Übung (nicht gewertet)";
+  document.getElementById("klassen_countdown").textContent = "";
+  document.getElementById("duell_klassen_visual").innerHTML = task.visual || "";
+  document.getElementById("duell_klassen_prompt").textContent = task.prompt;
+  document.getElementById("klassenAnsweredNote").classList.add("hidden");
+  inputBuffers.klassen = "";
+  activePart.klassen = "a";
+  setWidgetMode("duell_klassen", task.answerType, task.pairStyle);
+  renderMcOptions("duell_klassen", task);
+  const ti = document.getElementById("duell_klassen_textInput"); if (ti) ti.value = "";
+  renderBuffer("klassen");
+  renderPairBuffer("klassen");
+}
+function klassenRenderStudentQuestion(room) {
+  clearInterval(klassenCountdownIv);
+  const task = room.currentTask;
+  klassenStudentTask = task;
+  showView("klassenPlay");
+  document.getElementById("klassen_qnum").textContent = `Frage ${room.currentQuestionIndex + 1} von ${room.numQuestions}`;
+  document.getElementById("duell_klassen_visual").innerHTML = task.visual || "";
+  document.getElementById("duell_klassen_prompt").textContent = task.prompt;
+  document.getElementById("klassenAnsweredNote").classList.add("hidden");
+  inputBuffers.klassen = "";
+  activePart.klassen = "a";
+  setWidgetMode("duell_klassen", task.answerType, task.pairStyle);
+  renderMcOptions("duell_klassen", task);
+  const ti = document.getElementById("duell_klassen_textInput"); if (ti) ti.value = "";
+  renderBuffer("klassen");
+  renderPairBuffer("klassen");
+  const startedAt = room.questionStartedAt, timerSec = room.timerSec;
+  const tick = () => {
+    const remaining = Math.max(0, timerSec - (Date.now() - startedAt) / 1000);
+    document.getElementById("klassen_countdown").textContent = Math.ceil(remaining) + "s";
+    if (remaining <= 0) { clearInterval(klassenCountdownIv); if (!klassenHasAnsweredCurrent) klassenLockAnswerUI(); }
+  };
+  tick();
+  klassenCountdownIv = setInterval(tick, 250);
+}
+async function klassenSubmitAnswer() {
+  if (klassenMode === "practice") {
+    const task = klassenStudentTask;
+    if (!task) return;
+    const ok = checkAnswer(task, inputBuffers.klassen);
+    const inputElId = task.answerType === "mc" ? "duell_klassen_mcWrap" : "duell_klassen_input";
+    flash(inputElId, ok ? "correct-flash" : "wrong-flash");
+    setTimeout(() => { if (klassenMode === "practice") klassenPracticeNextTask(); }, 500);
+    return;
+  }
+  if (klassenHasAnsweredCurrent || !klassenStudentTask) return;
+  klassenHasAnsweredCurrent = true;
+  clearInterval(klassenCountdownIv);
+  const task = klassenStudentTask;
+  const ok = checkAnswer(task, inputBuffers.klassen);
+  const roomSnap = await firebaseDb.collection("rooms").doc(klassenRoomPin).get();
+  const room = roomSnap.data();
+  const elapsedSec = (Date.now() - room.questionStartedAt) / 1000;
+  const points = ok ? Math.max(0, Math.round(1000 * (1 - Math.min(1, elapsedSec / room.timerSec)))) : 0;
+  klassenLockAnswerUI();
+  try {
+    await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("questions").doc(String(room.currentQuestionIndex)).collection("answers").doc(klassenPlayerId).set({
+      name: klassenPlayerName, correct: ok, points, submittedAt: Date.now()
+    });
+    await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").doc(klassenPlayerId).update({
+      score: firebase.firestore.FieldValue.increment(points)
+    });
+  } catch (e) { console.error("Klassenmodus: Antwort konnte nicht gesendet werden.", e); }
+}
+async function klassenRenderStudentRanking(isFinal) {
+  clearInterval(klassenCountdownIv);
+  showView("klassenPlayerRank");
+  document.getElementById("klassenPlayerRankTitle").textContent = isFinal ? "🏆 Schlussrangliste" : "🏆 Zwischenstand";
+  try {
+    const snap = await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").get();
+    const players = [];
+    snap.forEach(d => players.push({ id: d.id, ...d.data() }));
+    players.sort((a, b) => (b.score || 0) - (a.score || 0));
+    const myIndex = players.findIndex(p => p.id === klassenPlayerId);
+    const me = players[myIndex];
+    document.getElementById("klassenPlayerRankPlace").textContent = myIndex >= 0 ? `Platz ${myIndex + 1} von ${players.length}` : "–";
+    document.getElementById("klassenPlayerRankScore").textContent = me ? `${me.score || 0} Punkte` : "";
+  } catch (e) { console.error("Klassenmodus: Rangliste konnte nicht geladen werden.", e); }
+}
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });

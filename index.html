@@ -312,8 +312,10 @@
     </div>
     <div class="setup-card">
       <label class="field-label">Beigetretene Spieler:innen (<span id="klassenJoinCount">0</span>)</label>
+      <p style="font-size:0.78rem; color:var(--muted); margin:-4px 0 8px;">Auf einen Namen tippen, um ihn zu bearbeiten oder zu entfernen.</p>
       <div id="klassenPlayerList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
     </div>
+    <p class="klassen-offline-banner hidden" style="text-align:center; color:#b45309; font-weight:700;"></p>
     <button class="btn btn-big btn-duell" id="klassenStartBtn">Spiel starten</button>
   </div>
 
@@ -330,6 +332,7 @@
       <button class="klassen-practice-link" id="klassenPendingToggleBtn">👀 Wer hat noch nicht geantwortet?</button>
     </div>
     <div id="klassenPendingList" class="hidden setup-card" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
+    <p class="klassen-offline-banner hidden" style="text-align:center; color:#b45309; font-weight:700;"></p>
     <button class="btn btn-secondary" style="display:block; margin:20px auto 0;" id="klassenSkipBtn">⏭️ Aufgabe überspringen</button>
   </div>
 
@@ -348,6 +351,7 @@
       <button class="btn btn-big btn-duell" style="flex:1;" id="klassenNextBtn">Weiter</button>
     </div>
     <button class="btn btn-secondary" style="margin-top:14px;" id="klassenRankHomeBtn">Zur Startseite</button>
+    <p class="klassen-offline-banner hidden" style="text-align:center; color:#b45309; font-weight:700; margin-top:12px;"></p>
     <div style="text-align:center; margin-top:16px;">
       <button id="klassenPracticeBtnRank" class="klassen-practice-link">🧠 Übung</button>
     </div>
@@ -411,7 +415,22 @@
       <div id="klassenPlayerRankTop5" style="display:flex; flex-direction:column; gap:6px;"></div>
     </div>
     <p id="klassenPlayerRankWaitNote" style="text-align:center; color:var(--muted);">Warte auf die Lehrperson …</p>
-    <button class="btn btn-big btn-duell hidden" id="klassenPlayerRankHomeBtn" style="margin-top:16px;">Zurück zum Start</button>
+    <button class="btn btn-secondary hidden" id="klassenMyAnswersBtn" style="display:block; width:100%; margin-top:16px;">📋 Meine Antworten</button>
+    <button class="btn btn-big btn-duell hidden" id="klassenPlayerRankHomeBtn" style="margin-top:10px;">Zurück zum Start</button>
+  </div>
+
+  <!-- KLASSENMODUS: Meine Antworten (Schüler) -->
+  <div id="klassenMyAnswersView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="klassenMyAnswersBackBtn">← Zurück</button></div>
+    <h1>📋 Meine Antworten</h1>
+    <p class="sub" id="klassenMyAnswersSubtitle"></p>
+    <div class="summary-row" style="display:flex; gap:10px; margin-bottom:16px;">
+      <div class="setup-card" style="flex:1; text-align:center; padding:10px;"><span style="font-size:1.4rem; font-weight:800; color:var(--success); display:block;" id="klassenMyAnswersCorrectN">0</span><span style="font-size:0.72rem; color:var(--muted);">richtig</span></div>
+      <div class="setup-card" style="flex:1; text-align:center; padding:10px;"><span style="font-size:1.4rem; font-weight:800; color:var(--danger); display:block;" id="klassenMyAnswersWrongN">0</span><span style="font-size:0.72rem; color:var(--muted);">falsch</span></div>
+      <div class="setup-card" style="flex:1; text-align:center; padding:10px;"><span style="font-size:1.4rem; font-weight:800; display:block;" id="klassenMyAnswersPoints">0</span><span style="font-size:0.72rem; color:var(--muted);">Punkte</span></div>
+    </div>
+    <div id="klassenMyAnswersList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <button class="btn btn-big btn-duell" id="klassenMyAnswersSaveBtn" style="margin-top:18px;">📷 Als Foto sichern</button>
   </div>
 
   <!-- KLASSENMODUS: Beitreten (Schüler) -->
@@ -1446,6 +1465,20 @@
   <div style="font-size:3.5rem; margin-bottom:16px;">📱↻</div>
   <p style="font-size:1.3rem; font-weight:800; max-width:320px;">Bitte iPad hochkant halten</p>
   <p style="color:#94a3b8; max-width:320px;">Das Duell ist für die Ausrichtung mit einer Person oben und einer unten gemacht.</p>
+</div>
+
+<div class="modal-overlay hidden" id="klassenPlayerEditOverlay">
+  <div class="modal-box">
+    <p style="font-weight:700; margin:0 0 12px;">Name bearbeiten</p>
+    <input type="text" id="klassenPlayerEditInput" maxlength="30" style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid var(--border); margin-bottom:16px;">
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button class="btn btn-secondary" id="klassenPlayerRemoveBtn" style="color:var(--danger);">Entfernen</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondary" id="klassenPlayerEditCancelBtn">Abbrechen</button>
+        <button class="btn btn-duell" id="klassenPlayerEditSaveBtn">Speichern</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="modal-overlay hidden" id="confirmOverlay">
@@ -3744,13 +3777,51 @@ let klassenCountdownIv = null;
 let klassenSettings = { numQuestions: 10, timerSec: 30, rankInterval: 0 };
 let klassenIsHost = false;
 let klassenPlayerId = null, klassenPlayerName = null;
-let klassenLastSeenQIndex = -1, klassenHasAnsweredCurrent = false, klassenStudentTask = null;
+let klassenLastSeenQIndex = -1, klassenHasAnsweredCurrent = false, klassenStudentTask = null, klassenMyAnswers = [];
+function formatMyAnswerForDisplay(task, bufferStr) {
+  if (bufferStr === "" || bufferStr == null) return "(keine Antwort)";
+  if (task.answerType === "pair") {
+    const parts = String(bufferStr).split(",");
+    if (task.pairStyle === "fraction") return `${parts[0]}/${parts[1]}`;
+    if (task.pairStyle === "scientific") return `${parts[0]}×10^${parts[1]}`;
+    return `${parts[0]}|${parts[1]}`;
+  }
+  if (task.answerType === "boolean") return bufferStr === "1" ? "Wahr" : "Falsch";
+  return String(bufferStr);
+}
 activePart.klassen = "a";
 function klassenStopListening() {
   if (klassenPlayersUnsub) { klassenPlayersUnsub(); klassenPlayersUnsub = null; }
   if (klassenAnswersUnsub) { klassenAnswersUnsub(); klassenAnswersUnsub = null; }
   if (klassenRoomUnsub) { klassenRoomUnsub(); klassenRoomUnsub = null; }
   clearInterval(klassenCountdownIv); klassenCountdownIv = null;
+  klassenStopHeartbeat();
+  klassenStopOfflineWatch();
+}
+const KLASSEN_OFFLINE_MS = 12000;
+let klassenHeartbeatIv = null;
+function klassenStartHeartbeat() {
+  klassenStopHeartbeat();
+  klassenHeartbeatIv = setInterval(() => {
+    if (!klassenRoomPin || !klassenPlayerId) return;
+    firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").doc(klassenPlayerId).update({ lastSeen: Date.now() }).catch(() => {});
+  }, 5000);
+}
+function klassenStopHeartbeat() { clearInterval(klassenHeartbeatIv); klassenHeartbeatIv = null; }
+let klassenOfflineCheckIv = null;
+function klassenStartOfflineWatch() {
+  clearInterval(klassenOfflineCheckIv);
+  klassenOfflineCheckIv = setInterval(klassenRenderOfflineBanner, 3000);
+  klassenRenderOfflineBanner();
+}
+function klassenStopOfflineWatch() { clearInterval(klassenOfflineCheckIv); klassenOfflineCheckIv = null; }
+function klassenRenderOfflineBanner() {
+  const now = Date.now();
+  const offline = klassenAllPlayers.filter(p => p.lastSeen && (now - p.lastSeen > KLASSEN_OFFLINE_MS));
+  document.querySelectorAll(".klassen-offline-banner").forEach(el => {
+    el.classList.toggle("hidden", offline.length === 0);
+    el.textContent = offline.length ? `⚠️ Gerade offline: ${offline.map(p => p.name).join(", ")}` : "";
+  });
 }
 function klassenGeneratePin() { return String(rnd(1000, 9999)); }
 function klassenShowNote(text) {
@@ -3818,11 +3889,18 @@ document.getElementById("klassenCreateRoomBtn").addEventListener("click", async 
   showView("klassenHost");
   klassenStopListening();
   klassenPlayersUnsub = firebaseDb.collection("rooms").doc(pin).collection("players").onSnapshot(snap => {
-    const names = [];
-    snap.forEach(d => names.push(d.data().name));
-    document.getElementById("klassenJoinCount").textContent = String(names.length);
-    document.getElementById("klassenPlayerList").innerHTML = names.map(n => `<span class="choice-btn active" style="cursor:default;">${escapeHtml(n)}</span>`).join("");
+    klassenAllPlayers = [];
+    snap.forEach(d => klassenAllPlayers.push({ id: d.id, name: d.data().name, lastSeen: d.data().lastSeen }));
+    document.getElementById("klassenJoinCount").textContent = String(klassenAllPlayers.length);
+    document.getElementById("klassenPlayerList").innerHTML = klassenAllPlayers.map(p => `<button class="choice-btn active" data-player-id="${p.id}">${escapeHtml(p.name)}</button>`).join("");
+    klassenRenderOfflineBanner();
   }, err => console.error("Klassenmodus: Spielerliste konnte nicht geladen werden.", err));
+  klassenStartOfflineWatch();
+  document.getElementById("klassenPlayerList").onclick = (e) => {
+    const btn = e.target.closest("[data-player-id]");
+    if (!btn) return;
+    klassenOpenPlayerEdit(btn.dataset.playerId, btn.textContent);
+  };
 });
 document.getElementById("klassenHostCloseBtn").addEventListener("click", () => {
   klassenStopListening();
@@ -3848,18 +3926,20 @@ document.getElementById("klassenJoinBtn").addEventListener("click", async () => 
     const roomDoc = await roomRef.get();
     if (!roomDoc.exists) { errEl.textContent = "Diese PIN existiert nicht."; errEl.classList.remove("hidden"); return; }
     klassenIsHost = false;
-    const playerRef = await roomRef.collection("players").add({ name, joinedAt: Date.now(), score: 0 });
+    const playerRef = await roomRef.collection("players").add({ name, joinedAt: Date.now(), score: 0, lastSeen: Date.now() });
     klassenPlayerId = playerRef.id;
     klassenPlayerName = name;
     klassenRoomPin = pin;
     klassenLastSeenQIndex = -1;
     klassenLastSeenPhase = null;
     klassenAnswerRevealed = false;
+    klassenMyAnswers = [];
     klassenMode = "quiz";
     document.getElementById("klassenWaitName").textContent = name;
     document.getElementById("klassenWaitPin").textContent = pin;
     showView("klassenWait");
     klassenStopListening();
+    klassenStartHeartbeat();
     klassenPlayersUnsub = roomRef.collection("players").onSnapshot(snap => {
       document.getElementById("klassenWaitCount").textContent = String(snap.size);
     }, err => console.error("Klassenmodus: Warteraum-Update fehlgeschlagen.", err));
@@ -3941,12 +4021,38 @@ function klassenHostRenderPlay(index, task, startedAt, timerSec, numQuestions) {
   klassenPlayersUnsub = firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").onSnapshot(snap => {
     klassenCurrentTotalPlayers = snap.size;
     klassenAllPlayers = [];
-    snap.forEach(d => klassenAllPlayers.push({ id: d.id, name: d.data().name }));
+    snap.forEach(d => klassenAllPlayers.push({ id: d.id, name: d.data().name, lastSeen: d.data().lastSeen }));
     document.getElementById("klassenHostTotalPlayers").textContent = String(snap.size);
     klassenRenderPendingList();
+    klassenRenderOfflineBanner();
   }, err => console.error("Klassenmodus: Spielerzahl konnte nicht geladen werden.", err));
 }
 let klassenAllPlayers = [], klassenAnsweredPlayerIds = new Set(), klassenPendingListOpen = false;
+let klassenEditingPlayerId = null;
+function klassenOpenPlayerEdit(id, name) {
+  klassenEditingPlayerId = id;
+  document.getElementById("klassenPlayerEditInput").value = name;
+  document.getElementById("klassenPlayerEditOverlay").classList.remove("hidden");
+}
+document.getElementById("klassenPlayerEditCancelBtn").addEventListener("click", () => {
+  document.getElementById("klassenPlayerEditOverlay").classList.add("hidden");
+});
+document.getElementById("klassenPlayerEditSaveBtn").addEventListener("click", async () => {
+  const newName = document.getElementById("klassenPlayerEditInput").value.trim();
+  if (!newName || !klassenEditingPlayerId) return;
+  try {
+    await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").doc(klassenEditingPlayerId).update({ name: newName });
+  } catch (e) { console.error("Klassenmodus: Name konnte nicht geändert werden.", e); }
+  document.getElementById("klassenPlayerEditOverlay").classList.add("hidden");
+});
+document.getElementById("klassenPlayerRemoveBtn").addEventListener("click", async () => {
+  const id = klassenEditingPlayerId;
+  document.getElementById("klassenPlayerEditOverlay").classList.add("hidden");
+  if (!id) return;
+  try {
+    await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").doc(id).delete();
+  } catch (e) { console.error("Klassenmodus: Spieler konnte nicht entfernt werden.", e); }
+});
 function klassenRenderPendingList() {
   if (!klassenPendingListOpen) return;
   const pending = klassenAllPlayers.filter(p => !klassenAnsweredPlayerIds.has(p.id));
@@ -4124,7 +4230,14 @@ function klassenRenderStudentQuestion(room) {
   const tick = () => {
     const remaining = Math.max(0, timerSec - (Date.now() - startedAt) / 1000);
     document.getElementById("klassen_countdown").textContent = Math.ceil(remaining) + "s";
-    if (remaining <= 0) { clearInterval(klassenCountdownIv); if (!klassenHasAnsweredCurrent) { klassenLastAnswerCorrect = false; klassenLockAnswerUI(false); } }
+    if (remaining <= 0) {
+      clearInterval(klassenCountdownIv);
+      if (!klassenHasAnsweredCurrent) {
+        klassenLastAnswerCorrect = false;
+        klassenLockAnswerUI(false);
+        klassenMyAnswers.push({ prompt: task.prompt, myAnswer: "(keine Antwort)", correctAnswer: formatCorrectAnswer(task), correct: false, points: 0 });
+      }
+    }
   };
   tick();
   klassenCountdownIv = setInterval(tick, 250);
@@ -4150,6 +4263,7 @@ async function klassenSubmitAnswer() {
   const elapsedSec = (Date.now() - room.questionStartedAt) / 1000;
   const points = ok ? Math.max(0, Math.round(1000 * (1 - Math.min(1, elapsedSec / room.timerSec)))) : 0;
   klassenLockAnswerUI(true);
+  klassenMyAnswers.push({ prompt: task.prompt, myAnswer: formatMyAnswerForDisplay(task, inputBuffers.klassen), correctAnswer: formatCorrectAnswer(task), correct: ok, points });
   try {
     await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("questions").doc(String(room.currentQuestionIndex)).collection("answers").doc(klassenPlayerId).set({
       name: klassenPlayerName, correct: ok, points, submittedAt: Date.now()
@@ -4165,6 +4279,7 @@ async function klassenRenderStudentRanking(isFinal) {
   document.getElementById("klassenPlayerRankTitle").textContent = isFinal ? "🏆 Schlussrangliste" : "🏆 Zwischenstand";
   document.getElementById("klassenPlayerRankWaitNote").classList.toggle("hidden", isFinal);
   document.getElementById("klassenPlayerRankHomeBtn").classList.toggle("hidden", !isFinal);
+  document.getElementById("klassenMyAnswersBtn").classList.toggle("hidden", !isFinal);
   try {
     const snap = await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").get();
     const players = [];
@@ -4181,6 +4296,40 @@ async function klassenRenderStudentRanking(isFinal) {
     }).join("");
   } catch (e) { console.error("Klassenmodus: Rangliste konnte nicht geladen werden.", e); }
 }
+
+document.getElementById("klassenMyAnswersBtn").addEventListener("click", () => {
+  const correctN = klassenMyAnswers.filter(a => a.correct).length;
+  const wrongN = klassenMyAnswers.length - correctN;
+  const totalPoints = klassenMyAnswers.reduce((sum, a) => sum + a.points, 0);
+  document.getElementById("klassenMyAnswersSubtitle").textContent = `${currentExercise ? currentExercise.title : ""} · ${klassenMyAnswers.length} Aufgaben`;
+  document.getElementById("klassenMyAnswersCorrectN").textContent = String(correctN);
+  document.getElementById("klassenMyAnswersWrongN").textContent = String(wrongN);
+  document.getElementById("klassenMyAnswersPoints").textContent = String(totalPoints);
+  document.getElementById("klassenMyAnswersList").innerHTML = klassenMyAnswers.map((a, i) => `
+    <div class="setup-card" style="display:flex; gap:10px; align-items:flex-start; padding:12px 14px; ${a.correct ? "background:#f0fdf4; border-color:#dcfce7;" : "background:#fef2f2; border-color:#fecaca;"}">
+      <span style="font-size:1.3rem;">${a.correct ? "✅" : "❌"}</span>
+      <div style="flex:1;">
+        <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px;">${i + 1}. ${escapeHtml(a.prompt)}</div>
+        <div style="font-size:0.85rem; color:var(--muted);">
+          Deine Antwort: <span style="font-weight:700; ${a.correct ? "color:var(--success);" : "color:var(--danger); text-decoration:line-through;"}">${escapeHtml(a.myAnswer)}</span>
+          ${a.correct ? "" : `&nbsp;·&nbsp; Richtig: <span style="font-weight:700; color:var(--success);">${escapeHtml(a.correctAnswer)}</span>`}
+        </div>
+      </div>
+    </div>`).join("");
+  showView("klassenMyAnswers");
+});
+document.getElementById("klassenMyAnswersBackBtn").addEventListener("click", () => showView("klassenPlayerRank"));
+document.getElementById("klassenMyAnswersSaveBtn").addEventListener("click", () => {
+  const correctN = klassenMyAnswers.filter(a => a.correct).length;
+  const lines = klassenMyAnswers.map((a, i) => {
+    const status = a.correct ? "✓" : "✗";
+    const detail = a.correct ? `Antwort: ${a.myAnswer}` : `Antwort: ${a.myAnswer}  (richtig: ${a.correctAnswer})`;
+    return `${status} ${i + 1}. ${a.prompt}  —  ${detail}`;
+  });
+  lines.unshift(`${correctN}/${klassenMyAnswers.length} richtig`, "");
+  const canvas = drawResultsCanvas("Meine Antworten", lines);
+  shareCanvasAsImage(canvas, "meine-antworten.png");
+});
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });

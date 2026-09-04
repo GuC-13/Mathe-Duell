@@ -19,10 +19,14 @@
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   h1, h2, h3, .btn, .btn-big, .cat-tile, button { font-family: "Baloo 2", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   body {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='%230f172a' fill-opacity='0.05'%3E%3Ccircle cx='8' cy='8' r='2'/%3E%3Ccircle cx='38' cy='22' r='2'/%3E%3Ccircle cx='20' cy='42' r='2'/%3E%3Cpath d='M48 44v6M45 47h6' stroke='%230f172a' stroke-width='1.4' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'%3E%3Cg fill='%230f172a' fill-opacity='0.055'%3E%3Cpath d='M18 10 l1.4 4.2 4.2 1.4 -4.2 1.4 -1.4 4.2 -1.4 -4.2 -4.2 -1.4 4.2 -1.4 z'/%3E%3Cpath d='M62 24 l1 3 3 1 -3 1 -1 3 -1 -3 -3 -1 3 -1 z'/%3E%3Cpath d='M38 58 l1.8 5.4 5.4 1.8 -5.4 1.8 -1.8 5.4 -1.8 -5.4 -5.4 -1.8 5.4 -1.8 z'/%3E%3Cpath d='M75 68 l1 3 3 1 -3 1 -1 3 -1 -3 -3 -1 3 -1 z'/%3E%3Cpath d='M8 72 l1 3 3 1 -3 1 -1 3 -1 -3 -3 -1 3 -1 z'/%3E%3C/g%3E%3C/svg%3E");
     background-repeat: repeat;
   }
   .view { max-width: 900px; margin: 0 auto; padding: 16px; padding-bottom: 60px; opacity: 1; transition: opacity 0.18s ease; }
+  #klassenPlayView { min-height: 100vh; box-sizing: border-box; transition: background-color 0.35s ease; }
+  #klassenPlayView.klassen-active-bg { background: #eaf2ff; }
+  #klassenPlayView.klassen-waiting-bg { background: #e5e9ef; }
+  @media (prefers-reduced-motion: reduce) { #klassenPlayView { transition: none; } }
   .view.view-fade-in { opacity: 0; }
   @media (prefers-reduced-motion: reduce) { .view { transition: none; } }
   h1 { font-size: 1.4rem; text-align: center; margin: 6px 0 18px; }
@@ -423,7 +427,6 @@
       <p style="font-size:0.78rem; color:var(--muted); margin:-4px 0 8px;">Auf einen Namen tippen, um ihn zu bearbeiten oder zu entfernen.</p>
       <div id="klassenPlayerList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
     </div>
-    <p class="klassen-offline-banner hidden" style="text-align:center; color:#b45309; font-weight:700;"></p>
     <button class="btn btn-big btn-duell" id="klassenStartBtn">Spiel starten</button>
   </div>
 
@@ -452,6 +455,10 @@
       <p style="font-size:1rem; color:var(--muted); margin:0;">Richtige Antwort</p>
       <p style="font-size:1.8rem; font-weight:800; margin:4px 0 0;" id="klassenRankCorrectAnswer">–</p>
     </div>
+    <div style="text-align:center;">
+      <button class="klassen-practice-link" id="klassenCorrectToggleBtn">✅ Wer hatte es richtig?</button>
+    </div>
+    <div id="klassenCorrectList" class="hidden setup-card" style="display:flex; flex-direction:column; gap:10px;"></div>
     <div id="klassenPodium" style="display:flex; flex-direction:column; gap:10px; margin:20px 0;"></div>
     <div id="klassenFullList" class="hidden" style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px;"></div>
     <div class="row">
@@ -4752,13 +4759,13 @@ function klassenStopListening() {
   klassenStopHeartbeat();
   klassenStopOfflineWatch();
 }
-const KLASSEN_OFFLINE_MS = 12000;
+const KLASSEN_OFFLINE_MS = 15000;
 let klassenHeartbeatIv = null;
 function klassenStartHeartbeat() {
   klassenStopHeartbeat();
   klassenHeartbeatIv = setInterval(() => {
     if (!klassenRoomPin || !klassenPlayerId) return;
-    firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").doc(klassenPlayerId).update({ lastSeen: Date.now() }).catch(() => {});
+    firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").doc(klassenPlayerId).update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(() => {});
   }, 5000);
 }
 function klassenStopHeartbeat() { clearInterval(klassenHeartbeatIv); klassenHeartbeatIv = null; }
@@ -4771,7 +4778,10 @@ function klassenStartOfflineWatch() {
 function klassenStopOfflineWatch() { clearInterval(klassenOfflineCheckIv); klassenOfflineCheckIv = null; }
 function klassenRenderOfflineBanner() {
   const now = Date.now();
-  const offline = klassenAllPlayers.filter(p => p.lastSeen && (now - p.lastSeen > KLASSEN_OFFLINE_MS));
+  const offline = klassenAllPlayers.filter(p => {
+    const ms = p.lastSeen && typeof p.lastSeen.toMillis === "function" ? p.lastSeen.toMillis() : 0;
+    return ms > 0 && (now - ms > KLASSEN_OFFLINE_MS);
+  });
   document.querySelectorAll(".klassen-offline-banner").forEach(el => {
     el.classList.toggle("hidden", offline.length === 0);
     el.textContent = offline.length ? `⚠️ Gerade offline: ${offline.map(p => p.name).join(", ")}` : "";
@@ -4867,20 +4877,41 @@ document.getElementById("goKlassenJoinBtn").addEventListener("click", () => {
   showView("klassenJoin");
 });
 document.querySelectorAll("[data-back-klassenchoice]").forEach(b => b.addEventListener("click", () => showView("klassenChoice")));
+const KLASSEN_SESSION_KEY = "matheDuellKlassenSession";
+function klassenSaveSession() {
+  try { sessionStorage.setItem(KLASSEN_SESSION_KEY, JSON.stringify({ pin: klassenRoomPin, playerId: klassenPlayerId, name: klassenPlayerName })); } catch (e) {}
+}
+function klassenClearSession() {
+  try { sessionStorage.removeItem(KLASSEN_SESSION_KEY); } catch (e) {}
+}
+function klassenAttachStudentListeners(roomRef, pin) {
+  klassenStopListening();
+  klassenStartHeartbeat();
+  klassenPlayersUnsub = roomRef.collection("players").onSnapshot(snap => {
+    document.getElementById("klassenWaitCount").textContent = String(snap.size);
+  }, err => console.error("Klassenmodus: Warteraum-Update fehlgeschlagen.", err));
+  klassenRoomUnsub = roomRef.onSnapshot(snap => {
+    const room = snap.data();
+    if (room) klassenStudentHandleRoomUpdate(room);
+  }, err => console.error("Klassenmodus: Raum-Update fehlgeschlagen.", err));
+}
 document.getElementById("klassenJoinBtn").addEventListener("click", async () => {
+  const joinBtn = document.getElementById("klassenJoinBtn");
+  if (joinBtn.disabled) return;
   const pin = document.getElementById("klassenJoinPinInput").value.trim();
   const name = document.getElementById("klassenJoinNameInput").value.trim();
   const errEl = document.getElementById("klassenJoinError");
   errEl.classList.add("hidden");
   if (!pin || !name) { errEl.textContent = "Bitte PIN und Namen eingeben."; errEl.classList.remove("hidden"); return; }
-  const ok = await ensureFirebase();
-  if (!ok) { errEl.textContent = "Keine Verbindung zum Klassenduell-Server möglich."; errEl.classList.remove("hidden"); return; }
+  joinBtn.disabled = true;
   try {
+    const ok = await ensureFirebase();
+    if (!ok) { errEl.textContent = "Keine Verbindung zum Klassenduell-Server möglich."; errEl.classList.remove("hidden"); return; }
     const roomRef = firebaseDb.collection("rooms").doc(pin);
     const roomDoc = await roomRef.get();
     if (!roomDoc.exists) { errEl.textContent = "Diese PIN existiert nicht."; errEl.classList.remove("hidden"); return; }
     klassenIsHost = false;
-    const playerRef = await roomRef.collection("players").add({ name, joinedAt: Date.now(), score: 0, lastSeen: Date.now() });
+    const playerRef = await roomRef.collection("players").add({ name, joinedAt: Date.now(), score: 0, lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
     klassenPlayerId = playerRef.id;
     klassenPlayerName = name;
     klassenRoomPin = pin;
@@ -4889,24 +4920,46 @@ document.getElementById("klassenJoinBtn").addEventListener("click", async () => 
     klassenAnswerRevealed = false;
     klassenMyAnswers = [];
     klassenMode = "quiz";
+    klassenSaveSession();
     document.getElementById("klassenWaitName").textContent = name;
     document.getElementById("klassenWaitPin").textContent = pin;
     showView("klassenWait");
-    klassenStopListening();
-    klassenStartHeartbeat();
-    klassenPlayersUnsub = roomRef.collection("players").onSnapshot(snap => {
-      document.getElementById("klassenWaitCount").textContent = String(snap.size);
-    }, err => console.error("Klassenmodus: Warteraum-Update fehlgeschlagen.", err));
-    klassenRoomUnsub = roomRef.onSnapshot(snap => {
-      const room = snap.data();
-      if (room) klassenStudentHandleRoomUpdate(room);
-    }, err => console.error("Klassenmodus: Raum-Update fehlgeschlagen.", err));
+    klassenAttachStudentListeners(roomRef, pin);
   } catch (e) {
     console.error("Klassenmodus: Beitritt fehlgeschlagen.", e);
     errEl.textContent = "Beitritt fehlgeschlagen. Prüfe die Internetverbindung.";
     errEl.classList.remove("hidden");
+  } finally {
+    joinBtn.disabled = false;
   }
 });
+(async function klassenResumeSession() {
+  let saved = null;
+  try { saved = JSON.parse(sessionStorage.getItem(KLASSEN_SESSION_KEY)); } catch (e) {}
+  if (!saved || !saved.pin || !saved.playerId) return;
+  const ok = await ensureFirebase();
+  if (!ok) return;
+  try {
+    const roomRef = firebaseDb.collection("rooms").doc(saved.pin);
+    const playerDoc = await roomRef.collection("players").doc(saved.playerId).get();
+    if (!playerDoc.exists) { klassenClearSession(); return; }
+    klassenIsHost = false;
+    klassenPlayerId = saved.playerId;
+    klassenPlayerName = saved.name;
+    klassenRoomPin = saved.pin;
+    klassenLastSeenQIndex = -1;
+    klassenLastSeenPhase = null;
+    klassenAnswerRevealed = false;
+    klassenMyAnswers = [];
+    klassenMode = "quiz";
+    document.getElementById("klassenWaitName").textContent = saved.name;
+    document.getElementById("klassenWaitPin").textContent = saved.pin;
+    showView("klassenWait");
+    klassenAttachStudentListeners(roomRef, saved.pin);
+  } catch (e) {
+    console.error("Klassenmodus: Sitzung konnte nicht wiederhergestellt werden.", e);
+  }
+})();
 document.getElementById("klassenWaitLeaveBtn").addEventListener("click", () => {
   klassenStopListening();
   showView("klassenChoice");
@@ -4961,7 +5014,13 @@ function klassenHostRenderPlay(index, task, startedAt, timerSec, numQuestions) {
   klassenAnswersUnsub = firebaseDb.collection("rooms").doc(klassenRoomPin).collection("questions").doc(String(index)).collection("answers").onSnapshot(snap => {
     let correct = 0, wrong = 0;
     klassenAnsweredPlayerIds = new Set();
-    snap.forEach(d => { if (d.data().correct) correct++; else wrong++; klassenAnsweredPlayerIds.add(d.id); });
+    klassenLastCorrectNames = [];
+    klassenLastWrongNames = [];
+    snap.forEach(d => {
+      const data = d.data();
+      if (data.correct) { correct++; klassenLastCorrectNames.push(data.name); } else { wrong++; klassenLastWrongNames.push(data.name); }
+      klassenAnsweredPlayerIds.add(d.id);
+    });
     document.getElementById("klassenHostAnsweredCount").textContent = String(snap.size);
     document.getElementById("klassenHostCorrectCount").textContent = String(correct);
     document.getElementById("klassenHostWrongCount").textContent = String(wrong);
@@ -4982,6 +5041,22 @@ function klassenHostRenderPlay(index, task, startedAt, timerSec, numQuestions) {
   }, err => console.error("Klassenmodus: Spielerzahl konnte nicht geladen werden.", err));
 }
 let klassenAllPlayers = [], klassenAnsweredPlayerIds = new Set(), klassenPendingListOpen = false;
+let klassenLastCorrectNames = [], klassenLastWrongNames = [], klassenCorrectListOpen = false;
+function klassenRenderCorrectList() {
+  const el = document.getElementById("klassenCorrectList");
+  const correctHtml = klassenLastCorrectNames.length
+    ? `<div><p style="font-weight:700; color:var(--success); margin:0 0 6px;">✅ Richtig (${klassenLastCorrectNames.length})</p><div style="display:flex; flex-wrap:wrap; gap:8px;">${klassenLastCorrectNames.map(n => `<span class="choice-btn" style="cursor:default;">${escapeHtml(n)}</span>`).join("")}</div></div>`
+    : `<p style="margin:0; color:var(--muted);">Niemand hatte diese Aufgabe richtig.</p>`;
+  const wrongHtml = klassenLastWrongNames.length
+    ? `<div><p style="font-weight:700; color:var(--danger); margin:10px 0 6px;">❌ Falsch (${klassenLastWrongNames.length})</p><div style="display:flex; flex-wrap:wrap; gap:8px;">${klassenLastWrongNames.map(n => `<span class="choice-btn" style="cursor:default;">${escapeHtml(n)}</span>`).join("")}</div></div>`
+    : "";
+  el.innerHTML = correctHtml + wrongHtml;
+}
+document.getElementById("klassenCorrectToggleBtn").addEventListener("click", () => {
+  klassenCorrectListOpen = !klassenCorrectListOpen;
+  document.getElementById("klassenCorrectList").classList.toggle("hidden", !klassenCorrectListOpen);
+  if (klassenCorrectListOpen) klassenRenderCorrectList();
+});
 let klassenEditingPlayerId = null;
 function klassenOpenPlayerEdit(id, name) {
   klassenEditingPlayerId = id;
@@ -5062,6 +5137,8 @@ function klassenRenderHostRanking(players, isFinal) {
   showView("klassenHostRank");
   document.getElementById("klassenRankTitle").textContent = isFinal ? "🏆 Schlussrangliste" : "🏆 Zwischenstand";
   document.getElementById("klassenRankCorrectAnswer").textContent = formatCorrectAnswer(klassenCurrentHostTask);
+  document.getElementById("klassenCorrectList").classList.toggle("hidden", !klassenCorrectListOpen);
+  klassenRenderCorrectList();
   const medals = ["🥇", "🥈", "🥉"];
   const top3 = players.slice(0, 3);
   document.getElementById("klassenPodium").innerHTML = top3.length
@@ -5086,7 +5163,7 @@ function klassenAbortGame() {
 }
 document.getElementById("klassenHostPlayStopBtn").addEventListener("click", klassenAbortGame);
 document.getElementById("klassenRankStopBtn").addEventListener("click", klassenAbortGame);
-document.getElementById("klassenPlayerRankHomeBtn").addEventListener("click", () => { klassenStopListening(); showView("home"); });
+document.getElementById("klassenPlayerRankHomeBtn").addEventListener("click", () => { klassenStopListening(); klassenClearSession(); showView("home"); });
 
 /* ---- Klassenmodus: Schüler-seitiger Spielablauf ---- */
 let klassenLastSeenPhase = null, klassenMode = "quiz", klassenExerciseId = null, klassenAnswerRevealed = false, klassenLastAnswerCorrect = null;
@@ -5113,6 +5190,12 @@ function klassenStudentHandleRoomUpdate(room) {
   }
   klassenLastSeenPhase = room.phase;
 }
+function klassenSetPlayBg(state) {
+  const el = document.getElementById("klassenPlayView");
+  if (!el) return;
+  el.classList.toggle("klassen-active-bg", state === "active");
+  el.classList.toggle("klassen-waiting-bg", state === "waiting");
+}
 function klassenSetAnsweredNote(html) {
   const el = document.getElementById("klassenAnsweredNote");
   el.innerHTML = html;
@@ -5120,6 +5203,7 @@ function klassenSetAnsweredNote(html) {
 }
 function klassenLockAnswerUI(answered) {
   setWidgetMode("duell_klassen", "none");
+  klassenSetPlayBg("waiting");
   klassenSetAnsweredNote(answered
     ? "✓ Antwort gesendet – warte auf die nächste Aufgabe …"
     : "⏱ Zeit abgelaufen – warte auf die nächste Aufgabe …");
@@ -5139,6 +5223,7 @@ function klassenShowWaitingForNext() {
   document.getElementById("duell_klassen_visual").innerHTML = "";
   document.getElementById("duell_klassen_prompt").textContent = "";
   setWidgetMode("duell_klassen", "none");
+  klassenSetPlayBg("waiting");
   klassenSetAnsweredNote("Warte auf die nächste Aufgabe …");
 }
 function klassenEnterPracticeMode() {
@@ -5156,6 +5241,7 @@ function klassenPracticeNextTask() {
   document.getElementById("duell_klassen_visual").innerHTML = task.visual || "";
   document.getElementById("duell_klassen_prompt").textContent = task.prompt;
   document.getElementById("klassenAnsweredNote").classList.add("hidden");
+  klassenSetPlayBg("active");
   inputBuffers.klassen = "";
   activePart.klassen = "a";
   setWidgetMode("duell_klassen", task.answerType, task.pairStyle);
@@ -5173,6 +5259,7 @@ function klassenRenderStudentQuestion(room) {
   document.getElementById("duell_klassen_visual").innerHTML = task.visual || "";
   document.getElementById("duell_klassen_prompt").textContent = task.prompt;
   document.getElementById("klassenAnsweredNote").classList.add("hidden");
+  klassenSetPlayBg("active");
   inputBuffers.klassen = "";
   activePart.klassen = "a";
   setWidgetMode("duell_klassen", task.answerType, task.pairStyle);

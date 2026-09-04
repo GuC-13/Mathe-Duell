@@ -6,19 +6,28 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Mathe-Duell</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
 <style>
   :root {
-    --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0; --text: #0f172a; --muted: #64748b;
+    --bg: #eef6fb; --card: #ffffff; --border: #e2e8f0; --text: #0f172a; --muted: #64748b;
     --accent: #2563eb; --accent-dark: #1d4ed8; --danger: #dc2626; --success: #16a34a;
+    --coral: #ff7a59; --gold: #f2ac00;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   button, .duell-half, .vk-quad { touch-action: manipulation; }
   .hidden { display: none !important; }
-  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  .view { max-width: 900px; margin: 0 auto; padding: 16px; padding-bottom: 60px; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  h1, h2, h3, .btn, .btn-big, .cat-tile, button { font-family: "Baloo 2", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='%230f172a' fill-opacity='0.05'%3E%3Ccircle cx='8' cy='8' r='2'/%3E%3Ccircle cx='38' cy='22' r='2'/%3E%3Ccircle cx='20' cy='42' r='2'/%3E%3Cpath d='M48 44v6M45 47h6' stroke='%230f172a' stroke-width='1.4' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: repeat;
+  }
+  .view { max-width: 900px; margin: 0 auto; padding: 16px; padding-bottom: 60px; opacity: 1; transition: opacity 0.18s ease; }
+  .view.view-fade-in { opacity: 0; }
+  @media (prefers-reduced-motion: reduce) { .view { transition: none; } }
   h1 { font-size: 1.4rem; text-align: center; margin: 6px 0 18px; }
   h2.sub { font-size: 1.05rem; text-align: center; margin: -8px 0 18px; color: var(--muted); }
-  .btn { border: none; border-radius: 10px; padding: 12px 18px; font-size: 1rem; font-weight: 700; cursor: pointer; color: white; background: var(--accent); }
+  .btn { border: none; border-radius: 16px; padding: 12px 18px; font-size: 1rem; font-weight: 700; cursor: pointer; color: white; background: var(--accent); }
   .btn:active { transform: scale(0.97); }
   .btn-secondary { background: #64748b; }
   .btn-danger { background: var(--danger); }
@@ -119,9 +128,9 @@
   .setup-accordion[open] > summary { border-bottom: 1px solid var(--border); }
   .setup-accordion-body { padding: 16px; }
   .field-label { font-size: 0.85rem; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; }
-  input[type="text"], input[type="number"] { border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 1rem; width: 100%; }
+  input[type="text"], input[type="number"] { border: 1px solid var(--border); border-radius: 12px; padding: 10px; font-size: 1rem; width: 100%; }
   .choice-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-  .choice-btn { flex: 1; min-width: 100px; border: 2px solid var(--border); background: white; border-radius: 10px; padding: 10px; font-weight: 700; cursor: pointer; }
+  .choice-btn { flex: 1; min-width: 100px; border: 2px solid var(--border); background: white; border-radius: 16px; padding: 10px; font-weight: 700; cursor: pointer; }
   .choice-btn.active { border-color: var(--accent); background: #eff6ff; color: var(--accent); }
   .range-slider { width: 100%; accent-color: var(--accent); height: 28px; margin-bottom: 4px; }
   .range-scale { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-bottom: 14px; }
@@ -146,23 +155,35 @@
   .task-prompt { font-size: 1.3rem; font-weight: 700; margin-bottom: 14px; }
   .answer-display { font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; background: var(--bg); border-radius: 10px; padding: 12px; min-height: 54px; margin-bottom: 14px; }
   .keypad-row { display: flex; gap: 8px; margin-bottom: 8px; }
-  .keypad-row button { flex: 1; padding: 16px 0; font-size: 1.3rem; font-weight: 700; border: none; border-radius: 10px; background: #e2e8f0; color: var(--text); }
+  .keypad-row button { flex: 1; padding: 16px 0; font-size: 1.3rem; font-weight: 700; border: none; border-radius: 16px; background: #e2e8f0; color: var(--text); }
   .keypad-row button.ok-key { background: var(--success); color: white; }
   .wrong-flash { animation: wrongFlash 0.35s; }
   @keyframes wrongFlash { 0%,100% { background: var(--bg); } 40% { background: #fecaca; } }
   .correct-flash { animation: correctFlash 0.35s; }
   @keyframes correctFlash { 0%,100% { background: var(--bg); } 40% { background: #bbf7d0; } }
+  .bounce-pop { animation: bouncePop .45s ease; }
+  @keyframes bouncePop { 0%{transform:scale(1);} 30%{transform:scale(1.15) rotate(-2deg);} 55%{transform:scale(0.95) rotate(1deg);} 100%{transform:scale(1) rotate(0);} }
+  .shake-x { animation: shakeX .4s ease; }
+  @keyframes shakeX { 0%,100%{transform:translateX(0);} 20%{transform:translateX(-8px);} 40%{transform:translateX(7px);} 60%{transform:translateX(-5px);} 80%{transform:translateX(3px);} }
+  .confetti-bit { position: fixed; width: 7px; height: 7px; border-radius: 2px; pointer-events: none; z-index: 200; animation: confettiPop .55s ease forwards; }
+  @keyframes confettiPop { 0%{opacity:1; transform:translate(0,0) rotate(0);} 100%{opacity:0; transform:translate(var(--dx),var(--dy)) rotate(var(--rot));} }
+  @media (prefers-reduced-motion: reduce) {
+    .bounce-pop, .shake-x, .confetti-bit { animation: none; }
+  }
+  .kmp-progress-dots { display: flex; gap: 4px; align-items: center; }
+  .kmp-progress-dot { width: 9px; height: 9px; border-radius: 50%; background: transparent; border: 2px solid var(--border); }
+  .kmp-progress-dot.filled { background: var(--gold); border-color: var(--gold); }
   .bool-wrap { display: flex; gap: 12px; margin-bottom: 8px; }
   .bool-btn { flex: 1; padding: 26px 0; font-size: 1.3rem; font-weight: 800; border: none; border-radius: 12px; color: white; }
   .bool-btn.true-btn { background: var(--success); }
   .bool-btn.false-btn { background: var(--danger); }
   .text-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
   .text-wrap input { flex: 1; }
-  .text-wrap button { background: var(--success); color: white; border: none; border-radius: 8px; padding: 0 20px; font-weight: 700; }
+  .text-wrap button { background: var(--success); color: white; border: none; border-radius: 12px; padding: 0 20px; font-weight: 700; }
 
   /* Fachbegriffe: Multiple-Choice-Auswahl */
   .mc-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; padding: 6px; border-radius: 12px; }
-  .mc-btn { border: 2px solid var(--border); background: white; color: var(--text); border-radius: 10px; padding: 12px 8px; font-weight: 700; font-size: 0.92rem; cursor: pointer; line-height: 1.25; }
+  .mc-btn { border: 2px solid var(--border); background: white; color: var(--text); border-radius: 16px; padding: 12px 8px; font-weight: 700; font-size: 0.92rem; cursor: pointer; line-height: 1.25; }
   .mc-btn:active { transform: scale(0.97); }
 
   /* Bruch-/Koordinaten-Kästchen und Variablen-Tastatur */
@@ -179,7 +200,7 @@
   .pair-sep { font-size: 1.5rem; font-weight: 800; color: var(--muted); }
   .style-fraction .pair-sep { width: 74px; height: 3px; background: var(--muted); border-radius: 2px; }
   .var-row { display: flex; gap: 8px; margin-bottom: 8px; }
-  .var-row button { flex: 1; padding: 12px 0; font-size: 1.1rem; font-weight: 800; border: none; border-radius: 8px; background: #ede9fe; color: #5b21b6; font-style: italic; }
+  .var-row button { flex: 1; padding: 12px 0; font-size: 1.1rem; font-weight: 800; border: none; border-radius: 12px; background: #ede9fe; color: #5b21b6; font-style: italic; }
 
   /* Duell play: geteilter Bildschirm, oben 180° gedreht */
   .duell-play { max-width: none; padding: 0; margin: 0; }
@@ -203,13 +224,13 @@
   .buzz-btn { width: 110px; height: 110px; border-radius: 50%; font-size: 1.05rem; font-weight: 700; line-height: 1.3; border: none; background: linear-gradient(145deg,#f59e0b,#d97706); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
   .buzz-btn:disabled { opacity: 0.35; }
   .buzz-status { margin-top: 10px; font-weight: 600; color: var(--muted); }
-  .duell-divider button { background: #ef4444; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-weight: 700; }
+  .duell-divider button { background: #ef4444; color: white; border: none; border-radius: 12px; padding: 8px 14px; font-weight: 700; }
   #duellPlayView { display: flex; flex-direction: column; height: 100vh; }
   .duell-bool-wrap { display: flex; gap: 10px; margin-bottom: 8px; }
-  .duell-bool-wrap button { flex: 1; padding: 18px 0; font-size: 1.05rem; font-weight: 800; border: none; border-radius: 10px; color: white; }
+  .duell-bool-wrap button { flex: 1; padding: 18px 0; font-size: 1.05rem; font-weight: 800; border: none; border-radius: 16px; color: white; }
   .duell-text-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
   .duell-text-wrap input { flex: 1; }
-  .duell-text-wrap button { background: var(--success); color: white; border: none; border-radius: 8px; padding: 0 16px; font-weight: 700; }
+  .duell-text-wrap button { background: var(--success); color: white; border: none; border-radius: 12px; padding: 0 16px; font-weight: 700; }
 
   /* Vierkampf (Pilot): 2x2-Raster, obere Reihe 180° gedreht */
   #vkPlayView { display: flex; flex-direction: column; height: 100vh; padding: 0; margin: 0; max-width: none; }
@@ -240,7 +261,7 @@
   .vk-quad .mc-wrap { gap: 4px; margin-bottom: 4px; }
   .vk-quad .mc-btn { padding: 6px 4px; font-size: 0.68rem; border-width: 1px; }
   .vk-divider { height: 44px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; gap: 20px; font-weight: 700; font-size: 1rem; }
-  .vk-divider button { background: #ef4444; color: white; border: none; border-radius: 8px; padding: 6px 12px; font-weight: 700; }
+  .vk-divider button { background: #ef4444; color: white; border: none; border-radius: 12px; padding: 6px 12px; font-weight: 700; }
   .vk-name-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .vk-names-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
   .vk-names-row .vk-name-inputs { flex: 1; min-width: 220px; margin-bottom: 0; }
@@ -599,6 +620,7 @@
     <div class="solo-card">
       <div class="solo-top-row">
         <div class="solo-score" id="solo_score">Richtig: 0</div>
+        <div class="kmp-progress-dots hidden" id="kampagne_dots"></div>
         <div class="solo-score" id="solo_timerDisplay">00:00</div>
         <button class="help-btn" id="solo_helpBtn">❓ Hilfe</button>
         <button class="help-btn skip-btn" id="solo_skipBtn">⏭️ Überspringen</button>
@@ -1621,7 +1643,12 @@ document.getElementById("solo_skipBtn").addEventListener("click", () => {
 /* ================= Navigation ================= */
 function showView(name) {
   document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
-  document.getElementById(name + "View").classList.remove("hidden");
+  const target = document.getElementById(name + "View");
+  target.classList.remove("hidden");
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    target.classList.add("view-fade-in");
+    requestAnimationFrame(() => requestAnimationFrame(() => target.classList.remove("view-fade-in")));
+  }
   checkDuellOrientation();
 }
 function checkDuellOrientation() {
@@ -3546,6 +3573,37 @@ function checkAnswer(task, bufferStr) {
   return !isNaN(val) && Math.abs(val - task.correct) < 0.01;
 }
 function flash(elId, cls) { const el = document.getElementById(elId); if (!el) return; el.classList.remove("wrong-flash", "correct-flash"); void el.offsetWidth; el.classList.add(cls); }
+const CONFETTI_COLORS = ["var(--coral)", "var(--gold)", "var(--success)", "var(--accent)", "#7c3aed"];
+function celebrateCorrect(el) {
+  if (!el) return;
+  el.classList.remove("bounce-pop", "shake-x");
+  void el.offsetWidth;
+  el.classList.add("bounce-pop");
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+  const count = 6 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < count; i++) {
+    const bit = document.createElement("div");
+    bit.className = "confetti-bit";
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 40 + Math.random() * 30;
+    bit.style.setProperty("--dx", `${Math.cos(angle) * dist}px`);
+    bit.style.setProperty("--dy", `${Math.sin(angle) * dist}px`);
+    bit.style.setProperty("--rot", `${Math.random() * 360 - 180}deg`);
+    bit.style.left = `${cx - 3.5}px`;
+    bit.style.top = `${cy - 3.5}px`;
+    bit.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+    bit.addEventListener("animationend", () => bit.remove());
+    document.body.appendChild(bit);
+  }
+}
+function celebrateWrong(el) {
+  if (!el) return;
+  el.classList.remove("shake-x", "bounce-pop");
+  void el.offsetWidth;
+  el.classList.add("shake-x");
+}
 function setWidgetMode(prefix, answerType, pairStyle) {
   const kp = document.getElementById(`${prefix}_keypadWrap`), bw = document.getElementById(`${prefix}_boolWrap`), tw = document.getElementById(`${prefix}_textWrap`);
   const pw = document.getElementById(`${prefix}_pairWrap`), vr = document.getElementById(`${prefix}_varRow`), mw = document.getElementById(`${prefix}_mcWrap`);
@@ -3633,14 +3691,15 @@ function nextSoloTask() {
   renderBuffer("solo");
   renderPairBuffer("solo");
   document.getElementById("solo_score").textContent = `Richtig: ${soloScore}`;
+  document.getElementById("kampagne_dots").classList.add("hidden");
 }
 function submitSolo() {
   if (campaignPlayActive) { submitCampaignAnswer(); return; }
   if (!soloRunning) return;
   const ok = checkAnswer(soloCurrent, inputBuffers.solo);
   const soloFlashId = soloCurrent.answerType === "mc" ? "solo_mcWrap" : "solo_input";
-  if (ok) { soloScore++; document.getElementById("solo_score").textContent = `Richtig: ${soloScore}`; flash(soloFlashId, "correct-flash"); setTimeout(nextSoloTask, 250); }
-  else { flash(soloFlashId, "wrong-flash"); inputBuffers.solo = ""; renderBuffer("solo"); }
+  if (ok) { soloScore++; document.getElementById("solo_score").textContent = `Richtig: ${soloScore}`; flash(soloFlashId, "correct-flash"); celebrateCorrect(document.getElementById(soloFlashId)); setTimeout(nextSoloTask, 250); }
+  else { flash(soloFlashId, "wrong-flash"); celebrateWrong(document.getElementById(soloFlashId)); inputBuffers.solo = ""; renderBuffer("solo"); }
 }
 function finishSolo() {
   clearInterval(soloInterval);
@@ -3930,6 +3989,7 @@ function nextCampaignTask() {
   renderBuffer("solo");
   renderPairBuffer("solo");
   document.getElementById("solo_score").textContent = `Frage ${campaignQuestionIndex + 1} von 10`;
+  renderCampaignDots(campaignQuestionIndex);
   campaignTimeLeft = kampagneTimeForTask(soloExercise, soloCurrent);
   updateCampaignTimerDisplay();
   clearInterval(campaignInterval);
@@ -3940,6 +4000,17 @@ function nextCampaignTask() {
   }, 1000);
 }
 function updateCampaignTimerDisplay() { document.getElementById("solo_timerDisplay").textContent = formatTime(Math.max(0, campaignTimeLeft)); }
+function renderCampaignDots(currentIndex) {
+  const wrap = document.getElementById("kampagne_dots");
+  if (!wrap) return;
+  wrap.classList.remove("hidden");
+  wrap.innerHTML = "";
+  for (let i = 0; i < 10; i++) {
+    const dot = document.createElement("span");
+    dot.className = "kmp-progress-dot" + (i <= currentIndex ? " filled" : "");
+    wrap.appendChild(dot);
+  }
+}
 function submitCampaignAnswer() {
   const ok = checkAnswer(soloCurrent, inputBuffers.solo);
   const flashId = soloCurrent.answerType === "mc" ? "solo_mcWrap" : "solo_input";
@@ -3948,11 +4019,13 @@ function submitCampaignAnswer() {
     campaignCorrectCount++;
     campaignQuestionIndex++;
     flash(flashId, "correct-flash");
+    celebrateCorrect(document.getElementById(flashId));
     if (campaignQuestionIndex >= 10) setTimeout(() => finishKampagneLevel(true), 250);
     else setTimeout(nextCampaignTask, 250);
   } else {
     clearInterval(campaignInterval);
     flash(flashId, "wrong-flash");
+    celebrateWrong(document.getElementById(flashId));
     setTimeout(() => finishKampagneLevel(false, "mistake"), 400);
   }
 }
@@ -4297,6 +4370,7 @@ function submitAnswer(side) {
   if (ok) {
     duellScores[side]++;
     flash(inputElId, "correct-flash");
+    celebrateCorrect(document.getElementById(inputElId));
     if (duellSettings.sameTask) {
       startSameTaskCountdown(["top", "bottom"], () => { nextRound(side); renderDuell(); });
     } else {
@@ -4305,6 +4379,7 @@ function submitAnswer(side) {
     }
   } else {
     flash(inputElId, "wrong-flash");
+    celebrateWrong(document.getElementById(inputElId));
     const shouldPenalize = duellSettings.sameTask || duellSettings.penalizeMistakes;
     if (shouldPenalize) {
       const other = side === "top" ? "bottom" : "top";
@@ -4475,11 +4550,13 @@ function vkSubmitAnswer(side) {
   if (ok) {
     vkScores[idx]++;
     flash(inputElId, "correct-flash");
+    celebrateCorrect(document.getElementById(inputElId));
     for (let i = 0; i < 4; i++) inputBuffers[`vk${i}`] = "";
     if (checkVkFinish()) return;
     startSameTaskCountdown(["vk0", "vk1", "vk2", "vk3"], () => { vkNextTask(); renderVk(); });
   } else {
     flash(inputElId, "wrong-flash");
+    celebrateWrong(document.getElementById(inputElId));
     for (let i = 0; i < 4; i++) { if (i !== idx) vkScores[i]++; }
     for (let i = 0; i < 4; i++) inputBuffers[`vk${i}`] = "";
     renderVk();
@@ -5126,6 +5203,7 @@ async function klassenSubmitAnswer() {
     const ok = checkAnswer(task, inputBuffers.klassen);
     const inputElId = task.answerType === "mc" ? "duell_klassen_mcWrap" : "duell_klassen_input";
     flash(inputElId, ok ? "correct-flash" : "wrong-flash");
+    if (ok) celebrateCorrect(document.getElementById(inputElId)); else celebrateWrong(document.getElementById(inputElId));
     setTimeout(() => { if (klassenMode === "practice") klassenPracticeNextTask(); }, 500);
     return;
   }

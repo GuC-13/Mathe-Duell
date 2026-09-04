@@ -79,6 +79,35 @@
   .btn-solo { background: linear-gradient(135deg, #16a34a, #14532d); }
   .btn-duell { background: linear-gradient(135deg, #dc2626, #7f1d1d); }
   .btn-vk { background: linear-gradient(135deg, #f59e0b, #b45309); color: white; grid-column: 1 / -1; }
+  .btn-kampagne { background: linear-gradient(135deg, #0ea5e9, #075985); }
+
+  /* Kampagne */
+  .kmp-stage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; justify-items: center; margin-top: 14px; }
+  .kmp-stage-circle { width: 148px; height: 148px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-weight: 800; color: white; cursor: pointer; padding: 10px; box-sizing: border-box; background: linear-gradient(135deg, #2563eb, #1e3a8a); }
+  .kmp-stage-circle .kmp-stage-name { font-size: 0.95rem; margin-bottom: 6px; }
+  .kmp-stage-circle .kmp-stage-pct { font-size: 1.4rem; }
+  .kmp-stage-circle.kmp-locked { background: #cbd5e1; color: #64748b; cursor: default; }
+  .kmp-stage-circle.kmp-complete { background: linear-gradient(135deg, #16a34a, #14532d); }
+  /* Kampagne: paginierte Landschafts-Karte */
+  .kmp-map-wrap { max-width: 460px; margin: 0 auto; }
+  .kmp-map-pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0 12px; }
+  .kmp-map-pager .btn { padding: 8px 14px; }
+  .kmp-map-pager .btn:disabled { opacity: 0.35; cursor: default; }
+  .kmp-page-indicator { font-size: 0.85rem; font-weight: 700; color: var(--muted); }
+  .kmp-map-page { position: relative; width: 100%; aspect-ratio: 3 / 5; border-radius: 22px; overflow: hidden; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18); background: #7ec478; }
+  .kmp-map-page .kmp-map-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .kmp-node-wrap { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .kmp-node-btn { width: 54px; height: 54px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; color: white; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.3); background: #94a3b8; padding: 0; }
+  .kmp-node-btn.kmp-locked { background: #94a3b8; color: #eef2f7; cursor: default; }
+  .kmp-node-btn.kmp-completed { background: linear-gradient(135deg, #16a34a, #14532d); }
+  .kmp-node-btn.kmp-current { background: linear-gradient(135deg, #2563eb, #1d4ed8); box-shadow: 0 0 0 5px rgba(37,99,235,0.35), 0 2px 8px rgba(0,0,0,0.3); animation: kmpPulse 1.8s ease-in-out infinite; }
+  @keyframes kmpPulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(37,99,235,0.35), 0 2px 8px rgba(0,0,0,0.3); }
+    50% { box-shadow: 0 0 0 9px rgba(37,99,235,0.12), 0 2px 8px rgba(0,0,0,0.3); }
+  }
+  @media (prefers-reduced-motion: reduce) { .kmp-node-btn.kmp-current { animation: none; } }
+  .kmp-node-caption { font-size: 0.62rem; font-weight: 700; text-align: center; max-width: 84px; color: var(--text); background: rgba(255,255,255,0.85); border-radius: 6px; padding: 2px 5px; line-height: 1.15; }
+  .kmp-node-caption.kmp-locked-caption { color: var(--muted); }
 
   /* Duell-Setup */
   .setup-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
@@ -250,6 +279,7 @@
       <button class="cat-tile cat-jahr3" data-cat="jahr3"><span class="ti">3️⃣</span>Mathematik 3. Jahr</button>
     </div>
     <button class="btn btn-big btn-vk" id="goTournamentBtn" style="margin-top:16px;">🏆 Turniermodus</button>
+    <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
   </div>
@@ -260,6 +290,63 @@
     <h1>🔍 Übung suchen</h1>
     <input type="text" id="exSearchInput" placeholder="z.B. Prozent, Bruch, Pythagoras …" style="width:100%; box-sizing:border-box; font-size:1.1rem; padding:12px 14px; border-radius:10px; border:1px solid var(--border); margin-bottom:16px;">
     <div id="exSearchResults" class="chapter-list"></div>
+  </div>
+
+  <!-- KAMPAGNE: Kampagne wählen -->
+  <div id="kampagneListView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>🗺️ Kampagne wählen</h1>
+    <div class="chapter-list" id="kampagneListItems"></div>
+    <button class="btn btn-big btn-kampagne" id="kampagneNewBtn" style="margin-top:16px;">+ Neue Kampagne</button>
+  </div>
+
+  <!-- KAMPAGNE: Neue Kampagne -->
+  <div id="kampagneNewView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="kampagneNewBackBtn">← Zurück</button></div>
+    <h1>🚀 Neue Kampagne</h1>
+    <div class="setup-card">
+      <label class="field-label">Name der Kampagne</label>
+      <input type="text" id="kampagneNameInput" placeholder="z.B. dein Name" maxlength="40">
+    </div>
+    <button class="btn btn-big btn-kampagne" id="kampagneCreateBtn">Kampagne starten</button>
+  </div>
+
+  <!-- KAMPAGNE: Hub (4 Etappen) -->
+  <div id="kampagneHubView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="kampagneHubBackBtn">← Kampagnen</button></div>
+    <h1 id="kampagneHubTitle">🗺️ Kampagne</h1>
+    <h2 class="sub">Wähle eine Etappe</h2>
+    <div class="kmp-stage-grid" id="kampagneHubStages"></div>
+  </div>
+
+  <!-- KAMPAGNE: Level-Karte einer Etappe -->
+  <div id="kampagneMapView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="kampagneMapBackBtn">← Kampagne</button></div>
+    <h1 id="kampagneMapTitle">Etappe</h1>
+    <div class="kmp-map-wrap">
+      <div class="kmp-map-pager">
+        <button class="btn btn-secondary" id="kampagneMapPrevBtn" aria-label="Vorherige Seite">◀</button>
+        <span class="kmp-page-indicator" id="kampagneMapPageIndicator"></span>
+        <button class="btn btn-secondary" id="kampagneMapNextBtn" aria-label="Nächste Seite">▶</button>
+      </div>
+      <div class="kmp-map-page" id="kampagneMapPage"></div>
+    </div>
+  </div>
+
+  <!-- KAMPAGNE: Level-Ergebnis (bestanden / nicht bestanden) -->
+  <div id="kampagneLevelResultView" class="view hidden">
+    <h1 id="kampagneResultHeading">📊 Level-Ergebnis</h1>
+    <div class="result-card">
+      <div class="result-winner" id="kampagneResultTitle"></div>
+      <div class="result-scores" id="kampagneResultDetail"></div>
+    </div>
+    <div class="row" id="kampagneResultFailActions">
+      <button class="btn btn-big btn-kampagne" style="flex:1;" id="kampagneRetryBtn">Nochmals versuchen</button>
+    </div>
+    <div class="row" id="kampagneResultPassActions">
+      <button class="btn btn-big btn-kampagne hidden" style="flex:1;" id="kampagneNextLevelBtn">Nächstes Level</button>
+    </div>
+    <button class="btn btn-secondary" style="display:block; width:100%; margin-top:10px;" id="kampagneResultMapBtn">Zurück zur Karte</button>
   </div>
 
   <!-- KLASSENMODUS: Wahl Host/Beitreten -->
@@ -1527,7 +1614,7 @@ document.getElementById("solo_helpBtn").addEventListener("click", () => {
   document.getElementById("helpOverlay").classList.remove("hidden");
 });
 document.getElementById("solo_skipBtn").addEventListener("click", () => {
-  if (!soloRunning) return;
+  if (campaignPlayActive || !soloRunning) return;
   nextSoloTask();
 });
 
@@ -3246,6 +3333,20 @@ function findExerciseById(id) {
   return null;
 }
 
+/* ================= Kampagne: Etappen & Level (aus den Kapitel-Daten abgeleitet) ================= */
+const KAMPAGNE_STAGES = [
+  { key: "basiswissen", label: "Basiswissen", chapters: BASISWISSEN_CHAPTERS },
+  { key: "jahr1", label: "Jahr 1", chapters: JAHR1_CHAPTERS },
+  { key: "jahr2", label: "Jahr 2", chapters: JAHR2_CHAPTERS },
+  { key: "jahr3", label: "Jahr 3", chapters: JAHR3_CHAPTERS }
+];
+const KAMPAGNE_LEVELS = {};
+KAMPAGNE_STAGES.forEach(stage => {
+  const levels = [];
+  stage.chapters.forEach(ch => { ch.exercises.forEach(exr => levels.push({ chapterTitle: ch.title, exercise: exr })); });
+  KAMPAGNE_LEVELS[stage.key] = levels;
+});
+
 /* ================= Home / Kategorie / Kapitel Navigation ================= */
 let navCategory = null, navChapter = null, currentExercise = null;
 document.querySelectorAll(".cat-tile[data-cat]").forEach(btn => btn.addEventListener("click", () => openCategory(btn.dataset.cat)));
@@ -3516,6 +3617,7 @@ function startSoloSession() {
 }
 function updateSoloTimerDisplay() { document.getElementById("solo_timerDisplay").textContent = formatTime(Math.max(0, soloTimeRemaining)); }
 document.getElementById("soloStopBtn").addEventListener("click", () => {
+  if (campaignPlayActive) { openConfirm("Level wirklich verlassen? Dein Fortschritt in diesem Level geht verloren.", () => abortKampagneLevel(), "Verlassen"); return; }
   if (!soloRunning) { stopDuellTimerIfRunning(); showView("modeChoice"); return; }
   openConfirm("Training beenden und Ergebnis anzeigen?", () => finishSolo(), "Beenden");
 });
@@ -3533,6 +3635,7 @@ function nextSoloTask() {
   document.getElementById("solo_score").textContent = `Richtig: ${soloScore}`;
 }
 function submitSolo() {
+  if (campaignPlayActive) { submitCampaignAnswer(); return; }
   if (!soloRunning) return;
   const ok = checkAnswer(soloCurrent, inputBuffers.solo);
   const soloFlashId = soloCurrent.answerType === "mc" ? "solo_mcWrap" : "solo_input";
@@ -3591,6 +3694,326 @@ document.getElementById("solo_camBtn").addEventListener("click", () => {
   ];
   shareCanvasAsImage(drawResultsCanvas("Trainingsergebnis", lines), "training-ergebnis.png");
 });
+
+/* =========================================================================
+   KAMPAGNE-MODUS
+   Wiederverwendet die Solo-Spielmaschinerie (setWidgetMode/checkAnswer/renderMcOptions/
+   renderBuffer/renderPairBuffer, soloPlayView-DOM) mit eigener Ablaufsteuerung:
+   fix 10 Fragen, fix 30 Sek. pro Frage, Abbruch beim ersten Fehler oder Zeitablauf.
+   ========================================================================= */
+const KAMPAGNE_STORAGE_KEY = "matheDuellKampagnen";
+function loadKampagnen() {
+  try { const raw = JSON.parse(localStorage.getItem(KAMPAGNE_STORAGE_KEY)); return Array.isArray(raw) ? raw : []; }
+  catch (e) { return []; }
+}
+function saveKampagnen(list) { try { localStorage.setItem(KAMPAGNE_STORAGE_KEY, JSON.stringify(list)); } catch (e) {} }
+function genKampagneId() { return "k_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8); }
+
+let currentKampagne = null;
+let campaignPlayActive = false;
+let campaignStageKey = null, campaignLevelIndex = 0;
+let campaignQuestionIndex = 0, campaignCorrectCount = 0;
+let campaignTimeLeft = 30, campaignInterval = null;
+let campaignMapPage = 0, campaignLevelStartPage = 0;
+const KMP_LEVELS_PER_PAGE = 5;
+const KMP_NODE_ANCHORS = [
+  { left: 50, top: 9 },
+  { left: 44, top: 28 },
+  { left: 56, top: 48 },
+  { left: 44, top: 68 },
+  { left: 52, top: 88 }
+];
+function kampagneMaxPage(stageKey) { return Math.max(0, Math.ceil(kampagneStageTotal(stageKey) / KMP_LEVELS_PER_PAGE) - 1); }
+function kampagneDefaultPage(camp, stageKey) {
+  return Math.min(kampagneMaxPage(stageKey), Math.floor(kampagneStageDone(camp, stageKey) / KMP_LEVELS_PER_PAGE));
+}
+function kampagneMapBackgroundSVG() {
+  return `<svg class="kmp-map-bg" viewBox="0 0 300 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="kmpHillGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#8fce8a"/>
+        <stop offset="100%" stop-color="#69b464"/>
+      </linearGradient>
+    </defs>
+    <rect x="0" y="0" width="300" height="500" fill="url(#kmpHillGrad)"/>
+    <ellipse cx="40" cy="70" rx="140" ry="55" fill="#7ec478" opacity="0.55"/>
+    <ellipse cx="270" cy="210" rx="150" ry="70" fill="#86cf80" opacity="0.5"/>
+    <ellipse cx="25" cy="370" rx="150" ry="75" fill="#7ec478" opacity="0.5"/>
+    <ellipse cx="275" cy="465" rx="140" ry="60" fill="#63ad5f" opacity="0.5"/>
+    <path d="M -20 300 C 60 280, 100 335, 170 312 C 230 294, 260 258, 320 274" stroke="#bfe6f5" stroke-width="24" fill="none" stroke-linecap="round" opacity="0.9"/>
+    <path d="M150 -20 C 128 40, 152 62, 132 140 C 118 200, 190 218, 168 240 C 150 262, 100 300, 132 340 C 155 370, 110 400, 156 440 C 175 460, 150 480, 150 520" stroke="#c9a876" stroke-width="30" fill="none" stroke-linecap="round"/>
+    <path d="M150 -20 C 128 40, 152 62, 132 140 C 118 200, 190 218, 168 240 C 150 262, 100 300, 132 340 C 155 370, 110 400, 156 440 C 175 460, 150 480, 150 520" stroke="#dfc296" stroke-width="19" fill="none" stroke-linecap="round"/>
+    <g>
+      <circle cx="58" cy="58" r="14" fill="#4f9c4a"/><circle cx="72" cy="68" r="10" fill="#5fae59"/>
+      <circle cx="238" cy="128" r="13" fill="#5fae59"/><circle cx="250" cy="116" r="9" fill="#4f9c4a"/>
+      <circle cx="40" cy="195" r="12" fill="#4f9c4a"/>
+      <circle cx="252" cy="358" r="14" fill="#5fae59"/><circle cx="240" cy="370" r="9" fill="#4f9c4a"/>
+      <circle cx="50" cy="438" r="12" fill="#4f9c4a"/><circle cx="64" cy="450" r="9" fill="#5fae59"/>
+    </g>
+    <g fill="#a7b0ba">
+      <ellipse cx="205" cy="90" rx="10" ry="7"/>
+      <ellipse cx="88" cy="268" rx="9" ry="6"/>
+      <ellipse cx="212" cy="420" rx="10" ry="7"/>
+    </g>
+  </svg>`;
+}
+
+function kampagneStageTotal(stageKey) { return KAMPAGNE_LEVELS[stageKey].length; }
+function kampagneStageDone(camp, stageKey) { return camp.progress[stageKey] || 0; }
+function kampagneStagePercent(camp, stageKey) { const t = kampagneStageTotal(stageKey); return t ? Math.round((kampagneStageDone(camp, stageKey) / t) * 100) : 0; }
+function kampagneStageComplete(camp, stageKey) { return kampagneStageDone(camp, stageKey) >= kampagneStageTotal(stageKey); }
+function kampagneStageUnlocked(camp, stageIndex) { return stageIndex === 0 || kampagneStageComplete(camp, KAMPAGNE_STAGES[stageIndex - 1].key); }
+function kampagneOverallPercent(camp) {
+  let done = 0, total = 0;
+  KAMPAGNE_STAGES.forEach(s => { done += kampagneStageDone(camp, s.key); total += kampagneStageTotal(s.key); });
+  return total ? Math.round((done / total) * 100) : 0;
+}
+
+/* ---- Kampagne wählen ---- */
+document.getElementById("goKampagneBtn").addEventListener("click", () => { renderKampagneList(); showView("kampagneList"); });
+function renderKampagneList() {
+  const list = loadKampagnen();
+  const el = document.getElementById("kampagneListItems");
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-hint">Noch keine Kampagne – starte deine erste!</div>';
+  } else {
+    el.innerHTML = list.map(c => `
+      <div class="chapter-row" data-id="${escapeHtml(c.id)}">
+        <span class="chapter-title">${escapeHtml(c.name)}</span>
+        <span class="chapter-status">${kampagneOverallPercent(c)}% abgeschlossen</span>
+      </div>`).join("");
+  }
+  el.onclick = (e) => {
+    const row = e.target.closest(".chapter-row");
+    if (!row) return;
+    const camp = loadKampagnen().find(c => c.id === row.dataset.id);
+    if (camp) openKampagneHub(camp);
+  };
+}
+document.getElementById("kampagneNewBtn").addEventListener("click", () => {
+  document.getElementById("kampagneNameInput").value = "";
+  showView("kampagneNew");
+});
+document.getElementById("kampagneNewBackBtn").addEventListener("click", () => showView("kampagneList"));
+document.getElementById("kampagneCreateBtn").addEventListener("click", () => {
+  const list = loadKampagnen();
+  const name = document.getElementById("kampagneNameInput").value.trim() || `Kampagne ${list.length + 1}`;
+  const camp = { id: genKampagneId(), name, createdAt: new Date().toISOString(), progress: { basiswissen: 0, jahr1: 0, jahr2: 0, jahr3: 0 }, attempts: {} };
+  list.push(camp);
+  saveKampagnen(list);
+  openKampagneHub(camp);
+});
+document.getElementById("kampagneHubBackBtn").addEventListener("click", () => { renderKampagneList(); showView("kampagneList"); });
+
+/* ---- Hub: 4 Etappen ---- */
+function openKampagneHub(camp) {
+  currentKampagne = camp;
+  renderKampagneHub();
+  showView("kampagneHub");
+}
+function renderKampagneHub() {
+  const camp = loadKampagnen().find(c => c.id === currentKampagne.id) || currentKampagne;
+  currentKampagne = camp;
+  document.getElementById("kampagneHubTitle").textContent = "🗺️ " + camp.name;
+  const el = document.getElementById("kampagneHubStages");
+  el.innerHTML = KAMPAGNE_STAGES.map((s, i) => {
+    const unlocked = kampagneStageUnlocked(camp, i);
+    const complete = kampagneStageComplete(camp, s.key);
+    const pct = kampagneStagePercent(camp, s.key);
+    const cls = !unlocked ? "kmp-locked" : complete ? "kmp-complete" : "";
+    return `<div class="kmp-stage-circle ${cls}" data-stage="${s.key}" data-unlocked="${unlocked ? "1" : "0"}">
+      <span class="kmp-stage-name">${complete ? "✅ " : ""}${escapeHtml(s.label)}</span>
+      <span class="kmp-stage-pct">${unlocked ? pct + "%" : "🔒"}</span>
+    </div>`;
+  }).join("");
+  el.onclick = (e) => {
+    const circle = e.target.closest(".kmp-stage-circle");
+    if (!circle || circle.dataset.unlocked !== "1") return;
+    openKampagneMap(circle.dataset.stage);
+  };
+}
+
+/* ---- Level-Karte einer Etappe ---- */
+function openKampagneMap(stageKey) {
+  campaignStageKey = stageKey;
+  campaignMapPage = kampagneDefaultPage(currentKampagne, stageKey);
+  renderKampagneMap();
+  showView("kampagneMap");
+}
+function renderKampagneMap() {
+  const camp = loadKampagnen().find(c => c.id === currentKampagne.id) || currentKampagne;
+  currentKampagne = camp;
+  const stage = KAMPAGNE_STAGES.find(s => s.key === campaignStageKey);
+  const levels = KAMPAGNE_LEVELS[campaignStageKey];
+  const done = kampagneStageDone(camp, campaignStageKey);
+  const maxPage = kampagneMaxPage(campaignStageKey);
+  campaignMapPage = Math.min(Math.max(campaignMapPage, 0), maxPage);
+  const reachablePage = Math.min(maxPage, Math.floor(done / KMP_LEVELS_PER_PAGE));
+  document.getElementById("kampagneMapTitle").textContent = `${stage.label} · ${camp.name}`;
+  document.getElementById("kampagneMapPageIndicator").textContent = `Seite ${campaignMapPage + 1} von ${maxPage + 1}`;
+  document.getElementById("kampagneMapPrevBtn").disabled = campaignMapPage <= 0;
+  document.getElementById("kampagneMapNextBtn").disabled = campaignMapPage >= reachablePage;
+  const pageStart = campaignMapPage * KMP_LEVELS_PER_PAGE;
+  const pageLevels = levels.slice(pageStart, pageStart + KMP_LEVELS_PER_PAGE);
+  const el = document.getElementById("kampagneMapPage");
+  el.innerHTML = kampagneMapBackgroundSVG() + pageLevels.map((lvl, j) => {
+    const i = pageStart + j;
+    const anchor = KMP_NODE_ANCHORS[j];
+    const state = i < done ? "kmp-completed" : i === done ? "kmp-current" : "kmp-locked";
+    const icon = state === "kmp-completed" ? "✅" : state === "kmp-locked" ? "🔒" : String(i + 1);
+    const att = camp.attempts && camp.attempts[campaignStageKey] && camp.attempts[campaignStageKey][i];
+    const attCaption = state === "kmp-completed" && att ? `<br><span style="opacity:0.7; font-size:0.85em;">${att === 1 ? "im 1. Versuch" : `nach ${att} Versuchen`}</span>` : "";
+    return `<div class="kmp-node-wrap" style="left:${anchor.left}%; top:${anchor.top}%;">
+      <button type="button" class="kmp-node-btn ${state}" data-idx="${i}" ${state === "kmp-locked" ? "disabled" : ""} aria-label="Level ${i + 1}: ${escapeHtml(lvl.exercise.title)}">${icon}</button>
+      <div class="kmp-node-caption ${state === "kmp-locked" ? "kmp-locked-caption" : ""}">Level ${i + 1}<br>${escapeHtml(lvl.exercise.title)}${attCaption}</div>
+    </div>`;
+  }).join("");
+  el.onclick = (e) => {
+    const node = e.target.closest(".kmp-node-btn");
+    if (!node || node.classList.contains("kmp-locked")) return;
+    startKampagneLevel(Number(node.dataset.idx));
+  };
+}
+document.getElementById("kampagneMapPrevBtn").addEventListener("click", () => {
+  if (campaignMapPage > 0) { campaignMapPage--; renderKampagneMap(); }
+});
+document.getElementById("kampagneMapNextBtn").addEventListener("click", () => {
+  const maxPage = kampagneMaxPage(campaignStageKey);
+  const done = kampagneStageDone(currentKampagne, campaignStageKey);
+  const reachablePage = Math.min(maxPage, Math.floor(done / KMP_LEVELS_PER_PAGE));
+  if (campaignMapPage < reachablePage) { campaignMapPage++; renderKampagneMap(); }
+});
+document.getElementById("kampagneMapBackBtn").addEventListener("click", () => { renderKampagneHub(); showView("kampagneHub"); });
+
+/* ---- Level spielen (wiederverwendet die Solo-Antwort-Widgets) ---- */
+function startKampagneLevel(levelIndex) {
+  const level = KAMPAGNE_LEVELS[campaignStageKey][levelIndex];
+  campaignLevelIndex = levelIndex;
+  campaignLevelStartPage = campaignMapPage;
+  campaignPlayActive = true;
+  campaignQuestionIndex = 0;
+  campaignCorrectCount = 0;
+  soloExercise = level.exercise;
+  document.getElementById("solo_skipBtn").classList.add("hidden");
+  document.getElementById("solo_helpBtn").classList.add("hidden");
+  kampagneRecordAttempt(campaignStageKey, levelIndex);
+  clearInterval(soloInterval);
+  nextCampaignTask();
+  showView("soloPlay");
+}
+function kampagneRecordAttempt(stageKey, levelIndex) {
+  const list = loadKampagnen();
+  const camp = list.find(c => c.id === currentKampagne.id);
+  if (!camp) return;
+  camp.attempts = camp.attempts || {};
+  camp.attempts[stageKey] = camp.attempts[stageKey] || {};
+  camp.attempts[stageKey][levelIndex] = (camp.attempts[stageKey][levelIndex] || 0) + 1;
+  saveKampagnen(list);
+  currentKampagne = camp;
+}
+function kampagneTimeForTask(exercise, task) {
+  let seconds = 30;
+  if (task.visual) seconds = Math.max(seconds, 45);
+  if (task.answerType === "pair" || task.answerType === "mc") seconds = Math.max(seconds, 45);
+  if (exercise.calc) seconds = Math.max(seconds, 60);
+  return seconds;
+}
+function nextCampaignTask() {
+  soloCurrent = soloExercise.generate();
+  inputBuffers.solo = "";
+  activePart.solo = "a";
+  document.getElementById("solo_visual").innerHTML = soloCurrent.visual || "";
+  document.getElementById("solo_prompt").textContent = soloCurrent.prompt;
+  setWidgetMode("solo", soloCurrent.answerType, soloCurrent.pairStyle);
+  renderMcOptions("solo", soloCurrent);
+  document.getElementById("solo_textInput").value = "";
+  renderBuffer("solo");
+  renderPairBuffer("solo");
+  document.getElementById("solo_score").textContent = `Frage ${campaignQuestionIndex + 1} von 10`;
+  campaignTimeLeft = kampagneTimeForTask(soloExercise, soloCurrent);
+  updateCampaignTimerDisplay();
+  clearInterval(campaignInterval);
+  campaignInterval = setInterval(() => {
+    campaignTimeLeft--;
+    updateCampaignTimerDisplay();
+    if (campaignTimeLeft <= 0) { clearInterval(campaignInterval); finishKampagneLevel(false, "timeout"); }
+  }, 1000);
+}
+function updateCampaignTimerDisplay() { document.getElementById("solo_timerDisplay").textContent = formatTime(Math.max(0, campaignTimeLeft)); }
+function submitCampaignAnswer() {
+  const ok = checkAnswer(soloCurrent, inputBuffers.solo);
+  const flashId = soloCurrent.answerType === "mc" ? "solo_mcWrap" : "solo_input";
+  if (ok) {
+    clearInterval(campaignInterval);
+    campaignCorrectCount++;
+    campaignQuestionIndex++;
+    flash(flashId, "correct-flash");
+    if (campaignQuestionIndex >= 10) setTimeout(() => finishKampagneLevel(true), 250);
+    else setTimeout(nextCampaignTask, 250);
+  } else {
+    clearInterval(campaignInterval);
+    flash(flashId, "wrong-flash");
+    setTimeout(() => finishKampagneLevel(false, "mistake"), 400);
+  }
+}
+function campaignCleanupUI() {
+  document.getElementById("solo_skipBtn").classList.remove("hidden");
+  document.getElementById("solo_helpBtn").classList.remove("hidden");
+}
+function abortKampagneLevel() {
+  clearInterval(campaignInterval);
+  campaignPlayActive = false;
+  campaignCleanupUI();
+  campaignMapPage = campaignLevelStartPage;
+  renderKampagneMap();
+  showView("kampagneMap");
+}
+function finishKampagneLevel(passed, reason) {
+  clearInterval(campaignInterval);
+  campaignPlayActive = false;
+  const stage = KAMPAGNE_STAGES.find(s => s.key === campaignStageKey);
+  const total = kampagneStageTotal(campaignStageKey);
+  document.getElementById("kampagneResultFailActions").classList.toggle("hidden", passed);
+  document.getElementById("kampagneResultPassActions").classList.add("hidden");
+  const mapBtn = document.getElementById("kampagneResultMapBtn");
+  const attempts = (currentKampagne.attempts && currentKampagne.attempts[campaignStageKey] && currentKampagne.attempts[campaignStageKey][campaignLevelIndex]) || 1;
+  if (passed) {
+    const wasNextLevel = campaignLevelIndex === kampagneStageDone(currentKampagne, campaignStageKey);
+    let stageJustCompleted = false, campaignDone = false;
+    if (wasNextLevel) {
+      const list = loadKampagnen();
+      const camp = list.find(c => c.id === currentKampagne.id);
+      camp.progress[campaignStageKey] = kampagneStageDone(camp, campaignStageKey) + 1;
+      saveKampagnen(list);
+      currentKampagne = camp;
+      if (kampagneStageComplete(camp, campaignStageKey)) {
+        stageJustCompleted = true;
+        const stageIdx = KAMPAGNE_STAGES.findIndex(s => s.key === campaignStageKey);
+        if (stageIdx >= KAMPAGNE_STAGES.length - 1) campaignDone = true;
+      }
+    }
+    const wasLastOfPage = campaignLevelIndex % KMP_LEVELS_PER_PAGE === KMP_LEVELS_PER_PAGE - 1 || campaignLevelIndex === total - 1;
+    campaignMapPage = (wasNextLevel && wasLastOfPage) ? Math.min(kampagneMaxPage(campaignStageKey), campaignLevelStartPage + 1) : campaignLevelStartPage;
+    document.getElementById("kampagneResultTitle").textContent = "🎉 Gratulation! Level abgeschlossen.";
+    const attemptsText = attempts === 1 ? "im ersten Versuch" : `nach ${attempts} Versuchen`;
+    let detail = `Alle 10 Aufgaben richtig gelöst (${attemptsText}).`;
+    if (stageJustCompleted) {
+      detail += ` Du hast die Etappe „${stage.label}“ zu 100% abgeschlossen!`;
+      detail += campaignDone ? " Die ganze Kampagne ist geschafft! 🏆" : " Die nächste Etappe ist jetzt freigeschaltet.";
+    }
+    document.getElementById("kampagneResultDetail").textContent = detail;
+    mapBtn.textContent = "Weiter zur Karte";
+  } else {
+    campaignMapPage = campaignLevelStartPage;
+    document.getElementById("kampagneResultTitle").textContent = "😬 Level nicht bestanden";
+    const reasonText = reason === "timeout" ? "dann ist die Zeit abgelaufen" : "dann kam ein Fehler";
+    document.getElementById("kampagneResultDetail").textContent = `${campaignCorrectCount} von 10 richtig, ${reasonText}.`;
+    document.getElementById("kampagneRetryBtn").onclick = () => startKampagneLevel(campaignLevelIndex);
+    mapBtn.textContent = "Zurück zur Karte";
+  }
+  showView("kampagneLevelResult");
+}
+document.getElementById("kampagneResultMapBtn").addEventListener("click", () => { campaignCleanupUI(); renderKampagneMap(); showView("kampagneMap"); });
 
 /* =========================================================================
    DUELL-MODUS

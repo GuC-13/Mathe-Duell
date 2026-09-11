@@ -158,6 +158,9 @@
   .mt-shape { width: 160px; height: 160px; margin: 0 auto 10px; display: block; }
   .duell-half .mt-shape { width: 90px; height: 90px; margin: 0 auto 6px; }
   .vk-quad .mt-shape { width: 56px; height: 56px; margin: 0 auto 4px; }
+  .mt-mini-shape { width: 46px; height: 46px; display: block; }
+  .duell-half .mt-mini-shape { width: 26px; height: 26px; }
+  .vk-quad .mt-mini-shape { width: 16px; height: 16px; }
   .task-prompt { font-size: 1.3rem; font-weight: 700; margin-bottom: 14px; }
   .answer-display { font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; background: var(--bg); border-radius: 10px; padding: 12px; min-height: 54px; margin-bottom: 14px; }
   .keypad-row { display: flex; gap: 8px; margin-bottom: 8px; }
@@ -186,6 +189,9 @@
   .text-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
   .text-wrap input { flex: 1; }
   .text-wrap button { background: var(--success); color: white; border: none; border-radius: 12px; padding: 0 20px; font-weight: 700; }
+  .hotspot-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .hotspot-hint { font-size: 0.85rem; color: var(--text-muted, #64748b); text-align: center; }
+  .hotspot-confirm-btn { background: var(--success); color: white; border: none; border-radius: 12px; padding: 10px 24px; font-weight: 700; font-size: 0.95rem; }
 
   /* Fachbegriffe: Multiple-Choice-Auswahl */
   .mc-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; padding: 6px; border-radius: 12px; }
@@ -309,7 +315,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-10.3</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-11.5</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -370,9 +376,6 @@
     </div>
     <div class="row" id="kampagneResultFailActions">
       <button class="btn btn-big btn-kampagne" style="flex:1;" id="kampagneRetryBtn">Nochmals versuchen</button>
-    </div>
-    <div class="row" id="kampagneResultPassActions">
-      <button class="btn btn-big btn-kampagne hidden" style="flex:1;" id="kampagneNextLevelBtn">Nächstes Level</button>
     </div>
     <button class="btn btn-secondary" style="display:block; width:100%; margin-top:10px;" id="kampagneResultMapBtn">Zurück zur Karte</button>
   </div>
@@ -523,6 +526,10 @@
       <button class="mc-btn" data-side="klassen" data-mc="2"></button>
       <button class="mc-btn" data-side="klassen" data-mc="3"></button>
     </div>
+    <div id="duell_klassen_hotspotWrap" class="hotspot-wrap hidden">
+      <div class="hotspot-hint">Tippe auf die richtige Stelle im Bild, dann bestätige.</div>
+      <button class="hotspot-confirm-btn" data-side="klassen" data-hotspotsubmit="1">✓ Bestätigen</button>
+    </div>
     <div id="klassenAnsweredNote" class="hidden" style="text-align:center; font-weight:700; margin-top:14px;">✓ Antwort gesendet – warte auf die nächste Aufgabe …</div>
   </div>
 
@@ -670,6 +677,10 @@
         <button class="mc-btn" data-side="solo" data-mc="1"></button>
         <button class="mc-btn" data-side="solo" data-mc="2"></button>
         <button class="mc-btn" data-side="solo" data-mc="3"></button>
+      </div>
+      <div id="solo_hotspotWrap" class="hotspot-wrap hidden">
+        <div class="hotspot-hint">Tippe auf die richtige Stelle im Bild, dann bestätige.</div>
+        <button class="hotspot-confirm-btn" data-side="solo" data-hotspotsubmit="1">✓ Bestätigen</button>
       </div>
     </div>
   </div>
@@ -841,6 +852,10 @@
           <button class="mc-btn" data-side="top" data-mc="2"></button>
           <button class="mc-btn" data-side="top" data-mc="3"></button>
         </div>
+        <div id="duell_top_hotspotWrap" class="hotspot-wrap hidden">
+          <div class="hotspot-hint">Tippe auf die richtige Stelle im Bild, dann bestätige.</div>
+          <button class="hotspot-confirm-btn" data-side="top" data-hotspotsubmit="1">✓ Bestätigen</button>
+        </div>
       </div>
     </div>
     <div class="duell-divider">
@@ -886,6 +901,10 @@
           <button class="mc-btn" data-side="bottom" data-mc="1"></button>
           <button class="mc-btn" data-side="bottom" data-mc="2"></button>
           <button class="mc-btn" data-side="bottom" data-mc="3"></button>
+        </div>
+        <div id="duell_bottom_hotspotWrap" class="hotspot-wrap hidden">
+          <div class="hotspot-hint">Tippe auf die richtige Stelle im Bild, dann bestätige.</div>
+          <button class="hotspot-confirm-btn" data-side="bottom" data-hotspotsubmit="1">✓ Bestätigen</button>
         </div>
       </div>
     </div>
@@ -1043,6 +1062,10 @@
             <button class="mc-btn" data-side="vk2" data-mc="2"></button>
             <button class="mc-btn" data-side="vk2" data-mc="3"></button>
           </div>
+          <div id="duell_vk2_hotspotWrap" class="hotspot-wrap hidden">
+            <div class="hotspot-hint">Tippe auf die richtige Stelle im Bild, dann bestätige.</div>
+            <button class="hotspot-confirm-btn" data-side="vk2" data-hotspotsubmit="1">✓ Bestätigen</button>
+          </div>
         </div>
       </div>
       <div class="vk-quad vk-flip vk-p3" data-vkslot="3">
@@ -1083,6 +1106,10 @@
             <button class="mc-btn" data-side="vk3" data-mc="1"></button>
             <button class="mc-btn" data-side="vk3" data-mc="2"></button>
             <button class="mc-btn" data-side="vk3" data-mc="3"></button>
+          </div>
+          <div id="duell_vk3_hotspotWrap" class="hotspot-wrap hidden">
+            <div class="hotspot-hint">Tippe auf die richtige Stelle im Bild, dann bestätige.</div>
+            <button class="hotspot-confirm-btn" data-side="vk3" data-hotspotsubmit="1">✓ Bestätigen</button>
           </div>
         </div>
       </div>
@@ -1125,6 +1152,10 @@
             <button class="mc-btn" data-side="vk0" data-mc="2"></button>
             <button class="mc-btn" data-side="vk0" data-mc="3"></button>
           </div>
+          <div id="duell_vk0_hotspotWrap" class="hotspot-wrap hidden">
+            <div class="hotspot-hint">Tippe auf die richtige Stelle im Bild, dann bestätige.</div>
+            <button class="hotspot-confirm-btn" data-side="vk0" data-hotspotsubmit="1">✓ Bestätigen</button>
+          </div>
         </div>
       </div>
       <div class="vk-quad vk-p1" data-vkslot="1">
@@ -1165,6 +1196,10 @@
             <button class="mc-btn" data-side="vk1" data-mc="1"></button>
             <button class="mc-btn" data-side="vk1" data-mc="2"></button>
             <button class="mc-btn" data-side="vk1" data-mc="3"></button>
+          </div>
+          <div id="duell_vk1_hotspotWrap" class="hotspot-wrap hidden">
+            <div class="hotspot-hint">Tippe auf die richtige Stelle im Bild, dann bestätige.</div>
+            <button class="hotspot-confirm-btn" data-side="vk1" data-hotspotsubmit="1">✓ Bestätigen</button>
           </div>
         </div>
       </div>
@@ -1711,9 +1746,15 @@ const SHAPES = [
   ...[
     ["Siebeneck", 7], ["Achteck", 8], ["Neuneck", 9], ["Zehneck", 10], ["Elfeck", 11], ["Zwölfeck", 12],
     ["Dreizehneck", 13], ["Vierzehneck", 14], ["Fünfzehneck", 15], ["Sechzehneck", 16], ["Siebzehneck", 17], ["Achtzehneck", 18]
-  ].map(([name, n]) => ({ name: `regelmässiges ${name}`, axis: n, rot: n, points: regPoly(n, 100, 100, 78, -90) }))
+  ].map(([name, n]) => ({ name: `regelmässiges ${name}`, axis: n, rot: n, points: regPoly(n, 100, 100, 78, -90) })),
+  { name: "Buchstabe A", axis: 1, rot: 1, svg: `<line x1="100" y1="35" x2="52" y2="170" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/><line x1="100" y1="35" x2="148" y2="170" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/><line x1="70" y1="120" x2="130" y2="120" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/>` },
+  { name: "Buchstabe H", axis: 2, rot: 2, svg: `<line x1="60" y1="40" x2="60" y2="160" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/><line x1="140" y1="40" x2="140" y2="160" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/><line x1="60" y1="100" x2="140" y2="100" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/>` },
+  { name: "Buchstabe M", axis: 1, rot: 1, svg: `<line x1="55" y1="160" x2="55" y2="50" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/><line x1="145" y1="160" x2="145" y2="50" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/><line x1="55" y1="50" x2="100" y2="110" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/><line x1="145" y1="50" x2="100" y2="110" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/>` },
+  { name: "Buchstabe T", axis: 1, rot: 1, svg: `<line x1="45" y1="40" x2="155" y2="40" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/><line x1="100" y1="40" x2="100" y2="165" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/>` },
+  { name: "Buchstabe E", axis: 1, rot: 1, svg: `<line x1="60" y1="40" x2="60" y2="160" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/><line x1="60" y1="40" x2="145" y2="40" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/><line x1="60" y1="100" x2="125" y2="100" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/><line x1="60" y1="160" x2="145" y2="160" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/>` },
+  { name: "Buchstabe X", axis: 4, rot: 4, svg: `<line x1="55" y1="55" x2="145" y2="145" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/><line x1="55" y1="145" x2="145" y2="55" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/>` }
 ];
-function shapeSVG(shape) { return `<svg viewBox="0 0 200 200" class="mt-shape"><polygon points="${shape.points}" fill="#dbeafe" stroke="#2563eb" stroke-width="4"/></svg>`; }
+function shapeSVG(shape) { if (shape.svg) return `<svg viewBox="0 0 200 200" class="mt-shape">${shape.svg}</svg>`; return `<svg viewBox="0 0 200 200" class="mt-shape"><polygon points="${shape.points}" fill="#dbeafe" stroke="#2563eb" stroke-width="4"/></svg>`; }
 function coordinateGridSVG(x, y) {
   const scale = 13, cx = 100, cy = 100;
   const px = cx + x * scale, py = cy - y * scale;
@@ -1802,6 +1843,30 @@ function generateCoordinateOffset() {
   const dxText = dx > 0 ? `${dx} nach rechts (x+${dx})` : `${Math.abs(dx)} nach links (x−${Math.abs(dx)})`;
   const dyText = dy > 0 ? `${dy} nach oben (y+${dy})` : `${Math.abs(dy)} nach unten (y−${Math.abs(dy)})`;
   return { visual: coordinateGridSVG(x, y), prompt: `Ausgehend vom markierten Punkt P liegt Q ${dxText} und ${dyText}. Welche Koordinaten hat Q?`, answerType: "pair", pairStyle: "coordinate", correct: [x + dx, y + dy] };
+}
+function coordinateGridSVGBlank() {
+  const scale = 13, cx = 100, cy = 100;
+  let lines = "";
+  for (let i = -7; i <= 7; i++) {
+    lines += `<line x1="${cx + i * scale}" y1="8" x2="${cx + i * scale}" y2="192" stroke="#e2e8f0"/>`;
+    lines += `<line x1="8" y1="${cy - i * scale}" x2="192" y2="${cy - i * scale}" stroke="#e2e8f0"/>`;
+  }
+  return `<svg viewBox="0 0 200 200" class="mt-shape">${lines}
+    <line x1="8" y1="${cy}" x2="192" y2="${cy}" stroke="#334155" stroke-width="2"/>
+    <line x1="${cx}" y1="8" x2="${cx}" y2="192" stroke="#334155" stroke-width="2"/></svg>`;
+}
+function generatePointPlacementHotspot() {
+  const scale = 13, cx = 100, cy = 100;
+  const x = rnd(-6, 6), y = rnd(-6, 6);
+  return {
+    visual: coordinateGridSVGBlank(),
+    prompt: `Tippe auf den Punkt mit den Koordinaten (${x}|${y}).`,
+    answerType: "hotspot",
+    hotspotMode: "point",
+    viewBox: "0 0 200 200",
+    target: { x: cx + x * scale, y: cy - y * scale },
+    tolerance: 7
+  };
 }
 const UNIT_SETS = [
   { from: "cm", to: "m", factor: 0.01 }, { from: "m", to: "cm", factor: 100 },
@@ -1945,6 +2010,38 @@ function generateRounding() {
 function generateAngle() {
   if (Math.random() < 0.5) { const a = rnd(10, 80); return { visual: null, prompt: `Zwei Winkel ergänzen sich zu 90°. Der eine misst ${a}°. Wie gross ist der andere?`, answerType: "number", correct: 90 - a }; }
   const a = rnd(10, 170); return { visual: null, prompt: `Zwei Winkel ergänzen sich zu 180°. Der eine misst ${a}°. Wie gross ist der andere?`, answerType: "number", correct: 180 - a };
+}
+function angleCornerSVG(vertex, baseAngleDeg, angleDeg, len) {
+  const a1 = baseAngleDeg * Math.PI / 180;
+  const a2 = (baseAngleDeg + angleDeg) * Math.PI / 180;
+  const p1 = { x: vertex.x + len * Math.cos(a1), y: vertex.y + len * Math.sin(a1) };
+  const p2 = { x: vertex.x + len * Math.cos(a2), y: vertex.y + len * Math.sin(a2) };
+  return `<line x1="${vertex.x}" y1="${vertex.y}" x2="${p1.x.toFixed(1)}" y2="${p1.y.toFixed(1)}" stroke="#1e293b" stroke-width="3"/>` +
+    `<line x1="${vertex.x}" y1="${vertex.y}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}" stroke="#1e293b" stroke-width="3"/>` +
+    `<circle cx="${vertex.x}" cy="${vertex.y}" r="3.5" fill="#1e293b"/>`;
+}
+function generateRightAngleHotspot() {
+  const positions = [{ x: 50, y: 50 }, { x: 150, y: 50 }, { x: 50, y: 150 }, { x: 150, y: 150 }];
+  const distractorAngles = [45, 60, 120, 135];
+  const shuffledDistractors = distractorAngles.slice().sort(() => Math.random() - 0.5).slice(0, 3);
+  const angles = [90, ...shuffledDistractors].sort(() => Math.random() - 0.5);
+  const rightIdx = angles.indexOf(90);
+  let cue = "";
+  positions.forEach((pos, i) => {
+    const baseAngle = rnd(0, 359);
+    cue += angleCornerSVG(pos, baseAngle, angles[i], 35);
+  });
+  const target = positions[rightIdx];
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${cue}</svg>`;
+  return {
+    visual,
+    prompt: "Tippe auf die Ecke mit dem rechten Winkel.",
+    answerType: "hotspot",
+    hotspotMode: "point",
+    viewBox: "0 0 200 200",
+    target,
+    tolerance: 18
+  };
 }
 
 /* ---- Mathematik 1. Jahr: weitere Generatoren (Kapitel 3a–9b) ---- */
@@ -2118,6 +2215,37 @@ function generateFractionCompare() {
   return { visual: null, prompt: `Stimmt die Aussage: ${an}/${ad} > ${bn}/${bd} ?`, answerType: "boolean", correct: (an / ad) > (bn / bd) ? 1 : 0 };
 }
 function generateMixedToImproper() { const w = rnd(1, 8), n = rnd(1, 6), d = rnd(n + 1, 9); return { visual: null, prompt: `Wandle die gemischte Zahl ${w} ${n}/${d} in einen unechten Bruch um.`, answerType: "pair", pairStyle: "fraction", correct: [w * d + n, d] }; }
+function generateFractionNumberLineHotspot() {
+  const rangeMax = Math.random() < 0.7 ? 1 : 2;
+  const dens = [2, 3, 4, 5, 6, 8, 10];
+  const den = dens[rnd(0, dens.length - 1)];
+  const num = rangeMax === 1 ? rnd(1, den - 1) : rnd(1, den * rangeMax - 1);
+  const x0 = 20, x1 = 180, y = 100;
+  const value = num / den;
+  const px = x0 + (value / rangeMax) * (x1 - x0);
+  let ticks = "";
+  for (let i = 0; i <= rangeMax; i++) {
+    const tx = x0 + (i / rangeMax) * (x1 - x0);
+    ticks += `<line x1="${tx}" y1="${y - 8}" x2="${tx}" y2="${y + 8}" stroke="#334155" stroke-width="2"/>`;
+    ticks += `<text x="${tx}" y="${y + 24}" font-size="13" text-anchor="middle" fill="#334155" font-weight="700">${i}</text>`;
+  }
+  if (rangeMax === 1) {
+    const midX = x0 + 0.5 * (x1 - x0);
+    ticks += `<line x1="${midX}" y1="${y - 6}" x2="${midX}" y2="${y + 6}" stroke="#94a3b8" stroke-width="1.5"/>`;
+    ticks += `<text x="${midX}" y="${y - 14}" font-size="11" text-anchor="middle" fill="#64748b">½</text>`;
+  }
+  const lineSvg = `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#334155" stroke-width="2.5"/>`;
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${lineSvg}${ticks}</svg>`;
+  return {
+    visual,
+    prompt: `Markiere ungefähr, wo der Bruch ${num}/${den} auf dem Zahlenstrahl liegt.`,
+    answerType: "hotspot",
+    hotspotMode: "point",
+    viewBox: "0 0 200 200",
+    target: { x: px, y },
+    tolerance: 12
+  };
+}
 const FRACTION_DECIMAL_PERCENT_VALUES = [
   { num: 1, den: 2, dec: 0.5, pct: 50 }, { num: 1, den: 4, dec: 0.25, pct: 25 }, { num: 3, den: 4, dec: 0.75, pct: 75 },
   { num: 1, den: 5, dec: 0.2, pct: 20 }, { num: 2, den: 5, dec: 0.4, pct: 40 }, { num: 3, den: 5, dec: 0.6, pct: 60 }, { num: 4, den: 5, dec: 0.8, pct: 80 },
@@ -2380,17 +2508,59 @@ function generateSurveyExtrapolation() {
 function fmtThousands(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "'"); }
 
 /* ---- Mathematik 1. Jahr: Ergänzungs-Generatoren (Kapitel 1e, 2c, 3a-3c, 4a, 5, 6a-6b, 7b-7c, 8a, 9b) ---- */
+// Rein visuelle Variante (kein Koordinatensystem): mehrere kleine "Glyphen" (Fahne,
+// Winkelhaken, Pfeil, Häkchen), die alle bewusst chiral sind (kein Symmetrieachse UND
+// keine Drehsymmetrie) - so lässt sich die Abbildungsart eindeutig rein am Bild
+// erkennen, egal welche Glyphe gerade gewählt wird.
+const CHIRAL_GLYPHS = [
+  { parts: [
+    { type: "line", p: [[0, 0], [0, -70]] },
+    { type: "polygon", p: [[0, -70], [32, -55], [0, -42]] }
+  ] },
+  { parts: [
+    { type: "polygon", p: [[0, 0], [45, 0], [45, -14], [14, -14], [14, -70], [0, -70]] }
+  ] },
+  { parts: [
+    { type: "line", p: [[0, -35], [55, -35]], width: 5 },
+    { type: "polygon", p: [[55, -35], [30, -55], [35, -20]] }
+  ] },
+  { parts: [
+    { type: "line", p: [[0, 0], [18, 15]], width: 6 },
+    { type: "line", p: [[18, 15], [65, -45]], width: 6 }
+  ] }
+];
+function glyphTransformPoints(pts, anchor, angleDeg, mirror) {
+  const rad = angleDeg * Math.PI / 180;
+  return pts.map(([x, y]) => {
+    const mx = mirror ? -x : x;
+    const rx = mx * Math.cos(rad) - y * Math.sin(rad);
+    const ry = mx * Math.sin(rad) + y * Math.cos(rad);
+    return { x: anchor.x + rx, y: anchor.y + ry };
+  });
+}
+function glyphSVG(glyph, anchor, angleDeg, mirror, color) {
+  return glyph.parts.map(part => {
+    const pts = glyphTransformPoints(part.p, anchor, angleDeg, mirror);
+    if (part.type === "line") {
+      return `<line x1="${pts[0].x.toFixed(1)}" y1="${pts[0].y.toFixed(1)}" x2="${pts[1].x.toFixed(1)}" y2="${pts[1].y.toFixed(1)}" stroke="${color}" stroke-width="${part.width || 5}" stroke-linecap="round"/>`;
+    }
+    return `<polygon points="${pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ")}" fill="${color}"/>`;
+  }).join("");
+}
 function generateTransformationTypeMC() {
-  let x, y;
-  do { x = rndNonZero(-9, 9); y = rndNonZero(-9, 9); } while (Math.abs(x) === Math.abs(y));
+  const glyph = CHIRAL_GLYPHS[rnd(0, CHIRAL_GLYPHS.length - 1)];
+  const anchor1 = { x: 55, y: 155 };
   const kind = rnd(0, 3);
-  let px, py, correct;
-  if (kind === 0) { const axis = Math.random() < 0.5; px = axis ? x : -x; py = axis ? -y : y; correct = "Achsenspiegelung"; }
-  else if (kind === 1) { px = -x; py = -y; correct = "Punktspiegelung"; }
-  else if (kind === 2) { const dx = rndNonZero(-6, 6), dy = rndNonZero(-6, 6); px = x + dx; py = y + dy; correct = "Verschiebung"; }
-  else { px = -y; py = x; correct = "Drehung"; }
+  let anchor2, angle2, mirror2, correct;
+  if (kind === 0) { anchor2 = { x: 145, y: rnd(50, 155) }; angle2 = 0; mirror2 = true; correct = "Achsenspiegelung"; }
+  else if (kind === 1) { anchor2 = { x: rnd(120, 160), y: rnd(40, 90) }; angle2 = 180; mirror2 = false; correct = "Punktspiegelung"; }
+  else if (kind === 2) { anchor2 = { x: rnd(115, 150), y: rnd(50, 100) }; angle2 = 0; mirror2 = false; correct = "Verschiebung"; }
+  else { anchor2 = { x: rnd(120, 160), y: rnd(40, 100) }; angle2 = [90, 270][rnd(0, 1)]; mirror2 = false; correct = "Drehung"; }
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${glyphSVG(glyph, anchor1, 0, false, "#2563eb")}${glyphSVG(glyph, anchor2, angle2, mirror2, "#ea580c")}` +
+    `<text x="${(anchor1.x - 14).toFixed(1)}" y="${(anchor1.y + 14).toFixed(1)}" font-size="14" font-weight="700" fill="#2563eb">1</text>` +
+    `<text x="${(anchor2.x + 8).toFixed(1)}" y="${(anchor2.y + 14).toFixed(1)}" font-size="14" font-weight="700" fill="#ea580c">2</text></svg>`;
   const options = ["Achsenspiegelung", "Punktspiegelung", "Verschiebung", "Drehung"];
-  return { visual: null, prompt: `Der Punkt P(${x}|${y}) wird auf den Bildpunkt P'(${px}|${py}) abgebildet. Um welche Abbildung handelt es sich am ehesten?`, answerType: "mc", options, correct };
+  return { visual, prompt: "Figur 2 ist das Bild von Figur 1 bei einer Kongruenzabbildung. Um welche Abbildung handelt es sich am ehesten?", answerType: "mc", options, correct };
 }
 const TRANSFORM_STATEMENTS = [
   { text: "Bei einer Punktspiegelung bleiben alle Streckenlängen erhalten.", val: true },
@@ -2400,9 +2570,646 @@ const TRANSFORM_STATEMENTS = [
   { text: "Eine Punktspiegelung entspricht einer Drehung um 180°.", val: true },
   { text: "Bei einer Verschiebung ändert sich die Ausrichtung (Drehlage) einer Figur.", val: false },
   { text: "Kongruente Figuren stimmen in allen Seitenlängen und Winkeln überein.", val: true },
-  { text: "Bei einer Drehung ändert sich die Grösse der Figur, aber nicht ihre Form.", val: false }
+  { text: "Bei einer Drehung ändert sich die Grösse der Figur, aber nicht ihre Form.", val: false },
+  { text: "Bei einer Achsenspiegelung wird der Umlaufsinn (Drehsinn) der Figur umgekehrt.", val: true },
+  { text: "Bei einer Drehung und bei einer Verschiebung bleibt der Umlaufsinn der Figur erhalten.", val: true },
+  { text: "Der Drehpunkt (das Zentrum) einer Drehung ist immer ein Fixpunkt, er bleibt also an seinem Platz.", val: true },
+  { text: "Zwei Achsenspiegelungen hintereinander an zwei sich schneidenden Achsen ergeben zusammen eine Drehung um den Schnittpunkt.", val: true },
+  { text: "Bei einer Verschiebung, die nicht dem Nullvektor entspricht, gibt es immer mindestens einen Fixpunkt.", val: false },
+  { text: "Bei einer Drehung um 90° gibt es (ausser dem Drehzentrum) noch weitere Fixpunkte.", val: false },
+  { text: "Zwei Achsenspiegelungen hintereinander an zwei zueinander parallelen Achsen ergeben zusammen eine Drehung.", val: false },
+  { text: "Bei einer Achsenspiegelung verändern sich die Winkelgrössen der Figur.", val: false }
 ];
 function generateTransformTruth() { const s = TRANSFORM_STATEMENTS[rnd(0, TRANSFORM_STATEMENTS.length - 1)]; return { visual: null, prompt: s.text, answerType: "boolean", correct: s.val ? 1 : 0 }; }
+
+/* ---- Kongruenzabbildungen 1e: rein visuelle Zusatzaufgaben (keine Koordinatenschreibweise) ---- */
+// Figuren mit GENAU einer Symmetrieachse (kanonisch senkrecht bei x=100), damit unter den
+// 4 gezeigten Linien immer nur exakt eine wirklich korrekt ist. Figur + alle 4 Linien werden
+// gemeinsam um einen Zufallswinkel gedreht (gleiche Technik wie bei generateSymmetryAxisHotspot) -
+// das ändert nichts an der Korrektheit, nur an der Ausrichtung, und sorgt für Abwechslung.
+// Jede Figur hat manuell geprüft GENAU eine Symmetrieachse (senkrecht bei x=100) -
+// keine der 3 falschen Kandidatenlinien (Vertikale daneben, Horizontale, Diagonale)
+// darf zufällig ebenfalls eine echte Achse sein.
+const AXIS_MIRROR_MC_SHAPES = [
+  { type: "polygon", points: [[100, 40], [50, 160], [150, 160]] },
+  { type: "polygon", points: [[100, 30], [145, 90], [100, 175], [55, 90]] },
+  { type: "polygon", points: [[65, 55], [135, 55], [160, 150], [40, 150]] },
+  { type: "polygon", points: [[100, 40], [150, 100], [100, 145], [50, 100]] }
+];
+function generateAxisMirrorLineMC() {
+  const shape = AXIS_MIRROR_MC_SHAPES[rnd(0, AXIS_MIRROR_MC_SHAPES.length - 1)];
+  const angle = rnd(0, 179);
+  const rad = angle * Math.PI / 180;
+  const rp = (x, y) => rotatePt(x, y, 100, 100, rad);
+  let shapeSvg;
+  if (shape.type === "polygon") {
+    const pts = shape.points.map(([x, y]) => { const p = rp(x, y); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(" ");
+    shapeSvg = `<polygon points="${pts}" fill="#dbeafe" stroke="#2563eb" stroke-width="4"/>`;
+  } else {
+    shapeSvg = shape.segs.map(([[x1, y1], [x2, y2]]) => {
+      const p1 = rp(x1, y1), p2 = rp(x2, y2);
+      return `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/>`;
+    }).join("");
+  }
+  const canonicalLines = [
+    { x1: 100, y1: 20, x2: 100, y2: 180, isCorrect: true },
+    { x1: 128, y1: 20, x2: 128, y2: 180, isCorrect: false },
+    { x1: 20, y1: 100, x2: 180, y2: 100, isCorrect: false },
+    { x1: 50, y1: 40, x2: 150, y2: 160, isCorrect: false }
+  ];
+  const order = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
+  const letters = ["A", "B", "C", "D"];
+  let overlay = "", correctLetter = "";
+  order.forEach((idx, pos) => {
+    const l = canonicalLines[idx], letter = letters[pos];
+    const p1 = rp(l.x1, l.y1), p2 = rp(l.x2, l.y2);
+    const lp = rp(l.x1, l.y1 - 9);
+    if (l.isCorrect) correctLetter = letter;
+    overlay += `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="6,4"/>`;
+    overlay += `<text x="${lp.x.toFixed(1)}" y="${lp.y.toFixed(1)}" font-size="15" font-weight="700" fill="#dc2626" text-anchor="middle">${letter}</text>`;
+  });
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${shapeSvg}${overlay}</svg>`;
+  return { visual, prompt: "Welche der eingezeichneten Linien (A–D) ist eine Symmetrieachse dieser Figur?", answerType: "mc", options: letters, correct: correctLetter };
+}
+
+function generateMirrorImagePointMC() {
+  const presets = [
+    { A: { x: 70, y: 20 }, B: { x: 70, y: 180 } },
+    { A: { x: 20, y: 100 }, B: { x: 180, y: 100 } },
+    { A: { x: 30, y: 170 }, B: { x: 170, y: 30 } },
+    { A: { x: 30, y: 30 }, B: { x: 170, y: 170 } }
+  ];
+  const { A, B } = presets[rnd(0, presets.length - 1)];
+  const tLen = Math.hypot(B.x - A.x, B.y - A.y) || 1;
+  const t = { x: (B.x - A.x) / tLen, y: (B.y - A.y) / tLen };
+  const n = { x: -t.y, y: t.x };
+  const p0 = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+  const u = [0.3, 0.7][rnd(0, 1)];
+  const Q = { x: A.x + u * (B.x - A.x), y: A.y + u * (B.y - A.y) };
+  const sign = Math.random() < 0.5 ? 1 : -1;
+  const d = sign * rnd(28, 42);
+  const P = { x: Q.x + n.x * d, y: Q.y + n.y * d };
+  const v = { x: P.x - p0.x, y: P.y - p0.y };
+  const dPerp = v.x * n.x + v.y * n.y;
+  const dTang = v.x * t.x + v.y * t.y;
+  const clamp = (val) => Math.max(10, Math.min(190, val));
+  const correctPt = { x: clamp(P.x - 2 * dPerp * n.x), y: clamp(P.y - 2 * dPerp * n.y) };
+  const off = 20;
+  const wrongAxisPt = { x: clamp(correctPt.x + 2 * off * n.x), y: clamp(correctPt.y + 2 * off * n.y) };
+  const overshootPt = { x: clamp(P.x - 3 * dPerp * n.x), y: clamp(P.y - 3 * dPerp * n.y) };
+  const wrongOrientPt = { x: clamp(P.x - 2 * dTang * t.x), y: clamp(P.y - 2 * dTang * t.y) };
+  const candidates = [
+    { pt: correctPt, isCorrect: true },
+    { pt: wrongAxisPt, isCorrect: false },
+    { pt: overshootPt, isCorrect: false },
+    { pt: wrongOrientPt, isCorrect: false }
+  ].sort(() => Math.random() - 0.5);
+  const letters = ["A", "B", "C", "D"];
+  let correctLetter = "", markers = "";
+  candidates.forEach((c, i) => {
+    const letter = letters[i];
+    if (c.isCorrect) correctLetter = letter;
+    markers += `<circle cx="${c.pt.x.toFixed(1)}" cy="${c.pt.y.toFixed(1)}" r="6" fill="#0891b2" stroke="#0e7490" stroke-width="1.5"/><text x="${(c.pt.x + 10).toFixed(1)}" y="${(c.pt.y - 8).toFixed(1)}" font-size="14" font-weight="700" fill="#0e7490">${letter}</text>`;
+  });
+  const flagSign = Math.sign(dPerp);
+  const flagBase1 = { x: clamp(P.x + flagSign * n.x * 18 - t.x * 14), y: clamp(P.y + flagSign * n.y * 18 - t.y * 14) };
+  const flagBase2 = { x: clamp(P.x + flagSign * n.x * 18 + t.x * 14), y: clamp(P.y + flagSign * n.y * 18 + t.y * 14) };
+  const flag = `<polygon points="${P.x.toFixed(1)},${P.y.toFixed(1)} ${flagBase1.x.toFixed(1)},${flagBase1.y.toFixed(1)} ${flagBase2.x.toFixed(1)},${flagBase2.y.toFixed(1)}" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>`;
+  const lineSvg = `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#64748b" stroke-width="2.5" stroke-dasharray="7,5"/>`;
+  const pMarker = `<circle cx="${P.x.toFixed(1)}" cy="${P.y.toFixed(1)}" r="6" fill="#1e293b"/><text x="${(P.x + 9).toFixed(1)}" y="${(P.y - 9).toFixed(1)}" font-size="14" font-weight="700" fill="#1e293b">P</text>`;
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${lineSvg}${flag}${pMarker}${markers}</svg>`;
+  return { visual, prompt: "P' ist der Bildpunkt von P bei der Spiegelung an der eingezeichneten Achse. Welcher markierte Punkt (A–D) ist P'?", answerType: "mc", options: letters, correct: correctLetter };
+}
+
+function reflectPointAcrossLine(P, L1, L2) {
+  const len = Math.hypot(L2.x - L1.x, L2.y - L1.y) || 1;
+  const t = { x: (L2.x - L1.x) / len, y: (L2.y - L1.y) / len };
+  const n = { x: -t.y, y: t.x };
+  const v = { x: P.x - L1.x, y: P.y - L1.y };
+  const dPerp = v.x * n.x + v.y * n.y;
+  return { x: P.x - 2 * dPerp * n.x, y: P.y - 2 * dPerp * n.y };
+}
+// Mehrere Figuren (alle bekannten Formen) fürs "Bildpunkt einer Figur einzeichnen" -
+// bewusst auf der linken Bildhälfte platziert, damit sowohl die Achsenspiegelung
+// (Achse bei x=95) als auch die Punktspiegelung (Z nahe der Mitte) sicher innerhalb
+// des sichtbaren Bereichs bleiben.
+const IMAGE_POINT_FIGURES = [
+  { name: "Dreieck", verts: ["A", "B", "C"], points: { A: { x: 20, y: 150 }, B: { x: 70, y: 158 }, C: { x: 35, y: 105 } } },
+  { name: "Drachenviereck", verts: ["A", "B", "C", "D"], points: { A: { x: 45, y: 158 }, B: { x: 70, y: 120 }, C: { x: 45, y: 65 }, D: { x: 20, y: 120 } } },
+  { name: "Parallelogramm", verts: ["A", "B", "C", "D"], points: { A: { x: 15, y: 155 }, B: { x: 70, y: 155 }, C: { x: 85, y: 110 }, D: { x: 30, y: 110 } } },
+  { name: "Raute", verts: ["A", "B", "C", "D"], points: { A: { x: 45, y: 158 }, B: { x: 70, y: 115 }, C: { x: 45, y: 72 }, D: { x: 20, y: 115 } } }
+];
+function figurePolySVG(fig, color) {
+  const pts = fig.verts.map(v => `${fig.points[v].x},${fig.points[v].y}`).join(" ");
+  return `<polygon points="${pts}" fill="#dbeafe" stroke="${color || '#2563eb'}" stroke-width="2.5"/>`;
+}
+function figureLabelsSVG(fig) {
+  const cx = fig.verts.reduce((s, v) => s + fig.points[v].x, 0) / fig.verts.length;
+  const cy = fig.verts.reduce((s, v) => s + fig.points[v].y, 0) / fig.verts.length;
+  let out = "";
+  fig.verts.forEach(v => {
+    const p = fig.points[v];
+    const dx = p.x - cx, dy = p.y - cy, len = Math.hypot(dx, dy) || 1;
+    const lx = p.x + (dx / len) * 14, ly = p.y + (dy / len) * 14;
+    out += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#1e293b"/><text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="14" font-weight="700" fill="#1e293b">${v}</text>`;
+  });
+  return out;
+}
+function generateImagePointHotspot() {
+  const fig = IMAGE_POINT_FIGURES[rnd(0, IMAGE_POINT_FIGURES.length - 1)];
+  const targetName = fig.verts[rnd(0, fig.verts.length - 1)];
+  const kind = Math.random() < 0.5 ? "spiegelung" : "punktspiegelung";
+  const poly = figurePolySVG(fig);
+  const labels = figureLabelsSVG(fig);
+  const vertsStr = fig.verts.join("");
+  let cue, target, promptText;
+  if (kind === "spiegelung") {
+    const L1 = { x: 95, y: 10 }, L2 = { x: 95, y: 190 };
+    cue = `<line x1="${L1.x}" y1="${L1.y}" x2="${L2.x}" y2="${L2.y}" stroke="#64748b" stroke-width="2.5" stroke-dasharray="7,5"/>`;
+    target = reflectPointAcrossLine(fig.points[targetName], L1, L2);
+    promptText = `${fig.name} ${vertsStr} wird an der eingezeichneten Achse gespiegelt. Tippe auf die ungefähre Lage von ${targetName}'.`;
+  } else {
+    const Z = { x: rnd(88, 104), y: rnd(88, 104) };
+    cue = `<rect x="${(Z.x - 4).toFixed(1)}" y="${(Z.y - 4).toFixed(1)}" width="8" height="8" fill="#7c3aed"/><text x="${(Z.x + 10).toFixed(1)}" y="${(Z.y - 8).toFixed(1)}" font-size="14" font-weight="700" fill="#7c3aed">Z</text>`;
+    target = { x: 2 * Z.x - fig.points[targetName].x, y: 2 * Z.y - fig.points[targetName].y };
+    promptText = `${fig.name} ${vertsStr} wird an Z punktgespiegelt. Tippe auf die ungefähre Lage von ${targetName}'.`;
+  }
+  const clamp = (val) => Math.max(6, Math.min(194, val));
+  const clampedTarget = { x: clamp(target.x), y: clamp(target.y) };
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${cue}${poly}${labels}</svg>`;
+  return {
+    visual,
+    prompt: promptText,
+    answerType: "hotspot",
+    hotspotMode: "point",
+    viewBox: "0 0 200 200",
+    target: clampedTarget,
+    tolerance: 18
+  };
+}
+
+function rotatePt(x, y, cx, cy, rad) {
+  const dx = x - cx, dy = y - cy;
+  const cos = Math.cos(rad), sin = Math.sin(rad);
+  return { x: cx + dx * cos - dy * sin, y: cy + dx * sin + dy * cos };
+}
+// Alle Figuren sind in ihrer "Grundstellung" symmetrisch zur senkrechten Achse x=100
+// (jeweils von Hand geprüft: jeder Punkt hat ein Gegenstück bei 200-x, gleiches y).
+// Damit die Achse nicht immer senkrecht erscheint, werden Figur + Achse gemeinsam um
+// einen zufälligen Winkel um das Zentrum (100,100) gedreht - eine Drehung ändert nichts
+// an der Symmetrie, nur an ihrer Ausrichtung.
+const SYM_AXIS_SHAPES = [
+  { type: "polygon", points: [[100, 40], [50, 160], [150, 160]] },
+  { type: "polygon", points: [[60, 160], [140, 160], [140, 100], [100, 60], [60, 100]] },
+  { type: "polygon", points: [[100, 40], [150, 90], [100, 110], [50, 90]] },
+  { type: "lines", segs: [[[100, 35], [52, 170]], [[100, 35], [148, 170]], [[70, 120], [130, 120]]] },
+  { type: "polygon", points: [[100, 40], [150, 100], [100, 160], [50, 100]] },
+  { type: "polygon", points: [[70, 50], [130, 50], [155, 150], [45, 150]] },
+  { type: "polygon", points: [[100, 40], [160, 120], [130, 120], [130, 170], [70, 170], [70, 120], [40, 120]] },
+  { type: "lines", segs: [[[60, 40], [60, 160]], [[140, 40], [140, 160]], [[60, 100], [140, 100]]] }
+];
+function generateSymmetryAxisHotspot() {
+  const shape = SYM_AXIS_SHAPES[rnd(0, SYM_AXIS_SHAPES.length - 1)];
+  const angle = rnd(0, 179);
+  const rad = angle * Math.PI / 180;
+  const rp = (x, y) => rotatePt(x, y, 100, 100, rad);
+  let shapeSvg;
+  if (shape.type === "polygon") {
+    const pts = shape.points.map(([x, y]) => { const p = rp(x, y); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(" ");
+    shapeSvg = `<polygon points="${pts}" fill="#dbeafe" stroke="#2563eb" stroke-width="4"/>`;
+  } else {
+    shapeSvg = shape.segs.map(([[x1, y1], [x2, y2]]) => {
+      const p1 = rp(x1, y1), p2 = rp(x2, y2);
+      return `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/>`;
+    }).join("");
+  }
+  const axisP1 = rp(100, 25), axisP2 = rp(100, 175);
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${shapeSvg}</svg>`;
+  return {
+    visual,
+    prompt: "Zeichne die Symmetrieachse dieser Figur ein: Tippe zwei Punkte, durch die die Achse verläuft. Du kannst die Punkte danach noch verschieben.",
+    answerType: "hotspot",
+    hotspotMode: "line",
+    viewBox: "0 0 200 200",
+    targetLine: { x1: axisP1.x, y1: axisP1.y, x2: axisP2.x, y2: axisP2.y },
+    lineTolerance: 12
+  };
+}
+
+// Figuren mit MEHREREN Symmetrieachsen, die alle eingezeichnet werden müssen.
+const MULTI_AXIS_SHAPES = [
+  { name: "Quadrat", points: [[40, 40], [160, 40], [160, 160], [40, 160]],
+    axes: [[[100, 15], [100, 185]], [[15, 100], [185, 100]], [[15, 15], [185, 185]], [[15, 185], [185, 15]]] },
+  { name: "Rechteck", points: [[55, 70], [145, 70], [145, 130], [55, 130]],
+    axes: [[[100, 40], [100, 160]], [[30, 100], [170, 100]]] },
+  { name: "Raute (Rhombus)", points: [[100, 25], [160, 100], [100, 175], [40, 100]],
+    axes: [[[100, 25], [100, 175]], [[40, 100], [160, 100]]] }
+];
+function generateMultiSymmetryAxisHotspot() {
+  const shape = MULTI_AXIS_SHAPES[rnd(0, MULTI_AXIS_SHAPES.length - 1)];
+  const angle = rnd(0, 179);
+  const rad = angle * Math.PI / 180;
+  const rp = (x, y) => rotatePt(x, y, 100, 100, rad);
+  const pts = shape.points.map(([x, y]) => { const p = rp(x, y); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(" ");
+  const shapeSvg = `<polygon points="${pts}" fill="#dbeafe" stroke="#2563eb" stroke-width="4"/>`;
+  const targetLines = shape.axes.map(([[x1, y1], [x2, y2]]) => {
+    const p1 = rp(x1, y1), p2 = rp(x2, y2);
+    return { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y };
+  });
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${shapeSvg}</svg>`;
+  return {
+    visual,
+    prompt: `Diese Figur (${shape.name}) hat ${targetLines.length} Symmetrieachsen. Zeichne ALLE ${targetLines.length} ein: Tippe für jede Achse zwei Punkte, durch die sie verläuft.`,
+    answerType: "hotspot",
+    hotspotMode: "line",
+    viewBox: "0 0 200 200",
+    targetLines,
+    lineTolerance: 12
+  };
+}
+
+function generatePointReflectionCenterHotspot() {
+  const mode = Math.random() < 0.5 ? "points" : "figure";
+  if (mode === "points") {
+    // Z darf im ganzen mittleren Bereich liegen, und die 3 Punktepaare werden bewusst in
+    // 3 verschiedene Richtungen (120° auseinander, mit Zufallswinkel gedreht) und mit
+    // grossem Abstand von Z gesetzt - das verhindert, dass alle Paare zufällig eng
+    // zusammen in einer Ecke landen, und nutzt die ganze Bildfläche aus.
+    const Z = { x: rnd(55, 145), y: rnd(55, 145) };
+    const clampPt = (v) => Math.max(10, Math.min(190, v));
+    const rotOffset = rnd(0, 359);
+    const pairs = [];
+    for (let i = 0; i < 3; i++) {
+      const angle = (rotOffset + i * 120 + rnd(-15, 15)) * Math.PI / 180;
+      const dist = rnd(55, 95);
+      const rawP = { x: Z.x + Math.cos(angle) * dist, y: Z.y + Math.sin(angle) * dist };
+      const rawP2 = { x: 2 * Z.x - rawP.x, y: 2 * Z.y - rawP.y };
+      pairs.push({ P: { x: clampPt(rawP.x), y: clampPt(rawP.y) }, P2: { x: clampPt(rawP2.x), y: clampPt(rawP2.y) } });
+    }
+    let markers = "";
+    pairs.forEach((pr, i) => {
+      const idx = i + 1;
+      markers += `<circle cx="${pr.P.x.toFixed(1)}" cy="${pr.P.y.toFixed(1)}" r="6" fill="#1e293b"/><text x="${(pr.P.x + 9).toFixed(1)}" y="${(pr.P.y - 9).toFixed(1)}" font-size="13" font-weight="700" fill="#1e293b">P${idx}</text>`;
+      markers += `<circle cx="${pr.P2.x.toFixed(1)}" cy="${pr.P2.y.toFixed(1)}" r="6" fill="#dc2626"/><text x="${(pr.P2.x + 9).toFixed(1)}" y="${(pr.P2.y - 9).toFixed(1)}" font-size="13" font-weight="700" fill="#dc2626">P${idx}'</text>`;
+    });
+    const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${markers}</svg>`;
+    return {
+      visual,
+      prompt: "Jeder Punkt Pn' ist das Bild von Pn bei derselben Punktspiegelung. Tippe auf die ungefähre Lage des gemeinsamen Spiegelzentrums Z.",
+      answerType: "hotspot",
+      hotspotMode: "point",
+      viewBox: "0 0 200 200",
+      target: { x: Z.x, y: Z.y },
+      tolerance: 16
+    };
+  }
+  const fig = IMAGE_POINT_FIGURES[rnd(0, IMAGE_POINT_FIGURES.length - 1)];
+  const angle = rnd(0, 359) * Math.PI / 180;
+  const cx0 = fig.verts.reduce((s, v) => s + fig.points[v].x, 0) / fig.verts.length;
+  const cy0 = fig.verts.reduce((s, v) => s + fig.points[v].y, 0) / fig.verts.length;
+  // Figur leicht vergrössert (1.25x) und der Anker sowie Z deutlich variabler platziert
+  // als vorher (Z war fast immer in der Bildmitte) - dadurch liegen Original und Bild
+  // klar sichtbar auseinander statt eng zusammengedrängt.
+  const figScale = 1.25;
+  const anchor = { x: rnd(45, 78), y: rnd(112, 148) };
+  const clamp = (v) => Math.max(6, Math.min(194, v));
+  const orig = {};
+  fig.verts.forEach(v => {
+    const r = rotatePt(fig.points[v].x, fig.points[v].y, cx0, cy0, angle);
+    orig[v] = { x: clamp((r.x - cx0) * figScale + anchor.x), y: clamp((r.y - cy0) * figScale + anchor.y) };
+  });
+  const Z = { x: rnd(75, 128), y: rnd(75, 128) };
+  const image = {};
+  fig.verts.forEach(v => { image[v] = { x: clamp(2 * Z.x - orig[v].x), y: clamp(2 * Z.y - orig[v].y) }; });
+  const polyOrig = `<polygon points="${fig.verts.map(v => `${orig[v].x.toFixed(1)},${orig[v].y.toFixed(1)}`).join(" ")}" fill="#dbeafe" stroke="#2563eb" stroke-width="2.5"/>`;
+  const polyImage = `<polygon points="${fig.verts.map(v => `${image[v].x.toFixed(1)},${image[v].y.toFixed(1)}`).join(" ")}" fill="#fed7aa" stroke="#ea580c" stroke-width="2.5"/>`;
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${polyOrig}${polyImage}</svg>`;
+  return {
+    visual,
+    prompt: "Die orange Figur ist das Bild der blauen Figur bei einer Punktspiegelung. Tippe auf die ungefähre Lage des Spiegelzentrums Z.",
+    answerType: "hotspot",
+    hotspotMode: "point",
+    viewBox: "0 0 200 200",
+    target: { x: Z.x, y: Z.y },
+    tolerance: 18
+  };
+}
+
+function generateParallelogramMissingVertexHotspot() {
+  const A = { x: 50, y: 150 };
+  const u = { x: rnd(50, 90), y: rnd(-20, 10) };
+  const w = { x: rnd(-10, 30), y: rnd(-70, -40) };
+  const B = { x: A.x + u.x, y: A.y + u.y };
+  const C = { x: B.x + w.x, y: B.y + w.y };
+  const D = { x: A.x + C.x - B.x, y: A.y + C.y - B.y };
+  const seg = `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#2563eb" stroke-width="2.5"/>` +
+    `<line x1="${B.x}" y1="${B.y}" x2="${C.x}" y2="${C.y}" stroke="#2563eb" stroke-width="2.5"/>`;
+  const labelOffsets = {
+    A: { dx: -16, dy: 5 },
+    B: { dx: 10, dy: -8 },
+    C: { dx: 10, dy: -8 }
+  };
+  let labels = "";
+  [["A", A], ["B", B], ["C", C]].forEach(([name, p]) => {
+    const off = labelOffsets[name];
+    labels += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#1e293b"/><text x="${(p.x + off.dx).toFixed(1)}" y="${(p.y + off.dy).toFixed(1)}" font-size="14" font-weight="700" fill="#1e293b">${name}</text>`;
+  });
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${seg}${labels}</svg>`;
+  return {
+    visual,
+    prompt: "Diese drei Punkte sind drei Ecken eines Parallelogramms ABCD. Tippe auf die ungefähre Lage der vierten Ecke D.",
+    answerType: "hotspot",
+    hotspotMode: "point",
+    viewBox: "0 0 200 200",
+    target: { x: D.x, y: D.y },
+    tolerance: 17
+  };
+}
+
+function reflectVLine(p, m) { return { x: 2 * m - p.x, y: p.y }; }
+function reflectHLine(p, m) { return { x: p.x, y: 2 * m - p.y }; }
+function triPolyViewBox(pts, margin) {
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  const minX = Math.min(...xs) - margin, minY = Math.min(...ys) - margin;
+  const w = Math.max(...xs) - Math.min(...xs) + 2 * margin, h = Math.max(...ys) - Math.min(...ys) + 2 * margin;
+  return `${minX.toFixed(1)} ${minY.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`;
+}
+function triMiniSVG(pts) {
+  const poly = pts.map(p => `${p.x},${p.y}`).join(" ");
+  return `<svg viewBox="${triPolyViewBox(pts, 14)}" class="mt-mini-shape"><polygon points="${poly}" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/></svg>`;
+}
+// Alle bekannten Formen als kleine Vorlage, jeweils oben links platziert -
+// eine zufällige Verschiebung (jx/jy) sorgt dafür, dass die Figur nicht immer an
+// derselben Stelle startet.
+const DOUBLE_REFLECT_SHAPES = [
+  [{ x: 40, y: 40 }, { x: 80, y: 40 }, { x: 40, y: 70 }],
+  [{ x: 40, y: 40 }, { x: 65, y: 40 }, { x: 40, y: 80 }],
+  [{ x: 35, y: 35 }, { x: 65, y: 35 }, { x: 65, y: 65 }, { x: 35, y: 65 }],
+  [{ x: 45, y: 30 }, { x: 75, y: 50 }, { x: 55, y: 80 }, { x: 30, y: 55 }],
+  [{ x: 30, y: 30 }, { x: 70, y: 30 }, { x: 85, y: 60 }, { x: 45, y: 60 }]
+];
+function generateDoubleReflectionMC() {
+  const base = DOUBLE_REFLECT_SHAPES[rnd(0, DOUBLE_REFLECT_SHAPES.length - 1)];
+  const jx = rnd(-12, 12), jy = rnd(-12, 12);
+  const original = base.map(p => ({ x: p.x + jx, y: p.y + jy }));
+  const axis1X = 100, axis2Y = 100;
+  const afterAxis1 = original.map(p => reflectVLine(p, axis1X));
+  const finalCorrect = afterAxis1.map(p => reflectHLine(p, axis2Y));
+  const onlyAxis1 = afterAxis1;
+  const onlyAxis2 = original.map(p => reflectHLine(p, axis2Y));
+  const n = original.length;
+  const cOrig = { x: original.reduce((s, p) => s + p.x, 0) / n, y: original.reduce((s, p) => s + p.y, 0) / n };
+  const cFinal = { x: finalCorrect.reduce((s, p) => s + p.x, 0) / n, y: finalCorrect.reduce((s, p) => s + p.y, 0) / n };
+  const shift = { x: cFinal.x - cOrig.x, y: cFinal.y - cOrig.y };
+  const translatedWrong = original.map(p => ({ x: p.x + shift.x, y: p.y + shift.y }));
+  const candidates = [
+    { pts: finalCorrect, isCorrect: true },
+    { pts: onlyAxis1, isCorrect: false },
+    { pts: onlyAxis2, isCorrect: false },
+    { pts: translatedWrong, isCorrect: false }
+  ].sort(() => Math.random() - 0.5);
+  const letters = ["A", "B", "C", "D"];
+  let correctLetter = "", thumbs = "";
+  candidates.forEach((c, i) => {
+    const letter = letters[i];
+    if (c.isCorrect) correctLetter = letter;
+    thumbs += `<div style="text-align:center">${triMiniSVG(c.pts)}<div style="font-size:13px;font-weight:700;color:#334155">${letter}</div></div>`;
+  });
+  const shapePoly = `<polygon points="${original.map(p => `${p.x},${p.y}`).join(" ")}" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>`;
+  const axis1Svg = `<line x1="${axis1X}" y1="10" x2="${axis1X}" y2="190" stroke="#16a34a" stroke-width="3"/><text x="${axis1X + 8}" y="24" font-size="12" font-weight="700" fill="#16a34a">Achse 1</text>`;
+  const axis2Svg = `<line x1="10" y1="${axis2Y}" x2="190" y2="${axis2Y}" stroke="#dc2626" stroke-width="3" stroke-dasharray="7,5"/><text x="150" y="${axis2Y - 8}" font-size="12" font-weight="700" fill="#dc2626">Achse 2</text>`;
+  const mainSvg = `<svg viewBox="0 0 200 200" class="mt-shape">${axis1Svg}${axis2Svg}${shapePoly}</svg>`;
+  const visual = `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;max-width:100%">${mainSvg}<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;max-width:100%">${thumbs}</div></div>`;
+  return { visual, prompt: "Die Figur wird zuerst an Achse 1, dann an Achse 2 gespiegelt. Welches Ergebnis (A–D) ist richtig?", answerType: "mc", options: letters, correct: correctLetter };
+}
+
+// Die Katheten werden proportional zu p/q gezeichnet (statt immer gleich lang) -
+// so sieht jedes Dreieck visuell wirklich anders aus, nicht nur die Zahlen daneben.
+function triPanelSVG(offsetX, mirror, p, q, pLabel, qLabel, angleLabel) {
+  // Feste Mindestlänge (+20) verhindert zu kleine, unleserliche Dreiecke bei kleinem p/q.
+  const v1 = { x: 55, y: 100 };
+  const dxH = 20 + p * 5, dyV = 20 + q * 5;
+  const v2 = { x: mirror ? v1.x + dxH : v1.x - dxH, y: v1.y };
+  const v3 = { x: v1.x, y: v1.y - dyV };
+  const abs = [v1, v2, v3].map(pt => ({ x: pt.x + offsetX, y: pt.y }));
+  const [av1, av2, av3] = abs;
+  const poly = `<polygon points="${av1.x},${av1.y} ${av2.x},${av2.y} ${av3.x},${av3.y}" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>`;
+  const midP = { x: (av1.x + av2.x) / 2, y: (av1.y + av2.y) / 2 + 14 };
+  const midQ = { x: (av1.x + av3.x) / 2 + (mirror ? 16 : -16), y: (av1.y + av3.y) / 2 };
+  const angPos = { x: av1.x + (mirror ? 16 : -16), y: av1.y - 8 };
+  return `${poly}<text x="${midP.x}" y="${midP.y}" font-size="12" text-anchor="middle" fill="#334155">${pLabel}</text><text x="${midQ.x}" y="${midQ.y}" font-size="12" text-anchor="middle" fill="#334155">${qLabel}</text><text x="${angPos.x}" y="${angPos.y}" font-size="12" text-anchor="middle" fill="#334155">${angleLabel}</text>`;
+}
+function triSideFromSAS(p, q, angleDeg) { return Math.sqrt(p * p + q * q - 2 * p * q * Math.cos(angleDeg * Math.PI / 180)); }
+function generateTriangleCongruentTruth() {
+  const angles = [30, 40, 50, 60, 70, 80, 100, 110, 120, 130, 140, 150];
+  const p = rnd(4, 9), q = rnd(4, 9), angle = angles[rnd(0, angles.length - 1)];
+  const r1 = triSideFromSAS(p, q, angle);
+  const isCongruent = Math.random() < 0.5;
+  let p2 = p, q2 = q, angle2 = angle, r2 = r1;
+  if (!isCongruent) {
+    const sorted1 = [p, q, r1].map(v => Math.round(v * 100) / 100).sort((a, b) => a - b);
+    let tries = 0;
+    do {
+      const which = rnd(0, 2);
+      p2 = p; q2 = q; angle2 = angle;
+      if (which === 0) { const delta = [-3, -2, 2, 3][rnd(0, 3)]; p2 = Math.min(9, Math.max(3, p + delta)); if (p2 === p) p2 = p - 3; }
+      else if (which === 1) { const delta = [-3, -2, 2, 3][rnd(0, 3)]; q2 = Math.min(9, Math.max(3, q + delta)); if (q2 === q) q2 = q - 3; }
+      else { const delta = [-40, -25, 25, 40][rnd(0, 3)]; angle2 = Math.min(165, Math.max(15, angle + delta)); if (angle2 === angle) angle2 = angle > 90 ? angle - 40 : angle + 40; }
+      r2 = triSideFromSAS(p2, q2, angle2);
+      tries++;
+    } while (JSON.stringify([p2, q2, Math.round(r2 * 100) / 100].sort((a, b) => a - b)) === JSON.stringify(sorted1) && tries < 8);
+  }
+  const mirror2 = Math.random() < 0.5;
+  const panel1 = triPanelSVG(15, false, p, q, `${p} cm`, `${q} cm`, `${angle}°`);
+  const panel2 = triPanelSVG(125, mirror2, p2, q2, `${p2} cm`, `${q2} cm`, `${angle2}°`);
+  const visual = `<svg viewBox="0 0 260 130" class="mt-shape">${panel1}${panel2}</svg>`;
+  return { visual, prompt: "Sind diese beiden Dreiecke kongruent?", answerType: "boolean", correct: isCongruent ? 1 : 0 };
+}
+
+/* ---- Konstruktionen (Mittelsenkrechte/Winkelhalbierende) ohne echten Zirkel:
+   Zirkelschläge werden als fertige Kreisbögen dargestellt, die Übung testet das
+   Verständnis der Konstruktionsschritte selbst (wo entsteht der nächste Punkt,
+   welcher Radius ist gültig, welcher Schritt käme als nächstes). ---- */
+function circleCircleIntersections(C1, r1, C2, r2) {
+  const dx = C2.x - C1.x, dy = C2.y - C1.y;
+  const d = Math.hypot(dx, dy);
+  if (d === 0 || d > r1 + r2 || d < Math.abs(r1 - r2)) return null;
+  const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+  const hSq = r1 * r1 - a * a;
+  if (hSq < 0) return null;
+  const h = Math.sqrt(hSq);
+  const xm = C1.x + a * dx / d, ym = C1.y + a * dy / d;
+  const rx = -dy * (h / d), ry = dx * (h / d);
+  return [{ x: xm + rx, y: ym + ry }, { x: xm - rx, y: ym - ry }];
+}
+function arcPolyline(center, r, angleStart, angleEnd, color, steps) {
+  steps = steps || 16;
+  // Die Bogen-Enden (v.a. der kleine "Überschuss" über die Schnittpunkte hinaus) an den
+  // sichtbaren Bereich klemmen, statt sie vom SVG unsichtbar abschneiden zu lassen.
+  const clamp = (v) => Math.max(2, Math.min(198, v));
+  let pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const a = angleStart + (angleEnd - angleStart) * i / steps;
+    pts.push(`${clamp(center.x + r * Math.cos(a)).toFixed(1)},${clamp(center.y + r * Math.sin(a)).toFixed(1)}`);
+  }
+  return `<polyline points="${pts.join(" ")}" fill="none" stroke="${color || '#94a3b8'}" stroke-width="2"/>`;
+}
+// Kürzt einen Strahl ab Z in Richtung `angle` so, dass er innerhalb der viewBox bleibt,
+// statt über den Rand hinauszuragen (und dort vom SVG abgeschnitten zu werden).
+function clampRayLength(Z, angle, desiredLen, margin) {
+  margin = margin == null ? 8 : margin;
+  const dx = Math.cos(angle), dy = Math.sin(angle);
+  let maxT = desiredLen;
+  if (dx > 0.001) maxT = Math.min(maxT, (200 - margin - Z.x) / dx);
+  else if (dx < -0.001) maxT = Math.min(maxT, (margin - Z.x) / dx);
+  if (dy > 0.001) maxT = Math.min(maxT, (200 - margin - Z.y) / dy);
+  else if (dy < -0.001) maxT = Math.min(maxT, (margin - Z.y) / dy);
+  return Math.max(25, maxT);
+}
+function arcThroughTwoPoints(center, r, P1, P2, color) {
+  const th1 = Math.atan2(P1.y - center.y, P1.x - center.x);
+  const th2 = Math.atan2(P2.y - center.y, P2.x - center.x);
+  let diff = th2 - th1;
+  while (diff > Math.PI) diff -= 2 * Math.PI;
+  while (diff < -Math.PI) diff += 2 * Math.PI;
+  const extra = (12 * Math.PI / 180) * (diff < 0 ? -1 : 1);
+  return arcPolyline(center, r, th1 - extra, th1 + diff + extra, color);
+}
+function generateMittelsenkrechteConstructPoint() {
+  let A, B, d;
+  do { A = { x: rnd(30, 80), y: rnd(50, 150) }; B = { x: rnd(120, 170), y: rnd(50, 150) }; d = Math.hypot(B.x - A.x, B.y - A.y); } while (d < 70 || d > 150);
+  const r = d / 2 + rnd(15, 35);
+  const [I1, I2] = circleCircleIntersections(A, r, B, r);
+  const arcA = arcThroughTwoPoints(A, r, I1, I2);
+  const arcB = arcThroughTwoPoints(B, r, I1, I2);
+  const segAB = `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+  const labelA = `<circle cx="${A.x}" cy="${A.y}" r="4" fill="#1e293b"/><text x="${(A.x - 14).toFixed(1)}" y="${(A.y + 5).toFixed(1)}" font-size="13" font-weight="700" fill="#1e293b">A</text>`;
+  const labelB = `<circle cx="${B.x}" cy="${B.y}" r="4" fill="#1e293b"/><text x="${(B.x + 8).toFixed(1)}" y="${(B.y + 5).toFixed(1)}" font-size="13" font-weight="700" fill="#1e293b">B</text>`;
+  const clamp = (v) => Math.max(6, Math.min(194, v));
+  const I1c = { x: clamp(I1.x), y: clamp(I1.y) };
+  const knownPt = `<circle cx="${I1c.x.toFixed(1)}" cy="${I1c.y.toFixed(1)}" r="5" fill="#16a34a"/><text x="${(I1c.x + 8).toFixed(1)}" y="${(I1c.y - 6).toFixed(1)}" font-size="13" font-weight="700" fill="#16a34a">S1</text>`;
+  const target = { x: clamp(I2.x), y: clamp(I2.y) };
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${arcA}${arcB}${segAB}${labelA}${labelB}${knownPt}</svg>`;
+  return {
+    visual,
+    prompt: "Die beiden Kreisbögen um A und B (gleicher Radius) schneiden sich zweimal. Ein Schnittpunkt S1 ist markiert. Tippe auf die Lage des zweiten Schnittpunkts - beide zusammen legen die Mittelsenkrechte von AB fest.",
+    answerType: "hotspot", hotspotMode: "point", viewBox: "0 0 200 200", target, tolerance: 14
+  };
+}
+function generateWinkelhalbierendeConstructPoint() {
+  // Bereiche für Z/Winkel/Radius bewusst so gewählt, dass P und Q (Z + r1 in Schenkelrichtung)
+  // im ungünstigsten Fall (steilster Winkel, grösster Radius) immer innerhalb der viewBox bleiben.
+  const Z = { x: rnd(45, 85), y: rnd(90, 125) };
+  const theta = rnd(45, 100) * Math.PI / 180;
+  const rot = rnd(-15, 15) * Math.PI / 180;
+  const leg1Dir = rot, leg2Dir = rot + theta;
+  const leg1Len = clampRayLength(Z, leg1Dir, 120), leg2Len = clampRayLength(Z, leg2Dir, 120);
+  const leg1End = { x: Z.x + leg1Len * Math.cos(leg1Dir), y: Z.y + leg1Len * Math.sin(leg1Dir) };
+  const leg2End = { x: Z.x + leg2Len * Math.cos(leg2Dir), y: Z.y + leg2Len * Math.sin(leg2Dir) };
+  const r1 = rnd(45, 62);
+  const P = { x: Z.x + r1 * Math.cos(leg1Dir), y: Z.y + r1 * Math.sin(leg1Dir) };
+  const Q = { x: Z.x + r1 * Math.cos(leg2Dir), y: Z.y + r1 * Math.sin(leg2Dir) };
+  const pq = Math.hypot(Q.x - P.x, Q.y - P.y);
+  const r2 = pq * 0.75 + rnd(10, 20);
+  const [R1, R2] = circleCircleIntersections(P, r2, Q, r2);
+  const bisDir = { x: Math.cos(leg1Dir) + Math.cos(leg2Dir), y: Math.sin(leg1Dir) + Math.sin(leg2Dir) };
+  const scoreAlong = (pt) => (pt.x - Z.x) * bisDir.x + (pt.y - Z.y) * bisDir.y;
+  const R = scoreAlong(R1) > scoreAlong(R2) ? R1 : R2;
+  const arc1 = arcPolyline(Z, r1, Math.min(leg1Dir, leg2Dir) - 8 * Math.PI / 180, Math.max(leg1Dir, leg2Dir) + 8 * Math.PI / 180);
+  const arcP = arcThroughTwoPoints(P, r2, R1, R2);
+  const arcQ = arcThroughTwoPoints(Q, r2, R1, R2);
+  const leg1Line = `<line x1="${Z.x}" y1="${Z.y}" x2="${leg1End.x.toFixed(1)}" y2="${leg1End.y.toFixed(1)}" stroke="#334155" stroke-width="2.5"/>`;
+  const leg2Line = `<line x1="${Z.x}" y1="${Z.y}" x2="${leg2End.x.toFixed(1)}" y2="${leg2End.y.toFixed(1)}" stroke="#334155" stroke-width="2.5"/>`;
+  const zLabel = `<circle cx="${Z.x}" cy="${Z.y}" r="4" fill="#1e293b"/><text x="${(Z.x - 14).toFixed(1)}" y="${(Z.y + 10).toFixed(1)}" font-size="13" font-weight="700" fill="#1e293b">Z</text>`;
+  const pLabel = `<circle cx="${P.x.toFixed(1)}" cy="${P.y.toFixed(1)}" r="4" fill="#1e293b"/><text x="${(P.x + 7).toFixed(1)}" y="${(P.y - 6).toFixed(1)}" font-size="12" font-weight="700" fill="#1e293b">P</text>`;
+  const qLabel = `<circle cx="${Q.x.toFixed(1)}" cy="${Q.y.toFixed(1)}" r="4" fill="#1e293b"/><text x="${(Q.x + 7).toFixed(1)}" y="${(Q.y - 6).toFixed(1)}" font-size="12" font-weight="700" fill="#1e293b">Q</text>`;
+  const clamp = (v) => Math.max(6, Math.min(194, v));
+  const target = { x: clamp(R.x), y: clamp(R.y) };
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${leg1Line}${leg2Line}${arc1}${arcP}${arcQ}${zLabel}${pLabel}${qLabel}</svg>`;
+  return {
+    visual,
+    prompt: "Der erste Bogen um Z schneidet beide Schenkel in P und Q. Von P und Q aus sind zwei gleich grosse Bögen eingezeichnet. Tippe auf ihren Schnittpunkt - er liegt auf der Winkelhalbierenden.",
+    answerType: "hotspot", hotspotMode: "point", viewBox: "0 0 200 200", target, tolerance: 14
+  };
+}
+function generateMittelsenkrechteNextStepMC() {
+  const angle = rnd(0, 359) * Math.PI / 180;
+  const rp = (x, y) => rotatePt(x, y, 100, 100, angle);
+  const A = rp(60, 100), B = rp(140, 100);
+  const rCorrect = 55, rWrongDiff = 38;
+  const mid = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+  const dot = (P) => `<circle cx="${P.x.toFixed(1)}" cy="${P.y.toFixed(1)}" r="4" fill="#1e293b"/>`;
+  const circ = (C, r) => `<circle cx="${C.x.toFixed(1)}" cy="${C.y.toFixed(1)}" r="${r}" fill="none" stroke="#2563eb" stroke-width="2"/>`;
+  const base = `${dot(A)}${dot(B)}${circ(A, rCorrect)}`;
+  const options = [
+    { key: "correct", svg: `${base}${circ(B, rCorrect)}` },
+    { key: "diffRadius", svg: `${base}${circ(B, rWrongDiff)}` },
+    { key: "wrongCenter", svg: `${base}${circ(mid, rCorrect)}` },
+    { key: "twiceA", svg: `${base}${circ(A, rCorrect - 20)}` }
+  ].sort(() => Math.random() - 0.5);
+  const letters = ["A", "B", "C", "D"];
+  let correctLetter = "", thumbs = "";
+  options.forEach((o, i) => {
+    const letter = letters[i];
+    if (o.key === "correct") correctLetter = letter;
+    thumbs += `<div style="text-align:center"><svg viewBox="0 0 200 200" class="mt-mini-shape">${o.svg}</svg><div style="font-size:13px;font-weight:700;color:#334155">${letter}</div></div>`;
+  });
+  const visual = `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;max-width:100%"><svg viewBox="0 0 200 200" class="mt-shape">${base}</svg><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;max-width:100%">${thumbs}</div></div>`;
+  return {
+    visual,
+    prompt: "Der Kreisbogen um A ist schon gezeichnet. Welches Bild (A–D) zeigt den richtigen nächsten Schritt, um die Mittelsenkrechte von AB zu konstruieren?",
+    answerType: "mc", options: letters, correct: correctLetter
+  };
+}
+function generateMittelsenkrechteRadiusTruth() {
+  const angle = rnd(0, 359) * Math.PI / 180;
+  const rp = (x, y) => rotatePt(x, y, 100, 100, angle);
+  const A = rp(70, 100), B = rp(130, 100);
+  const d = 60;
+  const sufficient = Math.random() < 0.5;
+  const r = sufficient ? d / 2 + rnd(10, 30) : rnd(12, d / 2 - 5);
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">` +
+    `<line x1="${A.x.toFixed(1)}" y1="${A.y.toFixed(1)}" x2="${B.x.toFixed(1)}" y2="${B.y.toFixed(1)}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>` +
+    `<circle cx="${A.x.toFixed(1)}" cy="${A.y.toFixed(1)}" r="4" fill="#1e293b"/><circle cx="${B.x.toFixed(1)}" cy="${B.y.toFixed(1)}" r="4" fill="#1e293b"/>` +
+    `<circle cx="${A.x.toFixed(1)}" cy="${A.y.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="#2563eb" stroke-width="2"/>` +
+    `<circle cx="${B.x.toFixed(1)}" cy="${B.y.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="#2563eb" stroke-width="2"/></svg>`;
+  return { visual, prompt: "Beide Kreise um A und B haben den gleichen Radius (siehe Bild). Reicht dieser Radius aus, um damit die Mittelsenkrechte von AB zu konstruieren?", answerType: "boolean", correct: sufficient ? 1 : 0 };
+}
+function generateMittelparalleleConstruct() {
+  const angle = rnd(0, 359) * Math.PI / 180;
+  const rp = (x, y) => rotatePt(x, y, 100, 100, angle);
+  const A = rp(60, 150), B = rp(150, 150), C = rp(90, 60);
+  function midpointConstruction(P1, P2) {
+    const d = Math.hypot(P2.x - P1.x, P2.y - P1.y);
+    const r = d / 2 + rnd(12, 24);
+    const [I1, I2] = circleCircleIntersections(P1, r, P2, r);
+    const arc1 = arcThroughTwoPoints(P1, r, I1, I2);
+    const arc2 = arcThroughTwoPoints(P2, r, I1, I2);
+    return { arc1, arc2, mid: { x: (P1.x + P2.x) / 2, y: (P1.y + P2.y) / 2 } };
+  }
+  const mAB = midpointConstruction(A, B);
+  const mAC = midpointConstruction(A, C);
+  const clamp = (v) => Math.max(6, Math.min(194, v));
+  const triPoly = `<polygon points="${A.x.toFixed(1)},${A.y.toFixed(1)} ${B.x.toFixed(1)},${B.y.toFixed(1)} ${C.x.toFixed(1)},${C.y.toFixed(1)}" fill="none" stroke="#334155" stroke-width="2.5"/>`;
+  const lbl = (P, name, dx, dy) => `<circle cx="${P.x.toFixed(1)}" cy="${P.y.toFixed(1)}" r="4" fill="#1e293b"/><text x="${(P.x + dx).toFixed(1)}" y="${(P.y + dy).toFixed(1)}" font-size="13" font-weight="700" fill="#1e293b">${name}</text>`;
+  const midLbl = (P, name) => `<circle cx="${P.x.toFixed(1)}" cy="${P.y.toFixed(1)}" r="5" fill="#16a34a"/><text x="${(P.x + 8).toFixed(1)}" y="${(P.y - 6).toFixed(1)}" font-size="13" font-weight="700" fill="#16a34a">${name}</text>`;
+  const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${mAB.arc1}${mAB.arc2}${mAC.arc1}${mAC.arc2}${triPoly}${lbl(A, "A", -14, 5)}${lbl(B, "B", 8, 5)}${lbl(C, "C", -5, -10)}${midLbl(mAB.mid, "M1")}${midLbl(mAC.mid, "M2")}</svg>`;
+  return {
+    visual,
+    prompt: "M1 und M2 sind die durch Konstruktion gefundenen Mittelpunkte der Seiten AB und AC. Zeichne die Mittelparallele ein: Tippe zwei Punkte, durch die sie verläuft.",
+    answerType: "hotspot", hotspotMode: "line", viewBox: "0 0 200 200",
+    targetLine: { x1: clamp(mAB.mid.x), y1: clamp(mAB.mid.y), x2: clamp(mAC.mid.x), y2: clamp(mAC.mid.y) },
+    lineTolerance: 12
+  };
+}
+function generateConstructionMixedTask() {
+  const kind = rnd(0, 4);
+  if (kind === 0) return generateMittelsenkrechteConstructPoint();
+  if (kind === 1) return generateWinkelhalbierendeConstructPoint();
+  if (kind === 2) return generateMittelsenkrechteNextStepMC();
+  if (kind === 3) return generateMittelsenkrechteRadiusTruth();
+  return generateMittelparalleleConstruct();
+}
 
 function generateCalcChain() {
   let start = rnd(1, 30), val = start;
@@ -2442,6 +3249,29 @@ function generateBarChartRead() {
   const max = Math.max(...values) + 2;
   const idx = rnd(0, n - 1);
   return { visual: barChartSVG(labels, values, max), prompt: `Das Balkendiagramm zeigt die Anzahl verkaufter Eis pro Tag. Welchen Wert hat "${labels[idx]}"?`, answerType: "number", correct: values[idx] };
+}
+function generateBarChartMaxHotspot() {
+  const n = rnd(4, 5);
+  const labels = ["Mo", "Di", "Mi", "Do", "Fr"].slice(0, n);
+  let values;
+  do {
+    values = Array.from({ length: n }, () => rnd(2, 20));
+  } while (new Set(values).size !== values.length);
+  const max = Math.max(...values) + 2;
+  const maxIdx = values.indexOf(Math.max(...values));
+  const barW = 32, gap = 14, baseY = 150;
+  const bh = (values[maxIdx] / max) * 110;
+  const barX = 15 + maxIdx * (barW + gap);
+  const visual = barChartSVG(labels, values, max);
+  return {
+    visual,
+    prompt: "Tippe auf den höchsten Balken.",
+    answerType: "hotspot",
+    hotspotMode: "point",
+    viewBox: "0 0 240 180",
+    target: { x: barX + barW / 2, y: baseY - bh / 2 },
+    tolerance: 14
+  };
 }
 function generateFractionOfQuantity() {
   const dens = [2, 3, 4, 5, 6, 8, 10];
@@ -3041,7 +3871,8 @@ const BASISWISSEN_CHAPTERS = [
   ]),
   chapter("bw-koord", "Koordinatensystem", [
     ex("bw-koord-1", "Punkte ablesen", generateCoordinateRead, "Die erste Zahl (x) ist der Wert auf der waagrechten Achse, die zweite (y) auf der senkrechten Achse."),
-    ex("bw-koord-2", "Punkt verschieben", generateCoordinateOffset, "Lies zuerst die Koordinaten von P ab, dann rechne die Verschiebung auf x und y separat dazu bzw. davon ab.")
+    ex("bw-koord-2", "Punkt verschieben", generateCoordinateOffset, "Lies zuerst die Koordinaten von P ab, dann rechne die Verschiebung auf x und y separat dazu bzw. davon ab."),
+    ex("bw-koord-tap", "Punkt einzeichnen", generatePointPlacementHotspot, "Gehe vom Ursprung (Schnittpunkt der Achsen) zuerst so viele Kästchen nach rechts/links wie die erste Zahl angibt (x), dann so viele nach oben/unten wie die zweite Zahl angibt (y). Tippe genau dort hin.")
   ]),
   chapter("bw-mass", "Masseinheiten umrechnen", [
     ex("bw-mass-1", "Masseinheiten umrechnen", generateUnitConversion, "Überlege, ob die neue Einheit grösser oder kleiner ist: bei einer grösseren Einheit wird die Zahl kleiner, bei einer kleineren Einheit wird die Zahl grösser.")
@@ -3062,7 +3893,8 @@ const BASISWISSEN_CHAPTERS = [
   chapter("bw-winkel", "Winkel bestimmen", [
     ex("bw-winkel-1", "Ergänzungswinkel", generateAngle, "Ergänzungswinkel zu 90° (Komplementärwinkel) bzw. zu 180° (Supplementärwinkel): ziehe den gegebenen Winkel von 90° bzw. 180° ab."),
     ex("bw-winkel-2", "Winkelsumme im Dreieck", generateTriangleAngleSum, "Die Winkelsumme im Dreieck ist immer 180°. Ziehe die beiden bekannten Winkel von 180° ab."),
-    ex("bw-winkel-3", "Winkelsumme im Viereck", generateQuadAngleSum, "Die Winkelsumme im Viereck ist immer 360°. Ziehe die drei bekannten Winkel von 360° ab.")
+    ex("bw-winkel-3", "Winkelsumme im Viereck", generateQuadAngleSum, "Die Winkelsumme im Viereck ist immer 360°. Ziehe die drei bekannten Winkel von 360° ab."),
+    ex("bw-winkel-tap", "Rechten Winkel erkennen", generateRightAngleHotspot, "Ein rechter Winkel misst genau 90° – die beiden Linien stehen wie bei einer Zimmerecke senkrecht zueinander. Vergleiche die vier Ecken und tippe auf diejenige, die am ehesten wie ein L bzw. eine Zimmerecke aussieht.")
   ]),
   chapter("bw-fachbegriffe", "Fachbegriffe", [
     ex("bw-fach-1", "Fachbegriffe 1. Jahr", () => generateFachbegriff(1), "Überlege dir, in welchem Zusammenhang der Begriff im Unterricht vorkam, oder erkenne die passende Beschreibung."),
@@ -3075,16 +3907,29 @@ const BASISWISSEN_CHAPTERS = [
 ];
 
 const JAHR1_CHAPTERS = [
-  chapter("1a", "Die Achsensymmetrie", [ex("1a-1", "Symmetrieachsen zählen", generateAxisSymmetry, "Falte die Figur gedanklich entlang einer Linie. Liegen beide Hälften genau aufeinander, ist es eine Symmetrieachse.")]),
-  chapter("1b", "Die Drehsymmetrie", [ex("1b-1", "Drehsymmetrie-Ordnung bestimmen", generateRotSymmetry, "Drehe die Figur gedanklich um ihren Mittelpunkt und zähle, bei wie vielen Drehungen (inkl. der vollen 360°) sie wieder gleich aussieht.")]),
+  chapter("1a", "Die Achsensymmetrie", [
+    ex("1a-1", "Symmetrieachsen zählen", generateAxisSymmetry, "Falte die Figur gedanklich entlang einer Linie. Liegen beide Hälften genau aufeinander, ist es eine Symmetrieachse."),
+    ex("1a-symachse", "Symmetrieachse erkennen", generateAxisMirrorLineMC, "Eine Symmetrieachse muss die Figur so teilen, dass beide Hälften beim Falten genau aufeinander liegen. Prüfe für jede eingezeichnete Linie, ob sie durch die Spitze(n) bzw. die Mitte gegenüberliegender Seiten verläuft."),
+    ex("1a-symachse-tippen", "Symmetrieachse einzeichnen", generateSymmetryAxisHotspot, "Eine Symmetrieachse teilt die Figur in zwei spiegelgleiche Hälften. Suche zwei Punkte auf dieser Achse (z.B. eine Spitze und die Mitte der gegenüberliegenden Seite) und tippe sie an – danach kannst du beide Punkte noch feinjustieren."),
+    ex("1a-symachse-mehrere", "Mehrere Symmetrieachsen einzeichnen", generateMultiSymmetryAxisHotspot, "Quadrat und Rechteck/Raute haben mehrere Symmetrieachsen. Finde und zeichne nacheinander jede einzelne ein, bis alle markiert sind.")
+  ]),
+  chapter("1b", "Die Drehsymmetrie", [
+    ex("1b-1", "Drehsymmetrie-Ordnung bestimmen", generateRotSymmetry, "Drehe die Figur gedanklich um ihren Mittelpunkt und zähle, bei wie vielen Drehungen (inkl. der vollen 360°) sie wieder gleich aussieht."),
+    ex("1b-doppelspieg", "Verkettete Spiegelung", generateDoubleReflectionMC, "Spiegle zuerst jeden Eckpunkt der Figur an Achse 1, und spiegle das Ergebnis danach nochmals an Achse 2. Beide Schritte müssen ausgeführt werden – nicht nur einer davon. Das Ergebnis entspricht immer einer Drehung um den Schnittpunkt der beiden Achsen.")
+  ]),
   chapter("1c", "Die Achsenspiegelung", [
     ex("1c-x", "Spiegelung an der x-Achse", generateAxisReflectionX, "An der x-Achse bleibt x gleich, y wechselt das Vorzeichen."),
-    ex("1c-y", "Spiegelung an der y-Achse", generateAxisReflectionY, "An der y-Achse bleibt y gleich, x wechselt das Vorzeichen.")
+    ex("1c-y", "Spiegelung an der y-Achse", generateAxisReflectionY, "An der y-Achse bleibt y gleich, x wechselt das Vorzeichen."),
+    ex("1c-bildpunkt", "Bildpunkt erkennen", generateMirrorImagePointMC, "Der Bildpunkt P' liegt auf der Senkrechten zur Spiegelachse durch P, und zwar auf der gegenüberliegenden Seite im gleichen Abstand zur Achse wie P."),
+    ex("1c-bildpunkt-tippen", "Bildpunkt einzeichnen", generateImagePointHotspot, "Bei einer Spiegelung: Der Bildpunkt liegt senkrecht zur Achse auf der anderen Seite, im gleichen Abstand. Bei einer Punktspiegelung an Z: Z ist der Mittelpunkt zwischen dem Punkt und seinem Bildpunkt."),
+    ex("1c-konstruktion", "Konstruktionen: Mittelsenkrechte, Winkelhalbierende, Mittelparallele", generateConstructionMixedTask, "Mittelsenkrechte: zwei Kreisbögen mit gleichem Radius (grösser als die halbe Streckenlänge) um A und B schneiden sich in zwei Punkten - diese legen zusammen die Mittelsenkrechte fest. Winkelhalbierende: ein Bogen um den Scheitelpunkt schneidet beide Schenkel, von diesen zwei Punkten aus zwei gleich grosse Bögen schneiden sich auf der Winkelhalbierenden. Mittelparallele: verbindet die (durch Konstruktion gefundenen) Mittelpunkte zweier Seiten. Diese Konstruktionen werden auch gebraucht, um Spiegelachsen zu konstruieren.")
   ]),
-  chapter("1d", "Die Punktspiegelung", [ex("1d-1", "Punktspiegelung am Ursprung", generatePointReflection, "Bei der Punktspiegelung am Ursprung wechseln beide Koordinaten das Vorzeichen.")]),
-  chapter("1e", "Kongruenzabbildungen im Überblick", [
-    ex("1e-typ", "Abbildungstyp erkennen", generateTransformationTypeMC, "Achsenspiegelung: eine Koordinate bleibt gleich, die andere wechselt das Vorzeichen. Punktspiegelung: beide Koordinaten wechseln das Vorzeichen. Verschiebung: beide Koordinaten ändern sich um denselben Betrag. Drehung um 90°: x und y vertauschen (mit einem Vorzeichenwechsel)."),
-    ex("1e-eigen", "Eigenschaften von Kongruenzabbildungen", generateTransformTruth, "Bei allen vier Kongruenzabbildungen (Achsenspiegelung, Punktspiegelung, Verschiebung, Drehung) bleiben Streckenlängen und Winkel erhalten – nur die Lage und manchmal die Orientierung ändern sich.")
+  chapter("1d", "Die Punktspiegelung", [
+    ex("1d-1", "Punktspiegelung am Ursprung", generatePointReflection, "Bei der Punktspiegelung am Ursprung wechseln beide Koordinaten das Vorzeichen."),
+    ex("1d-spiegelzentrum", "Spiegelzentrum finden", generatePointReflectionCenterHotspot, "Das Zentrum einer Punktspiegelung liegt immer genau in der Mitte zwischen einem Punkt und seinem Bildpunkt."),
+    ex("1d-typ", "Abbildungstyp erkennen", generateTransformationTypeMC, "Achsenspiegelung: die Figur wird spiegelverkehrt (Wimpel zeigt in die andere Richtung). Punktspiegelung: die Figur ist um 180° gedreht (Wimpel zeigt exakt entgegengesetzt, aber nicht spiegelverkehrt). Verschiebung: gleiche Ausrichtung, nur an anderer Stelle. Drehung: um 90° oder 270° gedreht, aber nicht spiegelverkehrt."),
+    ex("1d-eigen", "Eigenschaften von Kongruenzabbildungen", generateTransformTruth, "Bei allen vier Kongruenzabbildungen (Achsenspiegelung, Punktspiegelung, Verschiebung, Drehung) bleiben Streckenlängen und Winkel erhalten – nur die Lage und manchmal die Orientierung ändern sich."),
+    ex("1d-kongruent", "Kongruent oder nicht?", generateTriangleCongruentTruth, "Zwei Dreiecke sind kongruent, wenn sie in allen Seitenlängen und Winkeln übereinstimmen (z.B. in zwei Seiten und dem eingeschlossenen Winkel). Vergleiche die angegebenen Masse beider Dreiecke genau.")
   ]),
   chapter("2a", "Potenzen/Regeln und Gesetze", [
     ex("2a-berechnen", "Potenz berechnen", generatePowerCalc, "a^n heisst: a wird n-mal mit sich selbst multipliziert."),
@@ -3105,7 +3950,8 @@ const JAHR1_CHAPTERS = [
     ex("3a-mean", "Mittelwert berechnen", generateMean, "Addiere alle Zahlen und teile die Summe durch die Anzahl der Zahlen.", true),
     ex("3a-median", "Median bestimmen", generateMedian, "Sortiere die Zahlen der Grösse nach. Der Median ist die Zahl genau in der Mitte."),
     ex("3a-range", "Spannweite bestimmen", generateRange, "Spannweite = grösste Zahl minus kleinste Zahl."),
-    ex("3a-chart", "Werte aus Diagrammen ablesen", generateBarChartRead, "Lies die Höhe des gesuchten Balkens an der senkrechten Achse ab.")
+    ex("3a-chart", "Werte aus Diagrammen ablesen", generateBarChartRead, "Lies die Höhe des gesuchten Balkens an der senkrechten Achse ab."),
+    ex("3a-chart-tap", "Grössten Balken finden", generateBarChartMaxHotspot, "Vergleiche die Höhe aller Balken und tippe auf denjenigen, der am weitesten nach oben reicht.")
   ]),
   chapter("3b", "Grössen und Prozente", [
     ex("3b-wert", "Prozentwert berechnen", generatePercentValue, "Prozentwert = Grundwert × Prozentsatz ÷ 100.", true),
@@ -3163,7 +4009,8 @@ const JAHR1_CHAPTERS = [
     ex("7b-clue", "Vierecksform anhand Eigenschaft erkennen", generateQuadFromClueMC, "Vergleiche die beschriebenen Eigenschaften (rechte Winkel, parallele Seiten, gleich lange Seiten) mit den typischen Merkmalen von Quadrat, Rechteck, Parallelogramm, Raute, Trapez und Drachenviereck."),
     ex("7b-drachen", "Flächeninhalt Drachen", generateKiteArea, "Fläche des Drachenvierecks = Diagonale e × Diagonale f ÷ 2."),
     ex("7b-umfang", "Umfang von Vierecken", generateQuadPerimeterGeneral, "Bei der Raute sind alle vier Seiten gleich lang (Umfang = 4 × Seite). Beim Parallelogramm sind gegenüberliegende Seiten gleich lang (Umfang = 2 × (a + b))."),
-    ex("7b-innenwinkel", "Innenwinkel regelmässiger Vielecke", generateRegularPolygonAngle, "Ein Innenwinkel eines regelmässigen n-Ecks berechnet sich mit 180° − 360° ÷ n.")
+    ex("7b-innenwinkel", "Innenwinkel regelmässiger Vielecke", generateRegularPolygonAngle, "Ein Innenwinkel eines regelmässigen n-Ecks berechnet sich mit 180° − 360° ÷ n."),
+    ex("7b-parallelo-tap", "Fehlender Eckpunkt", generateParallelogramMissingVertexHotspot, "In einem Parallelogramm ABCD sind gegenüberliegende Seiten gleich lang und parallel. Verschiebe A um denselben Pfeil, der von B nach C führt, um die Lage von D zu finden.")
   ]),
   chapter("7c", "Dreiecke", [
     ex("7c-1", "Winkelsumme im Dreieck", generateTriangleAngleSum, "Die Winkelsumme im Dreieck ist immer 180°. Ziehe die beiden bekannten Winkel von 180° ab."),
@@ -3196,7 +4043,8 @@ const JAHR2_CHAPTERS = [
     ex("m2-1a-comp", "Brüche vergleichen", generateFractionCompare, "Bringe beide Brüche gedanklich auf den gleichen Nenner oder rechne sie in Dezimalzahlen um, dann vergleiche."),
     ex("m2-1a-mixed", "Gemischte Zahl → unechter Bruch", generateMixedToImproper, "Multipliziere die ganze Zahl mit dem Nenner und addiere den Zähler. Der Nenner bleibt gleich."),
     ex("m2-1a-fdp", "Bruch, Dezimalzahl, Prozent umwandeln", generateFractionDecimalPercent, "Bruch → Dezimalzahl: Zähler durch Nenner teilen. Dezimalzahl → Prozent: mit 100 multiplizieren. Prozent → Bruch: die Prozentzahl über 100 schreiben und kürzen."),
-    ex("m2-1a-von", "Von-Rechnen", generateFractionVonM2, "Multipliziere die Grösse mit dem Zähler und teile durch den Nenner.")
+    ex("m2-1a-von", "Von-Rechnen", generateFractionVonM2, "Multipliziere die Grösse mit dem Zähler und teile durch den Nenner."),
+    ex("m2-1a-strahl", "Bruch auf dem Zahlenstrahl", generateFractionNumberLineHotspot, "Überlege, welchen Anteil der Bruch von der ganzen Strecke ausmacht (z.B. 3/4 liegt bei drei Vierteln des Weges), und tippe an diese Stelle auf dem Zahlenstrahl.")
   ]),
   chapter("1b", "Grundoperationen mit Brüchen", [
     ex("m2-1b-add", "Brüche addieren", generateFractionAdd, "Bringe beide Brüche auf einen gemeinsamen Nenner (z.B. das Produkt der Nenner), addiere die Zähler, kürze am Schluss."),
@@ -3529,8 +4377,155 @@ document.addEventListener("click", (e) => {
     const inputEl = document.getElementById(side === "solo" ? "solo_textInput" : `duell_${side}_textInput`);
     inputBuffers[side] = inputEl.value;
     submitAnswer(side);
+    return;
+  }
+  const hb = e.target.closest("button[data-side][data-hotspotsubmit]");
+  if (hb) { submitAnswer(hb.dataset.side); return; }
+  // Ein Klick auf einen ziehbaren Linien-Endpunkt (siehe Hotspot-Line-Drag weiter unten) darf
+  // niemals als "neuer Tap" (Reset/neuer Startpunkt) behandelt werden - egal ob es sich um
+  // einen echten Drag oder nur ein Antippen ohne Bewegung handelte.
+  if (e.target.closest(".hotspot-endpoint")) return;
+  if (hotspotDragJustEnded) return;
+  const visualHost = e.target.closest("[id$='_visual']");
+  if (visualHost) {
+    const prefix = visualHost.id.replace(/_visual$/, "");
+    const side = prefix.replace(/^duell_/, "");
+    const task = currentTaskFor(side);
+    if (task && task.answerType === "hotspot") {
+      const svg = visualHost.querySelector("svg");
+      if (svg) handleHotspotTap(prefix, side, task, svg, e.clientX, e.clientY);
+    }
   }
 });
+/* ---- Hotspot-Widget (Tippen auf eine Stelle im Bild) ---- */
+function svgPointFromClientCoords(svg, clientX, clientY) {
+  const rect = svg.getBoundingClientRect();
+  const vb = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width ? svg.viewBox.baseVal : { x: 0, y: 0, width: rect.width, height: rect.height };
+  let x = vb.x + (clientX - rect.left) / rect.width * vb.width;
+  let y = vb.y + (clientY - rect.top) / rect.height * vb.height;
+  // Ein Tap knapp ausserhalb der sichtbaren Fläche (z.B. am Bildrand) ergäbe sonst eine
+  // Koordinate ausserhalb der viewBox - der Marker würde dort vom SVG unsichtbar
+  // abgeschnitten, obwohl der Tap registriert wurde. Deshalb an den Rand klemmen.
+  x = Math.max(vb.x, Math.min(vb.x + vb.width, x));
+  y = Math.max(vb.y, Math.min(vb.y + vb.height, y));
+  return { x, y };
+}
+function setHotspotMarker(prefix, svg, innerSvgHtml) {
+  const old = document.getElementById(`${prefix}_hotspotMarker`);
+  if (old) old.remove();
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  g.setAttribute("id", `${prefix}_hotspotMarker`);
+  g.innerHTML = innerSvgHtml;
+  svg.appendChild(g);
+}
+function drawHotspotPointMarker(prefix, svg, pt) {
+  const x = pt.x.toFixed(2), y = pt.y.toFixed(2);
+  setHotspotMarker(prefix, svg,
+    `<circle cx="${x}" cy="${y}" r="7" fill="none" stroke="#dc2626" stroke-width="3"/>` +
+    `<line x1="${(pt.x - 10).toFixed(2)}" y1="${y}" x2="${(pt.x + 10).toFixed(2)}" y2="${y}" stroke="#dc2626" stroke-width="2"/>` +
+    `<line x1="${x}" y1="${(pt.y - 10).toFixed(2)}" x2="${x}" y2="${(pt.y + 10).toFixed(2)}" stroke="#dc2626" stroke-width="2"/>`);
+}
+function drawHotspotLineMarker(prefix, svg, p1, p2) {
+  setHotspotMarker(prefix, svg,
+    `<line id="${prefix}_hotspotLine" x1="${p1.x.toFixed(2)}" y1="${p1.y.toFixed(2)}" x2="${p2.x.toFixed(2)}" y2="${p2.y.toFixed(2)}" stroke="#dc2626" stroke-width="3"/>` +
+    `<circle id="${prefix}_hotspotEndpoint1" class="hotspot-endpoint" data-prefix="${prefix}" data-endpoint="1" cx="${p1.x.toFixed(2)}" cy="${p1.y.toFixed(2)}" r="8" fill="#dc2626" style="cursor:grab;touch-action:none;"/>` +
+    `<circle id="${prefix}_hotspotEndpoint2" class="hotspot-endpoint" data-prefix="${prefix}" data-endpoint="2" cx="${p2.x.toFixed(2)}" cy="${p2.y.toFixed(2)}" r="8" fill="#dc2626" style="cursor:grab;touch-action:none;"/>`);
+}
+// Aktualisiert Position von Linie + Endpunkten OHNE die DOM-Elemente neu zu erzeugen
+// (wichtig fürs Dragging: setHotspotMarker/drawHotspotLineMarker würde die Elemente ersetzen
+// und damit eine evtl. aktive setPointerCapture verlieren).
+function updateHotspotLineMarkerPositions(prefix, p1, p2) {
+  const line = document.getElementById(`${prefix}_hotspotLine`);
+  const e1 = document.getElementById(`${prefix}_hotspotEndpoint1`);
+  const e2 = document.getElementById(`${prefix}_hotspotEndpoint2`);
+  if (!line || !e1 || !e2) return false;
+  line.setAttribute("x1", p1.x.toFixed(2)); line.setAttribute("y1", p1.y.toFixed(2));
+  line.setAttribute("x2", p2.x.toFixed(2)); line.setAttribute("y2", p2.y.toFixed(2));
+  e1.setAttribute("cx", p1.x.toFixed(2)); e1.setAttribute("cy", p1.y.toFixed(2));
+  e2.setAttribute("cx", p2.x.toFixed(2)); e2.setAttribute("cy", p2.y.toFixed(2));
+  return true;
+}
+function drawHotspotMultiLineMarker(prefix, svg, nums) {
+  let inner = "", i = 0;
+  for (; i + 3 < nums.length; i += 4) {
+    inner += `<line x1="${nums[i].toFixed(2)}" y1="${nums[i + 1].toFixed(2)}" x2="${nums[i + 2].toFixed(2)}" y2="${nums[i + 3].toFixed(2)}" stroke="#dc2626" stroke-width="3"/>` +
+      `<circle cx="${nums[i].toFixed(2)}" cy="${nums[i + 1].toFixed(2)}" r="4" fill="#dc2626"/><circle cx="${nums[i + 2].toFixed(2)}" cy="${nums[i + 3].toFixed(2)}" r="4" fill="#dc2626"/>`;
+  }
+  if (i < nums.length) {
+    inner += `<circle cx="${nums[i].toFixed(2)}" cy="${nums[i + 1].toFixed(2)}" r="7" fill="none" stroke="#dc2626" stroke-width="3"/>`;
+  }
+  setHotspotMarker(prefix, svg, inner);
+}
+function handleHotspotTap(prefix, side, task, svg, clientX, clientY) {
+  const pt = svgPointFromClientCoords(svg, clientX, clientY);
+  const mode = task.hotspotMode || "point";
+  if (mode === "line" && task.targetLines) {
+    // Mehrere Achsen nacheinander: jede Achse braucht 2 Taps (=4 Zahlen im Buffer).
+    // Ist der Buffer bereits voll (alle Achsen gezeichnet), fängt ein weiterer Tap neu an.
+    const needed = task.targetLines.length * 4;
+    let nums = inputBuffers[side] ? String(inputBuffers[side]).split(",").map(Number).filter(n => !isNaN(n)) : [];
+    if (nums.length >= needed) nums = [];
+    nums.push(pt.x, pt.y);
+    inputBuffers[side] = nums.map(n => n.toFixed(2)).join(",");
+    drawHotspotMultiLineMarker(prefix, svg, nums);
+  } else if (mode === "line") {
+    const nums = String(inputBuffers[side] || "").split(",").map(Number).filter(n => !isNaN(n));
+    if (nums.length === 2) {
+      const p1 = { x: nums[0], y: nums[1] };
+      inputBuffers[side] = `${p1.x},${p1.y},${pt.x.toFixed(2)},${pt.y.toFixed(2)}`;
+      drawHotspotLineMarker(prefix, svg, p1, pt);
+    } else {
+      inputBuffers[side] = `${pt.x.toFixed(2)},${pt.y.toFixed(2)}`;
+      drawHotspotPointMarker(prefix, svg, pt);
+    }
+  } else {
+    inputBuffers[side] = `${pt.x.toFixed(2)},${pt.y.toFixed(2)}`;
+    drawHotspotPointMarker(prefix, svg, pt);
+  }
+}
+/* ---- Hotspot-Line-Drag: Endpunkte einer bereits gezeichneten Linie nachträglich verschieben ---- */
+let hotspotDrag = null;
+let hotspotDragJustEnded = false;
+document.addEventListener("pointerdown", (e) => {
+  const ep = e.target.closest(".hotspot-endpoint");
+  if (!ep) return;
+  const prefix = ep.dataset.prefix;
+  const side = prefix.replace(/^duell_/, "");
+  const task = currentTaskFor(side);
+  if (!task || task.answerType !== "hotspot" || (task.hotspotMode || "point") !== "line") return;
+  const nums = String(inputBuffers[side] || "").split(",").map(Number);
+  if (nums.length !== 4 || nums.some(isNaN)) return;
+  const svg = ep.closest("svg");
+  if (!svg) return;
+  e.preventDefault();
+  e.stopPropagation();
+  hotspotDrag = {
+    prefix, side, svg,
+    endpoint: Number(ep.dataset.endpoint),
+    p1: { x: nums[0], y: nums[1] },
+    p2: { x: nums[2], y: nums[3] }
+  };
+  try { ep.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+});
+document.addEventListener("pointermove", (e) => {
+  if (!hotspotDrag) return;
+  e.preventDefault();
+  const pt = svgPointFromClientCoords(hotspotDrag.svg, e.clientX, e.clientY);
+  if (hotspotDrag.endpoint === 1) hotspotDrag.p1 = pt; else hotspotDrag.p2 = pt;
+  updateHotspotLineMarkerPositions(hotspotDrag.prefix, hotspotDrag.p1, hotspotDrag.p2);
+  inputBuffers[hotspotDrag.side] = `${hotspotDrag.p1.x.toFixed(2)},${hotspotDrag.p1.y.toFixed(2)},${hotspotDrag.p2.x.toFixed(2)},${hotspotDrag.p2.y.toFixed(2)}`;
+});
+function endHotspotDrag() {
+  if (!hotspotDrag) return;
+  hotspotDrag = null;
+  // Verhindert, dass der native "click", der nach pointerup fürs selbe Gesture noch feuert,
+  // von der weiter oben registrierten document-click-Logik als "neuer Tap" (Reset) interpretiert
+  // wird. click folgt pointerup synchron im selben Task, daher läuft der setTimeout(0) danach.
+  hotspotDragJustEnded = true;
+  setTimeout(() => { hotspotDragJustEnded = false; }, 0);
+}
+document.addEventListener("pointerup", endHotspotDrag);
+document.addEventListener("pointercancel", endHotspotDrag);
 function pairParts(side) { const parts = (inputBuffers[side] || "").split(","); return { a: parts[0] || "", b: parts[1] || "" }; }
 function setPairPart(side, which, value) { const p = pairParts(side); if (which === "a") p.a = value; else p.b = value; inputBuffers[side] = p.a + "," + p.b; }
 function renderPairBuffer(side) {
@@ -3590,6 +4585,42 @@ function checkAnswer(task, bufferStr) {
     return normTerm(bufferStr) === normTerm(task.correct);
   }
   if (task.answerType === "mc") return String(bufferStr) === String(task.correct);
+  if (task.answerType === "hotspot") {
+    const mode = task.hotspotMode || "point";
+    const nums = String(bufferStr).split(",").map(Number);
+    if (nums.some(isNaN)) return false;
+    if (mode === "line" && task.targetLines) {
+      const needed = task.targetLines.length;
+      if (nums.length !== needed * 4) return false;
+      const used = new Array(needed).fill(false);
+      for (let i = 0; i < nums.length; i += 4) {
+        const [px1, py1, px2, py2] = [nums[i], nums[i + 1], nums[i + 2], nums[i + 3]];
+        let matched = false;
+        for (let ti = 0; ti < needed; ti++) {
+          if (used[ti]) continue;
+          const t = task.targetLines[ti];
+          const dx = t.x2 - t.x1, dy = t.y2 - t.y1;
+          const len = Math.hypot(dx, dy) || 1;
+          const distToLine = (px, py) => Math.abs(dy * px - dx * py + t.x2 * t.y1 - t.y2 * t.x1) / len;
+          if (distToLine(px1, py1) <= task.lineTolerance && distToLine(px2, py2) <= task.lineTolerance) { used[ti] = true; matched = true; break; }
+        }
+        if (!matched) return false;
+      }
+      return true;
+    }
+    if (mode === "line") {
+      if (nums.length !== 4) return false;
+      const [px1, py1, px2, py2] = nums;
+      const { x1, y1, x2, y2 } = task.targetLine;
+      const dx = x2 - x1, dy = y2 - y1;
+      const len = Math.hypot(dx, dy) || 1;
+      const distToLine = (px, py) => Math.abs(dy * px - dx * py + x2 * y1 - y2 * x1) / len;
+      return distToLine(px1, py1) <= task.lineTolerance && distToLine(px2, py2) <= task.lineTolerance;
+    }
+    if (nums.length !== 2) return false;
+    const [px, py] = nums;
+    return Math.hypot(px - task.target.x, py - task.target.y) <= task.tolerance;
+  }
   const val = parseFloat(bufferStr);
   return !isNaN(val) && Math.abs(val - task.correct) < 0.01;
 }
@@ -3628,13 +4659,15 @@ function celebrateWrong(el) {
 function setWidgetMode(prefix, answerType, pairStyle) {
   const kp = document.getElementById(`${prefix}_keypadWrap`), bw = document.getElementById(`${prefix}_boolWrap`), tw = document.getElementById(`${prefix}_textWrap`);
   const pw = document.getElementById(`${prefix}_pairWrap`), vr = document.getElementById(`${prefix}_varRow`), mw = document.getElementById(`${prefix}_mcWrap`);
+  const hw = document.getElementById(`${prefix}_hotspotWrap`);
   const disp = document.getElementById(`${prefix}_input`);
-  [kp, bw, tw, pw, vr, mw].forEach(el => el.classList.add("hidden"));
+  [kp, bw, tw, pw, vr, mw, hw].forEach(el => el.classList.add("hidden"));
   if (disp) disp.classList.add("hidden");
   if (answerType === "none") return;
   if (answerType === "boolean") { bw.classList.remove("hidden"); return; }
   if (answerType === "text" || answerType === "factors") { tw.classList.remove("hidden"); return; }
   if (answerType === "mc") { mw.classList.remove("hidden"); return; }
+  if (answerType === "hotspot") { hw.classList.remove("hidden"); return; }
   if (answerType === "pair") {
     pw.classList.remove("hidden"); kp.classList.remove("hidden");
     const boxesEl = document.getElementById(`${prefix}_pairBoxes`), sepEl = document.getElementById(`${prefix}_pairSep`);
@@ -3718,7 +4751,7 @@ function submitSolo() {
   if (campaignPlayActive) { submitCampaignAnswer(); return; }
   if (!soloRunning) return;
   const ok = checkAnswer(soloCurrent, inputBuffers.solo);
-  const soloFlashId = soloCurrent.answerType === "mc" ? "solo_mcWrap" : "solo_input";
+  const soloFlashId = soloCurrent.answerType === "mc" ? "solo_mcWrap" : soloCurrent.answerType === "hotspot" ? "solo_visual" : "solo_input";
   if (ok) { soloScore++; document.getElementById("solo_score").textContent = `Richtig: ${soloScore}`; flash(soloFlashId, "correct-flash"); celebrateCorrect(document.getElementById(soloFlashId)); setTimeout(nextSoloTask, 250); }
   else { flash(soloFlashId, "wrong-flash"); celebrateWrong(document.getElementById(soloFlashId)); inputBuffers.solo = ""; renderBuffer("solo"); }
 }
@@ -3783,8 +4816,37 @@ document.getElementById("solo_camBtn").addEventListener("click", () => {
    ========================================================================= */
 const KAMPAGNE_STORAGE_KEY = "matheDuellKampagnen";
 function loadKampagnen() {
-  try { const raw = JSON.parse(localStorage.getItem(KAMPAGNE_STORAGE_KEY)); return Array.isArray(raw) ? raw : []; }
-  catch (e) { return []; }
+  try {
+    const raw = JSON.parse(localStorage.getItem(KAMPAGNE_STORAGE_KEY));
+    const list = Array.isArray(raw) ? raw : [];
+    let migrated = false;
+    list.forEach(camp => {
+      camp.progress = camp.progress || {};
+      KAMPAGNE_STAGES.forEach(stage => {
+        const key = stage.key;
+        const val = camp.progress[key];
+        if (typeof val === "number") {
+          // Alte Speicherform (reine Anzahl statt Level-IDs) - einmalig umwandeln,
+          // damit künftige Kapitel-Einfügungen den Fortschritt nicht mehr verschieben.
+          migrated = true;
+          const levels = KAMPAGNE_LEVELS[key] || [];
+          camp.progress[key] = levels.slice(0, val).map(l => l.exercise.id);
+          if (camp.attempts && camp.attempts[key]) {
+            const oldAttempts = camp.attempts[key], newAttempts = {};
+            Object.keys(oldAttempts).forEach(idxStr => {
+              const lvl = levels[Number(idxStr)];
+              if (lvl) newAttempts[lvl.exercise.id] = oldAttempts[idxStr];
+            });
+            camp.attempts[key] = newAttempts;
+          }
+        } else if (!Array.isArray(val)) {
+          camp.progress[key] = [];
+        }
+      });
+    });
+    if (migrated) saveKampagnen(list);
+    return list;
+  } catch (e) { return []; }
 }
 function saveKampagnen(list) { try { localStorage.setItem(KAMPAGNE_STORAGE_KEY, JSON.stringify(list)); } catch (e) {} }
 function genKampagneId() { return "k_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8); }
@@ -3805,7 +4867,7 @@ const KMP_NODE_ANCHORS = [
 ];
 function kampagneMaxPage(stageKey) { return Math.max(0, Math.ceil(kampagneStageTotal(stageKey) / KMP_LEVELS_PER_PAGE) - 1); }
 function kampagneDefaultPage(camp, stageKey) {
-  return Math.min(kampagneMaxPage(stageKey), Math.floor(kampagneStageDone(camp, stageKey) / KMP_LEVELS_PER_PAGE));
+  return Math.min(kampagneMaxPage(stageKey), Math.floor(kampagneNextLevelIndex(camp, stageKey) / KMP_LEVELS_PER_PAGE));
 }
 function kampagneMapBackgroundSVG() {
   return `<svg class="kmp-map-bg" viewBox="0 0 300 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -3839,7 +4901,18 @@ function kampagneMapBackgroundSVG() {
 }
 
 function kampagneStageTotal(stageKey) { return KAMPAGNE_LEVELS[stageKey].length; }
-function kampagneStageDone(camp, stageKey) { return camp.progress[stageKey] || 0; }
+function kampagneCompletedIds(camp, stageKey) { return (camp.progress && camp.progress[stageKey]) || []; }
+// Anzahl abgeschlossener Level - basiert auf der Menge der abgeschlossenen Level-IDs, nicht auf einer
+// Position im Array, damit spätere Kapitel-Einfügungen bestehenden Fortschritt nicht verschieben.
+function kampagneStageDone(camp, stageKey) { return kampagneCompletedIds(camp, stageKey).length; }
+// Index des nächsten noch nicht abgeschlossenen Levels in der AKTUELLEN Level-Reihenfolge -
+// das ist die massgebliche Grösse für "welches Level ist als Nächstes dran", nicht kampagneStageDone.
+function kampagneNextLevelIndex(camp, stageKey) {
+  const completed = new Set(kampagneCompletedIds(camp, stageKey));
+  const levels = KAMPAGNE_LEVELS[stageKey];
+  for (let i = 0; i < levels.length; i++) { if (!completed.has(levels[i].exercise.id)) return i; }
+  return levels.length;
+}
 function kampagneStagePercent(camp, stageKey) { const t = kampagneStageTotal(stageKey); return t ? Math.round((kampagneStageDone(camp, stageKey) / t) * 100) : 0; }
 function kampagneStageComplete(camp, stageKey) { return kampagneStageDone(camp, stageKey) >= kampagneStageTotal(stageKey); }
 function kampagneStageUnlocked(camp, stageIndex) { return stageIndex === 0 || kampagneStageComplete(camp, KAMPAGNE_STAGES[stageIndex - 1].key); }
@@ -3878,7 +4951,7 @@ document.getElementById("kampagneNewBackBtn").addEventListener("click", () => sh
 document.getElementById("kampagneCreateBtn").addEventListener("click", () => {
   const list = loadKampagnen();
   const name = document.getElementById("kampagneNameInput").value.trim() || `Kampagne ${list.length + 1}`;
-  const camp = { id: genKampagneId(), name, createdAt: new Date().toISOString(), progress: { basiswissen: 0, jahr1: 0, jahr2: 0, jahr3: 0 }, attempts: {} };
+  const camp = { id: genKampagneId(), name, createdAt: new Date().toISOString(), progress: { basiswissen: [], jahr1: [], jahr2: [], jahr3: [] }, attempts: {} };
   list.push(camp);
   saveKampagnen(list);
   openKampagneHub(camp);
@@ -3925,10 +4998,11 @@ function renderKampagneMap() {
   currentKampagne = camp;
   const stage = KAMPAGNE_STAGES.find(s => s.key === campaignStageKey);
   const levels = KAMPAGNE_LEVELS[campaignStageKey];
-  const done = kampagneStageDone(camp, campaignStageKey);
+  const completed = new Set(kampagneCompletedIds(camp, campaignStageKey));
+  const nextIdx = kampagneNextLevelIndex(camp, campaignStageKey);
   const maxPage = kampagneMaxPage(campaignStageKey);
   campaignMapPage = Math.min(Math.max(campaignMapPage, 0), maxPage);
-  const reachablePage = Math.min(maxPage, Math.floor(done / KMP_LEVELS_PER_PAGE));
+  const reachablePage = Math.min(maxPage, Math.floor(nextIdx / KMP_LEVELS_PER_PAGE));
   document.getElementById("kampagneMapTitle").textContent = `${stage.label} · ${camp.name}`;
   document.getElementById("kampagneMapPageIndicator").textContent = `Seite ${campaignMapPage + 1} von ${maxPage + 1}`;
   document.getElementById("kampagneMapPrevBtn").disabled = campaignMapPage <= 0;
@@ -3939,9 +5013,9 @@ function renderKampagneMap() {
   el.innerHTML = kampagneMapBackgroundSVG() + pageLevels.map((lvl, j) => {
     const i = pageStart + j;
     const anchor = KMP_NODE_ANCHORS[j];
-    const state = i < done ? "kmp-completed" : i === done ? "kmp-current" : "kmp-locked";
+    const state = completed.has(lvl.exercise.id) ? "kmp-completed" : (i === nextIdx ? "kmp-current" : "kmp-locked");
     const icon = state === "kmp-completed" ? "✅" : state === "kmp-locked" ? "🔒" : String(i + 1);
-    const att = camp.attempts && camp.attempts[campaignStageKey] && camp.attempts[campaignStageKey][i];
+    const att = camp.attempts && camp.attempts[campaignStageKey] && camp.attempts[campaignStageKey][lvl.exercise.id];
     const attCaption = state === "kmp-completed" && att ? `<br><span style="opacity:0.7; font-size:0.85em;">${att === 1 ? "im 1. Versuch" : `nach ${att} Versuchen`}</span>` : "";
     return `<div class="kmp-node-wrap" style="left:${anchor.left}%; top:${anchor.top}%;">
       <button type="button" class="kmp-node-btn ${state}" data-idx="${i}" ${state === "kmp-locked" ? "disabled" : ""} aria-label="Level ${i + 1}: ${escapeHtml(lvl.exercise.title)}">${icon}</button>
@@ -3959,8 +5033,8 @@ document.getElementById("kampagneMapPrevBtn").addEventListener("click", () => {
 });
 document.getElementById("kampagneMapNextBtn").addEventListener("click", () => {
   const maxPage = kampagneMaxPage(campaignStageKey);
-  const done = kampagneStageDone(currentKampagne, campaignStageKey);
-  const reachablePage = Math.min(maxPage, Math.floor(done / KMP_LEVELS_PER_PAGE));
+  const nextIdx = kampagneNextLevelIndex(currentKampagne, campaignStageKey);
+  const reachablePage = Math.min(maxPage, Math.floor(nextIdx / KMP_LEVELS_PER_PAGE));
   if (campaignMapPage < reachablePage) { campaignMapPage++; renderKampagneMap(); }
 });
 document.getElementById("kampagneMapBackBtn").addEventListener("click", () => { renderKampagneHub(); showView("kampagneHub"); });
@@ -3985,9 +5059,10 @@ function kampagneRecordAttempt(stageKey, levelIndex) {
   const list = loadKampagnen();
   const camp = list.find(c => c.id === currentKampagne.id);
   if (!camp) return;
+  const exId = KAMPAGNE_LEVELS[stageKey][levelIndex].exercise.id;
   camp.attempts = camp.attempts || {};
   camp.attempts[stageKey] = camp.attempts[stageKey] || {};
-  camp.attempts[stageKey][levelIndex] = (camp.attempts[stageKey][levelIndex] || 0) + 1;
+  camp.attempts[stageKey][exId] = (camp.attempts[stageKey][exId] || 0) + 1;
   saveKampagnen(list);
   currentKampagne = camp;
 }
@@ -3995,6 +5070,8 @@ function kampagneTimeForTask(exercise, task) {
   let seconds = 30;
   if (task.visual) seconds = Math.max(seconds, 45);
   if (task.answerType === "pair" || task.answerType === "mc") seconds = Math.max(seconds, 45);
+  if (task.answerType === "hotspot") seconds = Math.max(seconds, 45);
+  if (task.answerType === "hotspot" && task.targetLines && task.targetLines.length > 1) seconds = Math.max(seconds, 60);
   if (exercise.calc) seconds = Math.max(seconds, 60);
   return seconds;
 }
@@ -4034,7 +5111,7 @@ function renderCampaignDots(currentIndex) {
 }
 function submitCampaignAnswer() {
   const ok = checkAnswer(soloCurrent, inputBuffers.solo);
-  const flashId = soloCurrent.answerType === "mc" ? "solo_mcWrap" : "solo_input";
+  const flashId = soloCurrent.answerType === "mc" ? "solo_mcWrap" : soloCurrent.answerType === "hotspot" ? "solo_visual" : "solo_input";
   if (ok) {
     clearInterval(campaignInterval);
     campaignCorrectCount++;
@@ -4067,17 +5144,18 @@ function finishKampagneLevel(passed, reason) {
   campaignPlayActive = false;
   const stage = KAMPAGNE_STAGES.find(s => s.key === campaignStageKey);
   const total = kampagneStageTotal(campaignStageKey);
+  const exId = KAMPAGNE_LEVELS[campaignStageKey][campaignLevelIndex].exercise.id;
   document.getElementById("kampagneResultFailActions").classList.toggle("hidden", passed);
-  document.getElementById("kampagneResultPassActions").classList.add("hidden");
   const mapBtn = document.getElementById("kampagneResultMapBtn");
-  const attempts = (currentKampagne.attempts && currentKampagne.attempts[campaignStageKey] && currentKampagne.attempts[campaignStageKey][campaignLevelIndex]) || 1;
+  const attempts = (currentKampagne.attempts && currentKampagne.attempts[campaignStageKey] && currentKampagne.attempts[campaignStageKey][exId]) || 1;
   if (passed) {
-    const wasNextLevel = campaignLevelIndex === kampagneStageDone(currentKampagne, campaignStageKey);
+    const wasNextLevel = campaignLevelIndex === kampagneNextLevelIndex(currentKampagne, campaignStageKey);
     let stageJustCompleted = false, campaignDone = false;
     if (wasNextLevel) {
       const list = loadKampagnen();
       const camp = list.find(c => c.id === currentKampagne.id);
-      camp.progress[campaignStageKey] = kampagneStageDone(camp, campaignStageKey) + 1;
+      camp.progress[campaignStageKey] = camp.progress[campaignStageKey] || [];
+      if (!camp.progress[campaignStageKey].includes(exId)) camp.progress[campaignStageKey].push(exId);
       saveKampagnen(list);
       currentKampagne = camp;
       if (kampagneStageComplete(camp, campaignStageKey)) {
@@ -4271,6 +5349,7 @@ function formatCorrectAnswer(task) {
     return `${task.correct[0]}|${task.correct[1]}`;
   }
   if (task.answerType === "boolean") return task.correct ? "Wahr" : "Falsch";
+  if (task.answerType === "hotspot") return "(siehe Markierung im Bild)";
   return String(task.correct);
 }
 function stackedFractionHtml(num, den) {
@@ -4395,7 +5474,7 @@ function submitAnswer(side) {
   clearStallGuard();
   const task = duellTasks[side];
   const ok = checkAnswer(task, inputBuffers[side]);
-  const inputElId = task.answerType === "mc" ? `duell_${side}_mcWrap` : `duell_${side}_input`;
+  const inputElId = task.answerType === "mc" ? `duell_${side}_mcWrap` : task.answerType === "hotspot" ? `duell_${side}_visual` : `duell_${side}_input`;
   if (ok) {
     duellScores[side]++;
     flash(inputElId, "correct-flash");
@@ -4575,7 +5654,7 @@ function vkSubmitAnswer(side) {
   clearStallGuard();
   const idx = Number(side.slice(2));
   const ok = checkAnswer(vkTask, inputBuffers[side]);
-  const inputElId = vkTask.answerType === "mc" ? `duell_${side}_mcWrap` : `duell_${side}_input`;
+  const inputElId = vkTask.answerType === "mc" ? `duell_${side}_mcWrap` : vkTask.answerType === "hotspot" ? `duell_${side}_visual` : `duell_${side}_input`;
   if (ok) {
     vkScores[idx]++;
     flash(inputElId, "correct-flash");
@@ -4770,6 +5849,7 @@ function formatMyAnswerForDisplay(task, bufferStr) {
     return `${parts[0]}|${parts[1]}`;
   }
   if (task.answerType === "boolean") return bufferStr === "1" ? "Wahr" : "Falsch";
+  if (task.answerType === "hotspot") return "(Antwort im Bild getippt)";
   return String(bufferStr);
 }
 function formatMyAnswerForDisplayHtml(task, bufferStr) {
@@ -5420,7 +6500,7 @@ async function klassenSubmitAnswer() {
     const task = klassenStudentTask;
     if (!task) return;
     const ok = checkAnswer(task, inputBuffers.klassen);
-    const inputElId = task.answerType === "mc" ? "duell_klassen_mcWrap" : "duell_klassen_input";
+    const inputElId = task.answerType === "mc" ? "duell_klassen_mcWrap" : task.answerType === "hotspot" ? "duell_klassen_visual" : "duell_klassen_input";
     flash(inputElId, ok ? "correct-flash" : "wrong-flash");
     if (ok) celebrateCorrect(document.getElementById(inputElId)); else celebrateWrong(document.getElementById(inputElId));
     setWidgetMode("duell_klassen", "none");

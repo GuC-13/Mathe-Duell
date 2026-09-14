@@ -162,6 +162,18 @@
   .duell-half .mt-mini-shape { width: 26px; height: 26px; }
   .vk-quad .mt-mini-shape { width: 16px; height: 16px; }
   .task-prompt { font-size: 1.3rem; font-weight: 700; margin-bottom: 14px; }
+  /* Bei Hotspot-/Linien-Aufgaben (Tippen oder Ziehen im Bild) ist die Genauigkeit beim
+     Treffen entscheidend - dort bekommt die Zeichenfläche deutlich mehr Platz, auf Kosten
+     der Aufgabentext-Grösse (Tastenfeld/MC/Bool-Widgets sind ohnehin ausgeblendet, der
+     Platz ist frei). Nur aktiv, solange das jeweilige Hotspot-Widget sichtbar ist. */
+  .solo-card:has(> #solo_hotspotWrap:not(.hidden)) .mt-shape { width: 230px; height: 230px; }
+  .solo-card:has(> #solo_hotspotWrap:not(.hidden)) .task-prompt { font-size: 0.95rem; margin-bottom: 8px; }
+  #klassenPlayView:has(> #duell_klassen_hotspotWrap:not(.hidden)) .mt-shape { width: 230px; height: 230px; }
+  #klassenPlayView:has(> #duell_klassen_hotspotWrap:not(.hidden)) .task-prompt { font-size: 0.95rem; margin-bottom: 8px; }
+  .duell-inner:has(> [id$="_hotspotWrap"]:not(.hidden)) .mt-shape { width: 165px; height: 165px; margin: 0 auto 6px; }
+  .duell-inner:has(> [id$="_hotspotWrap"]:not(.hidden)) .duell-prompt { font-size: 0.7rem; margin-bottom: 4px; }
+  .vk-inner:has(> [id$="_hotspotWrap"]:not(.hidden)) .mt-shape { width: 105px; height: 105px; margin: 0 auto 4px; }
+  .vk-inner:has(> [id$="_hotspotWrap"]:not(.hidden)) .vk-prompt { font-size: 0.62rem; margin-bottom: 3px; min-height: 0; }
   .answer-display { font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; background: var(--bg); border-radius: 10px; padding: 12px; min-height: 54px; margin-bottom: 14px; }
   .keypad-row { display: flex; gap: 8px; margin-bottom: 8px; }
   .keypad-row button { flex: 1; padding: 16px 0; font-size: 1.3rem; font-weight: 700; border: none; border-radius: 16px; background: #e2e8f0; color: var(--text); }
@@ -190,6 +202,7 @@
   .text-wrap input { flex: 1; }
   .text-wrap button { background: var(--success); color: white; border: none; border-radius: 12px; padding: 0 20px; font-weight: 700; }
   .hotspot-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .hotspot-wrap svg { touch-action: none; }
   .hotspot-hint { font-size: 0.85rem; color: var(--text-muted, #64748b); text-align: center; }
   .hotspot-confirm-btn { background: var(--success); color: white; border: none; border-radius: 12px; padding: 10px 24px; font-weight: 700; font-size: 0.95rem; }
 
@@ -315,7 +328,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-11.5</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-14.2</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -4526,6 +4539,71 @@ function endHotspotDrag() {
 }
 document.addEventListener("pointerup", endHotspotDrag);
 document.addEventListener("pointercancel", endHotspotDrag);
+/* ---- Hotspot-Line-Wischgeste: eine Linie/Achse direkt mit dem Finger ziehen, statt
+   zwei einzelne Punkte antippen zu müssen (intuitiver auf dem iPad). Ein Tap OHNE
+   Bewegung fällt weiterhin auf das bestehende Zwei-Tap-Verfahren zurück (siehe
+   handleHotspotTap oben), eine echte Wischbewegung zeichnet die Linie in einem Zug. ---- */
+function commitDrawnLine(prefix, side, task, svg, p1, p2) {
+  if (task.targetLines) {
+    const needed = task.targetLines.length * 4;
+    let nums = inputBuffers[side] ? String(inputBuffers[side]).split(",").map(Number).filter(n => !isNaN(n)) : [];
+    // Ein von einem einzelnen Tap "hängen gebliebener" erster Punkt wird verworfen -
+    // eine Wischgeste zeichnet immer eine vollständige, neue Achse.
+    nums = nums.slice(0, Math.floor(nums.length / 4) * 4);
+    if (nums.length >= needed) nums = [];
+    nums.push(p1.x, p1.y, p2.x, p2.y);
+    inputBuffers[side] = nums.map(n => n.toFixed(2)).join(",");
+    drawHotspotMultiLineMarker(prefix, svg, nums);
+  } else {
+    inputBuffers[side] = `${p1.x.toFixed(2)},${p1.y.toFixed(2)},${p2.x.toFixed(2)},${p2.y.toFixed(2)}`;
+    drawHotspotLineMarker(prefix, svg, p1, p2);
+  }
+}
+let hotspotDrawDrag = null;
+document.addEventListener("pointerdown", (e) => {
+  if (e.target.closest(".hotspot-endpoint")) return;
+  const visualHost = e.target.closest("[id$='_visual']");
+  if (!visualHost) return;
+  const prefix = visualHost.id.replace(/_visual$/, "");
+  const side = prefix.replace(/^duell_/, "");
+  const task = currentTaskFor(side);
+  if (!task || task.answerType !== "hotspot" || (task.hotspotMode || "point") !== "line") return;
+  const svg = visualHost.querySelector("svg");
+  if (!svg) return;
+  hotspotDrawDrag = { prefix, side, task, svg, startPt: svgPointFromClientCoords(svg, e.clientX, e.clientY), currentPt: null, moved: false };
+});
+document.addEventListener("pointermove", (e) => {
+  if (!hotspotDrawDrag) return;
+  const pt = svgPointFromClientCoords(hotspotDrawDrag.svg, e.clientX, e.clientY);
+  const dist = Math.hypot(pt.x - hotspotDrawDrag.startPt.x, pt.y - hotspotDrawDrag.startPt.y);
+  if (dist > 10) {
+    hotspotDrawDrag.moved = true;
+    hotspotDrawDrag.currentPt = pt;
+    e.preventDefault();
+    const { prefix, side, task, svg, startPt } = hotspotDrawDrag;
+    if (task.targetLines) {
+      // Bereits fertig gezeichnete Achsen müssen während der Vorschau sichtbar bleiben -
+      // nicht nur die aktuell gezogene Linie.
+      let nums = inputBuffers[side] ? String(inputBuffers[side]).split(",").map(Number).filter(n => !isNaN(n)) : [];
+      nums = nums.slice(0, Math.floor(nums.length / 4) * 4);
+      if (nums.length >= task.targetLines.length * 4) nums = [];
+      drawHotspotMultiLineMarker(prefix, svg, [...nums, startPt.x, startPt.y, pt.x, pt.y]);
+    } else {
+      drawHotspotLineMarker(prefix, svg, startPt, pt);
+    }
+  }
+});
+document.addEventListener("pointerup", (e) => {
+  if (!hotspotDrawDrag) return;
+  const drag = hotspotDrawDrag;
+  hotspotDrawDrag = null;
+  if (!drag.moved) return;
+  e.preventDefault();
+  commitDrawnLine(drag.prefix, drag.side, drag.task, drag.svg, drag.startPt, drag.currentPt);
+  hotspotDragJustEnded = true;
+  setTimeout(() => { hotspotDragJustEnded = false; }, 0);
+});
+document.addEventListener("pointercancel", () => { hotspotDrawDrag = null; });
 function pairParts(side) { const parts = (inputBuffers[side] || "").split(","); return { a: parts[0] || "", b: parts[1] || "" }; }
 function setPairPart(side, which, value) { const p = pairParts(side); if (which === "a") p.a = value; else p.b = value; inputBuffers[side] = p.a + "," + p.b; }
 function renderPairBuffer(side) {

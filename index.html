@@ -328,7 +328,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-14.2</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-16.1</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -4398,10 +4398,13 @@ document.addEventListener("click", (e) => {
   // niemals als "neuer Tap" (Reset/neuer Startpunkt) behandelt werden - egal ob es sich um
   // einen echten Drag oder nur ein Antippen ohne Bewegung handelte.
   if (e.target.closest(".hotspot-endpoint")) return;
-  if (hotspotDragJustEnded) return;
   const visualHost = e.target.closest("[id$='_visual']");
   if (visualHost) {
     const prefix = visualHost.id.replace(/_visual$/, "");
+    // Nur DIESE Seite (dieses Bild) blockieren, wenn dort gerade ein Drag endete - nicht
+    // global, sonst könnten zwei gleichzeitig tippende Spieler (Duell/Vierkampf) sich
+    // gegenseitig die Klicks blockieren.
+    if (hotspotJustEndedPrefixes.has(prefix)) return;
     const side = prefix.replace(/^duell_/, "");
     const task = currentTaskFor(side);
     if (task && task.answerType === "hotspot") {
@@ -4496,9 +4499,19 @@ function handleHotspotTap(prefix, side, task, svg, clientX, clientY) {
     drawHotspotPointMarker(prefix, svg, pt);
   }
 }
-/* ---- Hotspot-Line-Drag: Endpunkte einer bereits gezeichneten Linie nachträglich verschieben ---- */
-let hotspotDrag = null;
-let hotspotDragJustEnded = false;
+/* ---- Hotspot-Line-Drag: Endpunkte einer bereits gezeichneten Linie nachträglich verschieben ----
+   WICHTIG: Im Duell/Vierkampf können mehrere Spieler GLEICHZEITIG auf ihr eigenes Bild
+   tippen/ziehen (mehrere Finger gleichzeitig auf dem iPad). Der Zustand wird deshalb pro
+   Pointer-ID verwaltet (Map), nicht in einer einzigen globalen Variable - sonst würde der
+   zweite Finger den Zustand des ersten überschreiben und beide Spieler stören sich
+   gegenseitig (bis hin zu einem "hängen gebliebenen" Zustand, der später sogar den
+   Bestätigen-Button blockiert, weil ein fremdes pointerup fälschlich als Dragende gilt). */
+const hotspotDrags = new Map(); // pointerId -> {prefix, side, svg, endpoint, p1, p2}
+const hotspotJustEndedPrefixes = new Set();
+function markHotspotJustEnded(prefix) {
+  hotspotJustEndedPrefixes.add(prefix);
+  setTimeout(() => { hotspotJustEndedPrefixes.delete(prefix); }, 0);
+}
 document.addEventListener("pointerdown", (e) => {
   const ep = e.target.closest(".hotspot-endpoint");
   if (!ep) return;
@@ -4512,37 +4525,41 @@ document.addEventListener("pointerdown", (e) => {
   if (!svg) return;
   e.preventDefault();
   e.stopPropagation();
-  hotspotDrag = {
+  hotspotDrags.set(e.pointerId, {
     prefix, side, svg,
     endpoint: Number(ep.dataset.endpoint),
     p1: { x: nums[0], y: nums[1] },
     p2: { x: nums[2], y: nums[3] }
-  };
+  });
   try { ep.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
 });
 document.addEventListener("pointermove", (e) => {
-  if (!hotspotDrag) return;
+  const drag = hotspotDrags.get(e.pointerId);
+  if (!drag) return;
   e.preventDefault();
-  const pt = svgPointFromClientCoords(hotspotDrag.svg, e.clientX, e.clientY);
-  if (hotspotDrag.endpoint === 1) hotspotDrag.p1 = pt; else hotspotDrag.p2 = pt;
-  updateHotspotLineMarkerPositions(hotspotDrag.prefix, hotspotDrag.p1, hotspotDrag.p2);
-  inputBuffers[hotspotDrag.side] = `${hotspotDrag.p1.x.toFixed(2)},${hotspotDrag.p1.y.toFixed(2)},${hotspotDrag.p2.x.toFixed(2)},${hotspotDrag.p2.y.toFixed(2)}`;
+  const pt = svgPointFromClientCoords(drag.svg, e.clientX, e.clientY);
+  if (drag.endpoint === 1) drag.p1 = pt; else drag.p2 = pt;
+  updateHotspotLineMarkerPositions(drag.prefix, drag.p1, drag.p2);
+  inputBuffers[drag.side] = `${drag.p1.x.toFixed(2)},${drag.p1.y.toFixed(2)},${drag.p2.x.toFixed(2)},${drag.p2.y.toFixed(2)}`;
 });
-function endHotspotDrag() {
-  if (!hotspotDrag) return;
-  hotspotDrag = null;
+function endHotspotDrag(e) {
+  const drag = hotspotDrags.get(e.pointerId);
+  if (!drag) return;
+  hotspotDrags.delete(e.pointerId);
   // Verhindert, dass der native "click", der nach pointerup fürs selbe Gesture noch feuert,
   // von der weiter oben registrierten document-click-Logik als "neuer Tap" (Reset) interpretiert
   // wird. click folgt pointerup synchron im selben Task, daher läuft der setTimeout(0) danach.
-  hotspotDragJustEnded = true;
-  setTimeout(() => { hotspotDragJustEnded = false; }, 0);
+  // Betrifft nur DIESES Bild (prefix), nicht die anderen Spieler.
+  markHotspotJustEnded(drag.prefix);
 }
 document.addEventListener("pointerup", endHotspotDrag);
 document.addEventListener("pointercancel", endHotspotDrag);
 /* ---- Hotspot-Line-Wischgeste: eine Linie/Achse direkt mit dem Finger ziehen, statt
    zwei einzelne Punkte antippen zu müssen (intuitiver auf dem iPad). Ein Tap OHNE
    Bewegung fällt weiterhin auf das bestehende Zwei-Tap-Verfahren zurück (siehe
-   handleHotspotTap oben), eine echte Wischbewegung zeichnet die Linie in einem Zug. ---- */
+   handleHotspotTap oben), eine echte Wischbewegung zeichnet die Linie in einem Zug.
+   Auch hier: Zustand pro Pointer-ID, damit gleichzeitige Finger mehrerer Spieler sich
+   nicht gegenseitig überschreiben (siehe Kommentar oben bei hotspotDrags). ---- */
 function commitDrawnLine(prefix, side, task, svg, p1, p2) {
   if (task.targetLines) {
     const needed = task.targetLines.length * 4;
@@ -4559,7 +4576,7 @@ function commitDrawnLine(prefix, side, task, svg, p1, p2) {
     drawHotspotLineMarker(prefix, svg, p1, p2);
   }
 }
-let hotspotDrawDrag = null;
+const hotspotDrawDrags = new Map(); // pointerId -> {prefix, side, task, svg, startPt, currentPt, moved}
 document.addEventListener("pointerdown", (e) => {
   if (e.target.closest(".hotspot-endpoint")) return;
   const visualHost = e.target.closest("[id$='_visual']");
@@ -4570,17 +4587,18 @@ document.addEventListener("pointerdown", (e) => {
   if (!task || task.answerType !== "hotspot" || (task.hotspotMode || "point") !== "line") return;
   const svg = visualHost.querySelector("svg");
   if (!svg) return;
-  hotspotDrawDrag = { prefix, side, task, svg, startPt: svgPointFromClientCoords(svg, e.clientX, e.clientY), currentPt: null, moved: false };
+  hotspotDrawDrags.set(e.pointerId, { prefix, side, task, svg, startPt: svgPointFromClientCoords(svg, e.clientX, e.clientY), currentPt: null, moved: false });
 });
 document.addEventListener("pointermove", (e) => {
-  if (!hotspotDrawDrag) return;
-  const pt = svgPointFromClientCoords(hotspotDrawDrag.svg, e.clientX, e.clientY);
-  const dist = Math.hypot(pt.x - hotspotDrawDrag.startPt.x, pt.y - hotspotDrawDrag.startPt.y);
+  const drag = hotspotDrawDrags.get(e.pointerId);
+  if (!drag) return;
+  const pt = svgPointFromClientCoords(drag.svg, e.clientX, e.clientY);
+  const dist = Math.hypot(pt.x - drag.startPt.x, pt.y - drag.startPt.y);
   if (dist > 10) {
-    hotspotDrawDrag.moved = true;
-    hotspotDrawDrag.currentPt = pt;
+    drag.moved = true;
+    drag.currentPt = pt;
     e.preventDefault();
-    const { prefix, side, task, svg, startPt } = hotspotDrawDrag;
+    const { prefix, side, task, svg, startPt } = drag;
     if (task.targetLines) {
       // Bereits fertig gezeichnete Achsen müssen während der Vorschau sichtbar bleiben -
       // nicht nur die aktuell gezogene Linie.
@@ -4594,16 +4612,15 @@ document.addEventListener("pointermove", (e) => {
   }
 });
 document.addEventListener("pointerup", (e) => {
-  if (!hotspotDrawDrag) return;
-  const drag = hotspotDrawDrag;
-  hotspotDrawDrag = null;
+  const drag = hotspotDrawDrags.get(e.pointerId);
+  if (!drag) return;
+  hotspotDrawDrags.delete(e.pointerId);
   if (!drag.moved) return;
   e.preventDefault();
   commitDrawnLine(drag.prefix, drag.side, drag.task, drag.svg, drag.startPt, drag.currentPt);
-  hotspotDragJustEnded = true;
-  setTimeout(() => { hotspotDragJustEnded = false; }, 0);
+  markHotspotJustEnded(drag.prefix);
 });
-document.addEventListener("pointercancel", () => { hotspotDrawDrag = null; });
+document.addEventListener("pointercancel", (e) => { hotspotDrawDrags.delete(e.pointerId); });
 function pairParts(side) { const parts = (inputBuffers[side] || "").split(","); return { a: parts[0] || "", b: parts[1] || "" }; }
 function setPairPart(side, which, value) { const p = pairParts(side); if (which === "a") p.a = value; else p.b = value; inputBuffers[side] = p.a + "," + p.b; }
 function renderPairBuffer(side) {
@@ -4816,7 +4833,7 @@ function nextSoloTask() {
   inputBuffers.solo = "";
   activePart.solo = "a";
   document.getElementById("solo_visual").innerHTML = soloCurrent.visual || "";
-  document.getElementById("solo_prompt").textContent = soloCurrent.prompt;
+  document.getElementById("solo_prompt").innerHTML = fractionizePromptHtml(soloCurrent.prompt);
   setWidgetMode("solo", soloCurrent.answerType, soloCurrent.pairStyle);
   renderMcOptions("solo", soloCurrent);
   document.getElementById("solo_textInput").value = "";
@@ -5158,7 +5175,7 @@ function nextCampaignTask() {
   inputBuffers.solo = "";
   activePart.solo = "a";
   document.getElementById("solo_visual").innerHTML = soloCurrent.visual || "";
-  document.getElementById("solo_prompt").textContent = soloCurrent.prompt;
+  document.getElementById("solo_prompt").innerHTML = fractionizePromptHtml(soloCurrent.prompt);
   setWidgetMode("solo", soloCurrent.answerType, soloCurrent.pairStyle);
   renderMcOptions("solo", soloCurrent);
   document.getElementById("solo_textInput").value = "";
@@ -5366,7 +5383,7 @@ function startDuell() {
 function revealDuellSide(side) {
   const task = currentTaskFor(side);
   document.getElementById(`duell_${side}_visual`).innerHTML = task.visual || "";
-  document.getElementById(`duell_${side}_prompt`).textContent = task.prompt;
+  document.getElementById(`duell_${side}_prompt`).innerHTML = fractionizePromptHtml(task.prompt);
   activePart[side] = "a";
   setWidgetMode(`duell_${side}`, task.answerType, task.pairStyle);
   renderMcOptions(`duell_${side}`, task);
@@ -5432,6 +5449,13 @@ function formatCorrectAnswer(task) {
 }
 function stackedFractionHtml(num, den) {
   return `<span style="display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1.15;"><span>${escapeHtml(String(num))}</span><span style="border-top:2px solid currentColor; padding-top:1px;">${escapeHtml(String(den))}</span></span>`;
+}
+// Wandelt "3/4" innerhalb eines Aufgabentexts in einen echten gestapelten Bruch um
+// (statt Schrägstrich) - Text wird zuerst escaped, danach ist das Ersetzen von
+// Ziffer/Ziffer-Mustern sicher (kein HTML im Ausgangstext möglich).
+function fractionizePromptHtml(text) {
+  const esc = escapeHtml(text);
+  return esc.replace(/(\d+)\/(\d+)/g, (m, n, d) => stackedFractionHtml(n, d));
 }
 function formatCorrectAnswerHtml(task) {
   if (!task) return "";
@@ -6528,7 +6552,7 @@ function klassenPracticeNextTask() {
   document.getElementById("klassen_qnum").textContent = "🧠 Übung (nicht gewertet)";
   document.getElementById("klassen_countdown").textContent = "";
   document.getElementById("duell_klassen_visual").innerHTML = task.visual || "";
-  document.getElementById("duell_klassen_prompt").textContent = task.prompt;
+  document.getElementById("duell_klassen_prompt").innerHTML = fractionizePromptHtml(task.prompt);
   document.getElementById("klassenAnsweredNote").classList.add("hidden");
   klassenSetPlayBg("active");
   inputBuffers.klassen = "";
@@ -6546,7 +6570,7 @@ function klassenRenderStudentQuestion(room) {
   showView("klassenPlay");
   document.getElementById("klassen_qnum").textContent = `Frage ${room.currentQuestionIndex + 1} von ${room.numQuestions}`;
   document.getElementById("duell_klassen_visual").innerHTML = task.visual || "";
-  document.getElementById("duell_klassen_prompt").textContent = task.prompt;
+  document.getElementById("duell_klassen_prompt").innerHTML = fractionizePromptHtml(task.prompt);
   document.getElementById("klassenAnsweredNote").classList.add("hidden");
   klassenSetPlayBg("active");
   inputBuffers.klassen = "";
@@ -6646,7 +6670,7 @@ document.getElementById("klassenMyAnswersBtn").addEventListener("click", () => {
     <div class="setup-card" style="display:flex; gap:10px; align-items:flex-start; padding:12px 14px; ${a.correct ? "background:#f0fdf4; border-color:#dcfce7;" : "background:#fef2f2; border-color:#fecaca;"}">
       <span style="font-size:1.3rem;">${a.correct ? "✅" : "❌"}</span>
       <div style="flex:1;">
-        <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px;">${i + 1}. ${escapeHtml(a.prompt)}</div>
+        <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px;">${i + 1}. ${fractionizePromptHtml(a.prompt)}</div>
         <div style="font-size:0.85rem; color:var(--muted);">
           Deine Antwort: <span style="font-weight:700; ${a.correct ? "color:var(--success);" : "color:var(--danger); text-decoration:line-through;"}">${a.myAnswer}</span>
           ${a.correct ? "" : `&nbsp;·&nbsp; Richtig: <span style="font-weight:700; color:var(--success);">${a.correctAnswer}</span>`}

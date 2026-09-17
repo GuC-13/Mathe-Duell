@@ -328,7 +328,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-17.2</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-17.3</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -658,6 +658,7 @@
         <div class="kmp-progress-dots hidden" id="kampagne_dots"></div>
         <div class="solo-score" id="solo_timerDisplay">00:00</div>
         <button class="help-btn" id="solo_helpBtn">❓ Hilfe</button>
+        <button class="help-btn" id="solo_showAnswerBtn">👁️ Lösung anzeigen</button>
         <button class="help-btn skip-btn" id="solo_skipBtn">⏭️ Überspringen</button>
       </div>
       <div id="solo_visual"></div>
@@ -1677,6 +1678,14 @@
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="soloAnswerOverlay">
+  <div class="modal-box">
+    <h2 style="margin-top:0;">✅ Lösung</h2>
+    <p id="soloAnswerText" style="font-size:1.4rem; font-weight:700; text-align:center;"></p>
+    <div class="modal-actions"><button class="btn" id="soloAnswerClose">Schliessen</button></div>
+  </div>
+</div>
+
 <div class="modal-overlay hidden" id="mixedTopicModal">
   <div class="modal-box" style="max-height:82vh; overflow-y:auto; text-align:left;">
     <p style="font-weight:800; margin-top:0;">🔀 Themen auswählen</p>
@@ -1731,6 +1740,12 @@ document.getElementById("solo_helpBtn").addEventListener("click", () => {
   const text = (soloCurrent && soloCurrent.sourceHelp) || soloExercise.help || "Für diese Aufgabe ist noch kein Lösungsweg hinterlegt.";
   document.getElementById("helpText").textContent = text;
   document.getElementById("helpOverlay").classList.remove("hidden");
+});
+document.getElementById("soloAnswerClose").addEventListener("click", () => document.getElementById("soloAnswerOverlay").classList.add("hidden"));
+document.getElementById("solo_showAnswerBtn").addEventListener("click", () => {
+  if (!soloCurrent) return;
+  document.getElementById("soloAnswerText").innerHTML = formatCorrectAnswerHtml(soloCurrent);
+  document.getElementById("soloAnswerOverlay").classList.remove("hidden");
 });
 document.getElementById("solo_skipBtn").addEventListener("click", () => {
   if (campaignPlayActive || !soloRunning) return;
@@ -4727,7 +4742,12 @@ function checkAnswer(task, bufferStr) {
     const parts = String(bufferStr).split(",");
     if (parts.length !== 2) return false;
     const a = parseFloat(parts[0]), b = parseFloat(parts[1]);
-    return !isNaN(a) && !isNaN(b) && Math.abs(a - task.correct[0]) < 0.01 && Math.abs(b - task.correct[1]) < 0.01;
+    if (isNaN(a) || isNaN(b)) return false;
+    // Ein Bruch mit Wert 0 ist bei JEDEM Nenner ≠ 0 richtig (0/3, 0/7, ... sind alle
+    // gleich 0) - nicht nur beim einen zufällig gekürzten Nenner, der als "correct"
+    // hinterlegt ist. 0/0 bleibt zu Recht ungültig.
+    if (task.pairStyle === "fraction" && task.correct[0] === 0) return a === 0 && b !== 0;
+    return Math.abs(a - task.correct[0]) < 0.01 && Math.abs(b - task.correct[1]) < 0.01;
   }
   if (task.answerType === "text") return String(bufferStr).trim().toLowerCase() === String(task.correct).trim().toLowerCase();
   if (task.answerType === "factors") {
@@ -5205,6 +5225,7 @@ function startKampagneLevel(levelIndex) {
   soloExercise = level.exercise;
   document.getElementById("solo_skipBtn").classList.add("hidden");
   document.getElementById("solo_helpBtn").classList.add("hidden");
+  document.getElementById("solo_showAnswerBtn").classList.add("hidden");
   kampagneRecordAttempt(campaignStageKey, levelIndex);
   clearInterval(soloInterval);
   nextCampaignTask();
@@ -5285,6 +5306,7 @@ function submitCampaignAnswer() {
 function campaignCleanupUI() {
   document.getElementById("solo_skipBtn").classList.remove("hidden");
   document.getElementById("solo_helpBtn").classList.remove("hidden");
+  document.getElementById("solo_showAnswerBtn").classList.remove("hidden");
 }
 function abortKampagneLevel() {
   clearInterval(campaignInterval);
@@ -5499,7 +5521,7 @@ function startSameTaskCountdown(sides, onDone) {
 function formatCorrectAnswer(task) {
   if (!task) return "";
   if (task.answerType === "pair") {
-    if (task.pairStyle === "fraction") return `${task.correct[0]}/${task.correct[1]}`;
+    if (task.pairStyle === "fraction") return task.correct[0] === 0 ? "0" : `${task.correct[0]}/${task.correct[1]}`;
     if (task.pairStyle === "scientific") return `${task.correct[0]}×10^${task.correct[1]}`;
     return `${task.correct[0]}|${task.correct[1]}`;
   }
@@ -5519,7 +5541,7 @@ function fractionizePromptHtml(text) {
 }
 function formatCorrectAnswerHtml(task) {
   if (!task) return "";
-  if (task.answerType === "pair" && task.pairStyle === "fraction") return stackedFractionHtml(task.correct[0], task.correct[1]);
+  if (task.answerType === "pair" && task.pairStyle === "fraction") return task.correct[0] === 0 ? "0" : stackedFractionHtml(task.correct[0], task.correct[1]);
   return escapeHtml(formatCorrectAnswer(task));
 }
 function startStallTimeoutCountdown(sides, task, onDone) {

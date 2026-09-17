@@ -328,7 +328,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-17.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-17.2</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -1700,6 +1700,18 @@ function rndNonZero(min, max) { let n; do { n = rnd(min, max); } while (n === 0)
 function escapeHtml(str) { const d = document.createElement("div"); d.textContent = str == null ? "" : String(str); return d.innerHTML; }
 function formatTime(sec) { const m = Math.floor(sec / 60), s = Math.max(0, sec) % 60; return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0"); }
 function gcdFn(a, b) { return b === 0 ? a : gcdFn(b, a % b); }
+// Erzeugt einen echten Bruch n/d, der meistens bereits vollständig gekürzt ist - im
+// Lehrmittel sind die Ausgangsbrüche bei Grundoperationen normalerweise schon gekürzt,
+// nur gelegentlich (~15%) absichtlich nicht, damit das Kürzen am Ende nicht ganz fehlt.
+function rndProperFraction(dMin, dMax) {
+  let n, d;
+  for (let tries = 0; tries < 20; tries++) {
+    d = rnd(dMin, dMax);
+    n = rnd(1, d - 1);
+    if (gcdFn(n, d) === 1 || Math.random() < 0.15) return { n, d };
+  }
+  return { n, d };
+}
 function lcmFn(a, b) { return (a * b) / gcdFn(a, b); }
 function isPrime(n) { if (n < 2) return false; for (let i = 2; i * i <= n; i++) if (n % i === 0) return false; return true; }
 function countDivisors(n) { let c = 0; for (let i = 1; i <= n; i++) if (n % i === 0) c++; return c; }
@@ -2297,17 +2309,17 @@ function generateFractionDecimalPercent() {
   return { visual: null, prompt, answerType: "number", correct: v.pct };
 }
 function generateFractionAdd() {
-  const ad = rnd(2, 8), bd = rnd(2, 8), an = rnd(1, ad - 1), bn = rnd(1, bd - 1);
-  const commonD = ad * bd, num = an * bd + bn * ad;
-  return { visual: null, prompt: `Berechne: ${an}/${ad} + ${bn}/${bd} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(num, commonD) };
+  const A = rndProperFraction(2, 8), B = rndProperFraction(2, 8);
+  const commonD = A.d * B.d, num = A.n * B.d + B.n * A.d;
+  return { visual: null, prompt: `Berechne: ${A.n}/${A.d} + ${B.n}/${B.d} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(num, commonD) };
 }
 function generateFractionMul() {
-  const an = rnd(1, 8), ad = rnd(an + 1, 9), bn = rnd(1, 8), bd = rnd(bn + 1, 9);
-  return { visual: null, prompt: `Berechne: ${an}/${ad} × ${bn}/${bd} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(an * bn, ad * bd) };
+  const A = rndProperFraction(2, 9), B = rndProperFraction(2, 9);
+  return { visual: null, prompt: `Berechne: ${A.n}/${A.d} × ${B.n}/${B.d} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(A.n * B.n, A.d * B.d) };
 }
 function generateFractionDiv() {
-  const an = rnd(1, 8), ad = rnd(an + 1, 9), bn = rnd(1, 8), bd = rnd(bn + 1, 9);
-  return { visual: null, prompt: `Berechne: ${an}/${ad} : ${bn}/${bd} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(an * bd, ad * bn) };
+  const A = rndProperFraction(2, 9), B = rndProperFraction(2, 9);
+  return { visual: null, prompt: `Berechne: ${A.n}/${A.d} : ${B.n}/${B.d} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(A.n * B.d, A.d * B.n) };
 }
 
 function generateEquation2Step() {
@@ -3443,8 +3455,7 @@ function generateCuboidSurface() { const a = rnd(2, 20), b = rnd(2, 20), c = rnd
 
 /* ---- Mathematik 2. Jahr: Ergänzungs-Generatoren ---- */
 function generateFractionSub() {
-  const ad = rnd(2, 8), bd = rnd(2, 8);
-  let A = { n: rnd(1, ad - 1), d: ad }, B = { n: rnd(1, bd - 1), d: bd };
+  let A = rndProperFraction(2, 8), B = rndProperFraction(2, 8);
   if (A.n * B.d < B.n * A.d) { const t = A; A = B; B = t; }
   const commonD = A.d * B.d, num = A.n * B.d - B.n * A.d;
   return { visual: null, prompt: `Berechne: ${A.n}/${A.d} − ${B.n}/${B.d} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(num, commonD) };

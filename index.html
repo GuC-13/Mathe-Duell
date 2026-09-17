@@ -328,7 +328,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-17.3</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-17.5</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -4901,7 +4901,7 @@ function renderMcOptions(prefix, task) {
   if (!task || task.answerType !== "mc") return;
   for (let i = 0; i < 4; i++) {
     const btn = document.getElementById(`${prefix}_mcWrap`).children[i];
-    btn.textContent = task.options[i] || "";
+    btn.textContent = superscriptExponents(task.options[i] || "");
   }
 }
 
@@ -5575,17 +5575,25 @@ function formatCorrectAnswer(task) {
 function stackedFractionHtml(num, den) {
   return `<span style="display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1.15;"><span>${escapeHtml(String(num))}</span><span style="border-top:2px solid currentColor; padding-top:1px;">${escapeHtml(String(den))}</span></span>`;
 }
+// Wandelt "5^4" in "5⁴" um (echte hochgestellte Ziffern via Unicode) - funktioniert
+// sowohl in textContent als auch innerHTML, da es reiner Text ist (kein Markup).
+const SUPERSCRIPT_DIGITS = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
+function superscriptExponents(text) {
+  return String(text).replace(/\^(-?\d+)/g, (m, exp) => [...exp].map(ch => SUPERSCRIPT_DIGITS[ch] || ch).join(""));
+}
 // Wandelt "3/4" innerhalb eines Aufgabentexts in einen echten gestapelten Bruch um
 // (statt Schrägstrich) - Text wird zuerst escaped, danach ist das Ersetzen von
-// Ziffer/Ziffer-Mustern sicher (kein HTML im Ausgangstext möglich).
+// Ziffer/Ziffer-Mustern sicher (kein HTML im Ausgangstext möglich). Hochzahlen (5^4)
+// werden im selben Zug in echte hochgestellte Ziffern umgewandelt.
 function fractionizePromptHtml(text) {
   const esc = escapeHtml(text);
-  return esc.replace(/(\d+)\/(\d+)/g, (m, n, d) => stackedFractionHtml(n, d));
+  const withFractions = esc.replace(/(\d+)\/(\d+)/g, (m, n, d) => stackedFractionHtml(n, d));
+  return superscriptExponents(withFractions);
 }
 function formatCorrectAnswerHtml(task) {
   if (!task) return "";
   if (task.answerType === "pair" && task.pairStyle === "fraction") return task.correct[0] === 0 ? "0" : stackedFractionHtml(task.correct[0], task.correct[1]);
-  return escapeHtml(formatCorrectAnswer(task));
+  return superscriptExponents(escapeHtml(formatCorrectAnswer(task)));
 }
 function startStallTimeoutCountdown(sides, task, onDone) {
   clearSameTaskCountdown();
@@ -6085,7 +6093,7 @@ function formatMyAnswerForDisplayHtml(task, bufferStr) {
     const parts = String(bufferStr).split(",");
     return stackedFractionHtml(parts[0], parts[1]);
   }
-  return escapeHtml(formatMyAnswerForDisplay(task, bufferStr));
+  return superscriptExponents(escapeHtml(formatMyAnswerForDisplay(task, bufferStr)));
 }
 activePart.klassen = "a";
 function klassenStopListening() {

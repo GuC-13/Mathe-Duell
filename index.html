@@ -4277,18 +4277,50 @@ function makeMixedExercise(ch, selectedIds) {
     calc: pool.some(e => e.calc)
   };
 }
-/* ---- Themen-Auswahl für "Gemischte Aufgaben": welche Aufgabentypen des Kapitels
-   sollen vorkommen? Standard ist "Alle". ---- */
-let mixedTopicModalChapter = null;
-function openMixedTopicModal(ch) {
-  mixedTopicModalChapter = ch;
-  document.getElementById("mixedTopicList").innerHTML = ch.exercises.map(e => `
+function makeCategoryMixedExercise(cat, selectedChapterIds) {
+  const availableChapters = cat.chapters.filter(ch => ch.exercises.length);
+  const chapters = selectedChapterIds && selectedChapterIds.length
+    ? availableChapters.filter(ch => selectedChapterIds.includes(ch.id))
+    : availableChapters;
+  const pool = chapters.flatMap(ch => ch.exercises);
+  const isSubset = chapters.length < availableChapters.length;
+  return {
+    id: cat.id + "-mixed",
+    title: `Gemischte Aufgaben: ${cat.title}${isSubset ? " (Auswahl)" : ""}`,
+    isMixed: true,
+    mixedPool: pool,
+    mixedChapterTitles: chapters.map(ch => ch.title),
+    generate: () => { const sub = pool[rnd(0, pool.length - 1)]; const t = sub.generate(); t.sourceHelp = sub.help; return t; },
+    help: "Diese Übung mischt Aufgaben aus mehreren Kapiteln. Der Hilfe-Button zeigt jeweils den Lösungsweg zur aktuellen Aufgabe.",
+    calc: pool.some(e => e.calc)
+  };
+}
+/* ---- Auswahl-Modal für "Gemischte Aufgaben": welche Aufgabentypen (innerhalb eines
+   Kapitels) bzw. welche Kapitel (innerhalb einer ganzen Kategorie) sollen vorkommen?
+   Standard ist immer "Alle". Generisch gehalten, damit beide Ebenen dasselbe Modal
+   nutzen können. ---- */
+let mixedModalOnConfirm = null;
+function openMixedSelectModal(items, onConfirm) {
+  document.getElementById("mixedTopicList").innerHTML = items.map(it => `
     <label class="toggle-line" style="padding:5px 0;">
-      <span>${escapeHtml(e.title)}</span>
-      <input type="checkbox" class="mixed-topic-check" data-exid="${escapeHtml(e.id)}" checked>
+      <span>${escapeHtml(it.title)}</span>
+      <input type="checkbox" class="mixed-topic-check" data-id="${escapeHtml(it.id)}" checked>
     </label>`).join("");
   document.getElementById("mixedTopicAllCheck").checked = true;
+  mixedModalOnConfirm = onConfirm;
   document.getElementById("mixedTopicModal").classList.remove("hidden");
+}
+function openMixedTopicModal(ch) {
+  openMixedSelectModal(ch.exercises.map(e => ({ id: e.id, title: e.title })), (checked) => {
+    selectExercise(makeMixedExercise(ch, checked));
+  });
+}
+function openCategoryMixedModal(cat) {
+  const chapters = cat.chapters.filter(ch => ch.exercises.length);
+  openMixedSelectModal(chapters.map(ch => ({ id: ch.id, title: ch.title })), (checked) => {
+    navChapter = null;
+    selectExercise(makeCategoryMixedExercise(cat, checked));
+  });
 }
 document.getElementById("mixedTopicAllCheck").addEventListener("change", (e) => {
   document.querySelectorAll(".mixed-topic-check").forEach(cb => { cb.checked = e.target.checked; });
@@ -4302,10 +4334,10 @@ document.getElementById("mixedTopicCancelBtn").addEventListener("click", () => {
   document.getElementById("mixedTopicModal").classList.add("hidden");
 });
 document.getElementById("mixedTopicStartBtn").addEventListener("click", () => {
-  const checked = [...document.querySelectorAll(".mixed-topic-check")].filter(cb => cb.checked).map(cb => cb.dataset.exid);
-  if (checked.length === 0) { openConfirm("Bitte mindestens ein Thema auswählen.", null, "OK"); return; }
+  const checked = [...document.querySelectorAll(".mixed-topic-check")].filter(cb => cb.checked).map(cb => cb.dataset.id);
+  if (checked.length === 0) { openConfirm("Bitte mindestens eine Auswahl treffen.", null, "OK"); return; }
   document.getElementById("mixedTopicModal").classList.add("hidden");
-  selectExercise(makeMixedExercise(mixedTopicModalChapter, checked));
+  if (mixedModalOnConfirm) mixedModalOnConfirm(checked);
 });
 function findExerciseById(id) {
   const allChapters = [...BASISWISSEN_CHAPTERS, ...JAHR1_CHAPTERS, ...JAHR2_CHAPTERS, ...JAHR3_CHAPTERS];
@@ -4313,6 +4345,9 @@ function findExerciseById(id) {
     const ex = chapter.exercises.find(e => e.id === id);
     if (ex) return ex;
     if (id === chapter.id + "-mixed") return makeMixedExercise(chapter);
+  }
+  for (const cat of CATEGORIES) {
+    if (id === cat.id + "-mixed") return makeCategoryMixedExercise(cat);
   }
   return null;
 }
@@ -4342,15 +4377,20 @@ function openCategory(id) {
     el.innerHTML = '<div class="empty-hint">Noch keine Kapitel – bald verfügbar.</div>';
   } else {
     const showNum = navCategory.id !== "basiswissen";
-    el.innerHTML = navCategory.chapters.map(c => `
+    let rows = navCategory.chapters.map(c => `
       <div class="chapter-row ${c.exercises.length === 0 ? "locked" : ""}" data-id="${c.id}">
         ${showNum ? `<span class="chapter-id">${escapeHtml(c.id)}</span>` : ""}<span class="chapter-title">${escapeHtml(c.title)}</span>
         <span class="chapter-status">${c.exercises.length ? "✅" : "🔒 bald"}</span>
       </div>`).join("");
+    if (navCategory.chapters.filter(c => c.exercises.length).length > 1) {
+      rows = `<div class="chapter-row mixed" data-id="mixed"><span class="chapter-title">Gemischte Aufgaben: ${escapeHtml(navCategory.title)}</span><span class="chapter-status">🔀</span></div>` + rows;
+    }
+    el.innerHTML = rows;
   }
   el.onclick = (e) => {
     const row = e.target.closest(".chapter-row");
     if (!row || row.classList.contains("locked")) return;
+    if (row.dataset.id === "mixed") { openCategoryMixedModal(navCategory); return; }
     openChapter(row.dataset.id);
   };
   showView("category");
@@ -4381,8 +4421,11 @@ function selectExercise(exercise) {
   document.getElementById("duell_exercise_title").innerHTML = "⚔️ " + titleWithCalc(escapeHtml(exercise.title), exercise.calc);
   document.getElementById("vk_exercise_title").innerHTML = "🏁 " + titleWithCalc(escapeHtml(exercise.title), exercise.calc);
   const descEl = document.getElementById("mode_exercise_desc");
-  if (exercise.isMixed) {
-    const subTitles = (exercise.mixedPool || navChapter.exercises).map(e => e.title).join(", ");
+  if (exercise.isMixed && exercise.mixedChapterTitles) {
+    const chapTitles = exercise.mixedChapterTitles.join(", ");
+    descEl.innerHTML = `<p class="ex-desc-text">Zufällig gemischt aus den Kapiteln: ${escapeHtml(chapTitles)} (${exercise.mixedPool.length} Aufgabentypen total).</p><p class="ex-desc-goal">🎯 Lernziel: Diese Kapitel sicher beherrschen.</p>`;
+  } else if (exercise.isMixed) {
+    const subTitles = (exercise.mixedPool || (navChapter ? navChapter.exercises : [])).map(e => e.title).join(", ");
     descEl.innerHTML = `<p class="ex-desc-text">Zufällig gemischt aus: ${escapeHtml(subTitles)}.</p><p class="ex-desc-goal">🎯 Lernziel: Diese Aufgabentypen sicher beherrschen.</p>`;
   } else {
     const info = EXERCISE_INFO[exercise.id];

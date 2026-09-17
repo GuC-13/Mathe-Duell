@@ -328,7 +328,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-16.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-17.1</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -1674,6 +1674,22 @@
     <h2 style="margin-top:0;">💡 Lösungsweg</h2>
     <p id="helpText" style="font-size:1.05rem; line-height:1.5;"></p>
     <div class="modal-actions"><button class="btn" id="helpClose">Schliessen</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="mixedTopicModal">
+  <div class="modal-box" style="max-height:82vh; overflow-y:auto; text-align:left;">
+    <p style="font-weight:800; margin-top:0;">🔀 Themen auswählen</p>
+    <p style="font-size:0.85rem; color:var(--muted); margin-top:-6px;">Wähle aus, welche Aufgabentypen in den gemischten Aufgaben vorkommen sollen.</p>
+    <label class="toggle-line" style="border-bottom:1px solid var(--border); padding-bottom:10px; font-weight:700;">
+      <span>Alle</span>
+      <input type="checkbox" id="mixedTopicAllCheck" checked>
+    </label>
+    <div id="mixedTopicList" style="display:flex; flex-direction:column; gap:2px; margin-top:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="mixedTopicCancelBtn">Abbrechen</button>
+      <button class="btn btn-duell" id="mixedTopicStartBtn">Weiter</button>
+    </div>
   </div>
 </div>
 
@@ -4221,17 +4237,50 @@ const CATEGORIES = [
   { id: "jahr3", title: "Mathematik 3. Jahr", chapters: JAHR3_CHAPTERS }
 ];
 
-function makeMixedExercise(ch) {
+function makeMixedExercise(ch, selectedIds) {
   const showNum = navCategory && navCategory.id !== "basiswissen";
+  const pool = selectedIds && selectedIds.length ? ch.exercises.filter(e => selectedIds.includes(e.id)) : ch.exercises;
+  const isSubset = pool.length < ch.exercises.length;
   return {
     id: ch.id + "-mixed",
-    title: showNum ? `Kapitel ${ch.id} gemischte Aufgaben` : `Gemischte Aufgaben: ${ch.title}`,
+    title: showNum ? `Kapitel ${ch.id} gemischte Aufgaben${isSubset ? " (Auswahl)" : ""}` : `Gemischte Aufgaben: ${ch.title}${isSubset ? " (Auswahl)" : ""}`,
     isMixed: true,
-    generate: () => { const sub = ch.exercises[rnd(0, ch.exercises.length - 1)]; const t = sub.generate(); t.sourceHelp = sub.help; return t; },
+    mixedPool: pool,
+    generate: () => { const sub = pool[rnd(0, pool.length - 1)]; const t = sub.generate(); t.sourceHelp = sub.help; return t; },
     help: "Diese Übung mischt die verschiedenen Aufgabentypen dieses Kapitels. Der Hilfe-Button zeigt jeweils den Lösungsweg zur aktuellen Aufgabe.",
-    calc: ch.exercises.some(e => e.calc)
+    calc: pool.some(e => e.calc)
   };
 }
+/* ---- Themen-Auswahl für "Gemischte Aufgaben": welche Aufgabentypen des Kapitels
+   sollen vorkommen? Standard ist "Alle". ---- */
+let mixedTopicModalChapter = null;
+function openMixedTopicModal(ch) {
+  mixedTopicModalChapter = ch;
+  document.getElementById("mixedTopicList").innerHTML = ch.exercises.map(e => `
+    <label class="toggle-line" style="padding:5px 0;">
+      <span>${escapeHtml(e.title)}</span>
+      <input type="checkbox" class="mixed-topic-check" data-exid="${escapeHtml(e.id)}" checked>
+    </label>`).join("");
+  document.getElementById("mixedTopicAllCheck").checked = true;
+  document.getElementById("mixedTopicModal").classList.remove("hidden");
+}
+document.getElementById("mixedTopicAllCheck").addEventListener("change", (e) => {
+  document.querySelectorAll(".mixed-topic-check").forEach(cb => { cb.checked = e.target.checked; });
+});
+document.getElementById("mixedTopicList").addEventListener("change", (e) => {
+  if (!e.target.classList.contains("mixed-topic-check")) return;
+  const all = [...document.querySelectorAll(".mixed-topic-check")];
+  document.getElementById("mixedTopicAllCheck").checked = all.every(cb => cb.checked);
+});
+document.getElementById("mixedTopicCancelBtn").addEventListener("click", () => {
+  document.getElementById("mixedTopicModal").classList.add("hidden");
+});
+document.getElementById("mixedTopicStartBtn").addEventListener("click", () => {
+  const checked = [...document.querySelectorAll(".mixed-topic-check")].filter(cb => cb.checked).map(cb => cb.dataset.exid);
+  if (checked.length === 0) { openConfirm("Bitte mindestens ein Thema auswählen.", null, "OK"); return; }
+  document.getElementById("mixedTopicModal").classList.add("hidden");
+  selectExercise(makeMixedExercise(mixedTopicModalChapter, checked));
+});
 function findExerciseById(id) {
   const allChapters = [...BASISWISSEN_CHAPTERS, ...JAHR1_CHAPTERS, ...JAHR2_CHAPTERS, ...JAHR3_CHAPTERS];
   for (const chapter of allChapters) {
@@ -4295,8 +4344,8 @@ function openChapter(id) {
   el.onclick = (e) => {
     const row = e.target.closest(".chapter-row");
     if (!row) return;
-    const exercise = row.dataset.id === "mixed" ? makeMixedExercise(navChapter) : navChapter.exercises.find(x => x.id === row.dataset.id);
-    selectExercise(exercise);
+    if (row.dataset.id === "mixed") { openMixedTopicModal(navChapter); return; }
+    selectExercise(navChapter.exercises.find(x => x.id === row.dataset.id));
   };
   showView("chapter");
 }
@@ -4307,8 +4356,8 @@ function selectExercise(exercise) {
   document.getElementById("vk_exercise_title").innerHTML = "🏁 " + titleWithCalc(escapeHtml(exercise.title), exercise.calc);
   const descEl = document.getElementById("mode_exercise_desc");
   if (exercise.isMixed) {
-    const subTitles = navChapter.exercises.map(e => e.title).join(", ");
-    descEl.innerHTML = `<p class="ex-desc-text">Zufällig gemischt aus allen Aufgabentypen dieses Kapitels: ${escapeHtml(subTitles)}.</p><p class="ex-desc-goal">🎯 Lernziel: Alle Aufgabentypen dieses Kapitels sicher beherrschen.</p>`;
+    const subTitles = (exercise.mixedPool || navChapter.exercises).map(e => e.title).join(", ");
+    descEl.innerHTML = `<p class="ex-desc-text">Zufällig gemischt aus: ${escapeHtml(subTitles)}.</p><p class="ex-desc-goal">🎯 Lernziel: Diese Aufgabentypen sicher beherrschen.</p>`;
   } else {
     const info = EXERCISE_INFO[exercise.id];
     descEl.innerHTML = info ? `<p class="ex-desc-text">${escapeHtml(info.d)}</p><p class="ex-desc-goal">🎯 Lernziel: ${escapeHtml(info.g)}</p>` : "";

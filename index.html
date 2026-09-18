@@ -334,7 +334,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-18.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-18.2</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -4495,7 +4495,12 @@ function keypadHTML(side) {
 }
 document.querySelectorAll(".keypad").forEach(el => { el.innerHTML = keypadHTML(el.dataset.side); });
 function currentTaskFor(side) { if (side === "solo") return soloCurrent; if (side === "klassen") return klassenStudentTask; if (side.startsWith("vk")) return vkTask; return duellTasks[side]; }
-document.addEventListener("click", (e) => {
+// Zahlen-/Auswahl-Buttons: Pointer-Events statt "click" - manche mobilen Browser
+// synthetisieren bei ECHT gleichzeitigen Berührungen auf zwei verschiedenen Elementen
+// (z.B. beide Duell-Spieler drücken im selben Moment eine Taste) nicht zuverlässig für
+// beide Berührungen ein eigenes "click"-Event, wodurch eine der beiden Eingaben verloren
+// geht. Pointer-Events werden pro Finger unabhängig ausgelöst und gehen nicht verloren.
+document.addEventListener("pointerup", (e) => {
   const pb = e.target.closest(".pair-box");
   if (pb) { activePart[pb.dataset.side] = pb.dataset.part; renderPairBuffer(pb.dataset.side); return; }
   const kb = e.target.closest("button[data-side][data-key]");
@@ -4520,6 +4525,8 @@ document.addEventListener("click", (e) => {
   }
   const hb = e.target.closest("button[data-side][data-hotspotsubmit]");
   if (hb) { submitAnswer(hb.dataset.side); return; }
+});
+document.addEventListener("click", (e) => {
   // Ein Klick auf einen ziehbaren Linien-Endpunkt (siehe Hotspot-Line-Drag weiter unten) darf
   // niemals als "neuer Tap" (Reset/neuer Startpunkt) behandelt werden - egal ob es sich um
   // einen echten Drag oder nur ein Antippen ohne Bewegung handelte.

@@ -17,6 +17,12 @@
   button, .duell-half, .vk-quad { touch-action: manipulation; }
   .hidden { display: none !important; }
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  /* Während Duell/Vierkampf/Klassenduell darf die ganze Seite nicht verschiebbar sein -
+     sonst kann man durch (absichtliches oder versehentliches) Scrollen die Tipp-Ziele
+     der Mitspieler verrücken und so den Spielfluss stören. Die einzelnen Spielhälften
+     (.duell-half/.vk-quad) behalten ihr eigenes internes Scrollen (nur die jeweils
+     eigene Hälfte betroffen), nur die Seite als Ganzes wird fixiert. */
+  body.no-scroll-lock { position: fixed; inset: 0; width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; }
   h1, h2, h3, .btn, .btn-big, .cat-tile, button { font-family: "Baloo 2", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   body {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'%3E%3Cg fill='%230f172a' fill-opacity='0.055'%3E%3Cpath d='M18 10 l1.4 4.2 4.2 1.4 -4.2 1.4 -1.4 4.2 -1.4 -4.2 -4.2 -1.4 4.2 -1.4 z'/%3E%3Cpath d='M62 24 l1 3 3 1 -3 1 -1 3 -1 -3 -3 -1 3 -1 z'/%3E%3Cpath d='M38 58 l1.8 5.4 5.4 1.8 -5.4 1.8 -1.8 5.4 -1.8 -5.4 -5.4 -1.8 5.4 -1.8 z'/%3E%3Cpath d='M75 68 l1 3 3 1 -3 1 -1 3 -1 -3 -3 -1 3 -1 z'/%3E%3Cpath d='M8 72 l1 3 3 1 -3 1 -1 3 -1 -3 -3 -1 3 -1 z'/%3E%3C/g%3E%3C/svg%3E");
@@ -328,7 +334,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-17.5</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-18.1</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -1753,6 +1759,7 @@ document.getElementById("solo_skipBtn").addEventListener("click", () => {
 });
 
 /* ================= Navigation ================= */
+const SCROLL_LOCK_VIEWS = ["duellPlay", "vkPlay", "klassenPlay"];
 function showView(name) {
   document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
   const target = document.getElementById(name + "View");
@@ -1761,6 +1768,7 @@ function showView(name) {
     target.classList.add("view-fade-in");
     requestAnimationFrame(() => requestAnimationFrame(() => target.classList.remove("view-fade-in")));
   }
+  document.body.classList.toggle("no-scroll-lock", SCROLL_LOCK_VIEWS.includes(name));
   checkDuellOrientation();
 }
 function checkDuellOrientation() {

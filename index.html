@@ -334,7 +334,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-18.2</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-21.3</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -2348,12 +2348,66 @@ function generateFractionDiv() {
 function generateEquation2Step() {
   const a = rnd(2, 9), x = rnd(-12, 12), b = rnd(-25, 25);
   const c = a * x + b; const sign = b >= 0 ? "+" : "−";
-  return { visual: null, prompt: `Löse: ${a}x ${sign} ${Math.abs(b)} = ${c}. x = ?`, answerType: "number", correct: x };
+  return { visual: null, prompt: `Löse: ${a}x ${sign} ${Math.abs(b)} = ${c}\nx = ?`, answerType: "number", correct: x };
+}
+function seqResult(terms, correct) {
+  return { visual: null, prompt: `Wie lautet das nächste Glied der Zahlenfolge: ${terms.join(", ")}, ?`, answerType: "number", correct };
+}
+function seqFromOps(start, ops) {
+  const terms = [start];
+  for (const op of ops) terms.push(terms[terms.length - 1] + op);
+  return { shown: terms.slice(0, 4), correct: terms[4] };
+}
+function generateSequenceArithmetic() {
+  const start = rnd(1, 10), diff = rnd(2, 8) * (Math.random() < 0.5 ? 1 : -1);
+  const { shown, correct } = seqFromOps(start, [diff, diff, diff, diff]);
+  return seqResult(shown, correct);
+}
+function generateSequenceGeometricMul() {
+  const f = [2, 3][rnd(0, 1)];
+  const start = f === 3 ? rnd(1, 3) : rnd(1, 6);
+  const terms = [start, start * f, start * f * f, start * f * f * f];
+  return seqResult(terms, start * Math.pow(f, 4));
+}
+function generateSequenceGeometricDiv() {
+  const f = [2, 3][rnd(0, 1)];
+  const base = f === 3 ? rnd(1, 3) : rnd(1, 6);
+  const start = base * Math.pow(f, 4);
+  const terms = [start, start / f, start / f / f, start / f / f / f];
+  return seqResult(terms, base);
+}
+function generateSequenceQuadraticDiff() {
+  const start = rnd(1, 8);
+  const d = rnd(1, 4), inc = rnd(1, 3);
+  let curDiff = d;
+  const terms = [start];
+  for (let i = 0; i < 4; i++) { terms.push(terms[terms.length - 1] + curDiff); curDiff += inc; }
+  return seqResult(terms.slice(0, 4), terms[4]);
+}
+function generateSequenceAlternating() {
+  const start = rnd(1, 15);
+  const d1 = rnd(3, 9), d2 = rnd(3, 9);
+  const { shown, correct } = seqFromOps(start, [d1, -d2, d1, -d2]);
+  return seqResult(shown, correct);
+}
+function generateSequenceFibonacciLike() {
+  const a0 = rnd(1, 6), a1 = rnd(1, 8), a2 = a0 + a1, a3 = a1 + a2, a4 = a2 + a3;
+  return seqResult([a0, a1, a2, a3], a4);
+}
+function generateSequenceSquares() {
+  const n0 = rnd(1, 4), c = rnd(0, 5);
+  const terms = [0, 1, 2, 3].map(k => Math.pow(n0 + k, 2) + c);
+  return seqResult(terms, Math.pow(n0 + 4, 2) + c);
 }
 function generateSequence() {
-  const start = rnd(1, 10), diff = rnd(2, 8) * (Math.random() < 0.5 ? 1 : -1);
-  const terms = [start, start + diff, start + 2 * diff, start + 3 * diff];
-  return { visual: null, prompt: `Wie lautet das nächste Glied der Zahlenfolge: ${terms.join(", ")}, ?`, answerType: "number", correct: start + 4 * diff };
+  const kind = rnd(0, 6);
+  if (kind === 0) return generateSequenceArithmetic();
+  if (kind === 1) return generateSequenceGeometricMul();
+  if (kind === 2) return generateSequenceGeometricDiv();
+  if (kind === 3) return generateSequenceQuadraticDiff();
+  if (kind === 4) return generateSequenceAlternating();
+  if (kind === 5) return generateSequenceFibonacciLike();
+  return generateSequenceSquares();
 }
 function generateSquareRoot() { const r = rnd(2, 25); return { visual: null, prompt: `Berechne: √${r * r} =`, answerType: "number", correct: r }; }
 
@@ -2475,7 +2529,7 @@ function generateEquationBothSides() {
   const a = rnd(2, 9); let c = rnd(2, 9); if (c === a) c++;
   const x = rndNonZero(-10, 10), b = rnd(-20, 20);
   const d = a * x + b - c * x;
-  return { visual: null, prompt: `Löse die Gleichung: ${a}x ${b >= 0 ? "+" : "−"} ${Math.abs(b)} = ${c}x ${d >= 0 ? "+" : "−"} ${Math.abs(d)}. x = ?`, answerType: "number", correct: x };
+  return { visual: null, prompt: `Löse die Gleichung: ${a}x ${b >= 0 ? "+" : "−"} ${Math.abs(b)} = ${c}x ${d >= 0 ? "+" : "−"} ${Math.abs(d)}\nx = ?`, answerType: "number", correct: x };
 }
 function generateSimpleQuadratic() {
   const x = rnd(2, 25);
@@ -3631,7 +3685,29 @@ function generateLinearEquationFraction() {
   const xVal = d * rnd(-6, 6);
   const b = rnd(-15, 15);
   const result = (n * xVal) / d + b;
-  return { visual: null, prompt: `Löse die Gleichung: (${n}/${d})x ${b >= 0 ? "+" : "−"} ${Math.abs(b)} = ${result}. x = ?`, answerType: "number", correct: xVal };
+  return { visual: null, prompt: `Löse die Gleichung: (${n}/${d})x ${b >= 0 ? "+" : "−"} ${Math.abs(b)} = ${result}\nx = ?`, answerType: "number", correct: xVal };
+}
+function coprimeNumeratorAtLeast2(d) {
+  const candidates = [];
+  for (let n = 2; n < d; n++) if (gcdFn(n, d) === 1) candidates.push(n);
+  return candidates.length === 0 ? 1 : candidates[rnd(0, candidates.length - 1)];
+}
+function generateFractionEquationBothSides() {
+  const denomPool = [3, 4, 5, 6, 7, 8, 9, 10];
+  let d1, d2, n1, n2, x, b1, b2, attempts = 0;
+  do {
+    attempts++;
+    d1 = denomPool[rnd(0, denomPool.length - 1)];
+    do { d2 = denomPool[rnd(0, denomPool.length - 1)]; } while (d2 === d1);
+    n1 = coprimeNumeratorAtLeast2(d1);
+    n2 = coprimeNumeratorAtLeast2(d2);
+    const L = lcmFn(d1, d2);
+    const m = [-2, -1, 1, 2][rnd(0, 3)];
+    x = m * L;
+    b1 = rnd(-12, 12);
+    b2 = b1 + (n1 * x) / d1 - (n2 * x) / d2;
+  } while ((Math.abs(x) > 40 || Math.abs(b2) > 20) && attempts < 30);
+  return { visual: null, prompt: `Löse die Gleichung: ${n1}x/${d1} ${b1 >= 0 ? "+" : "−"} ${Math.abs(b1)} = ${n2}x/${d2} ${b2 >= 0 ? "+" : "−"} ${Math.abs(b2)}\nx = ?`, answerType: "number", correct: x };
 }
 function factorialM3(n) { let f = 1; for (let i = 2; i <= n; i++) f *= i; return f; }
 function generateBinomialCoefficient() {
@@ -3857,7 +3933,8 @@ const EXERCISE_INFO = {
   "m2-1b-mul": { d: "Multipliziere zwei Brüche.", g: "Brüche multiplizieren können." },
   "m2-1b-div": { d: "Dividiere zwei Brüche.", g: "Brüche dividieren können (Kehrwert bilden)." },
   "m2-1c-eq": { d: "Löse eine lineare Gleichung nach x auf.", g: "Lineare Gleichungen lösen können." },
-  "m2-1c-seq": { d: "Setze eine Zahlenfolge fort.", g: "Muster in Zahlenfolgen erkennen und fortsetzen." },
+  "m2-1c-fraceq": { d: "Löse eine Gleichung mit einem Bruch vor dem x auf beiden Seiten nach x auf.", g: "Bruchgleichungen (lineare Gleichungen mit Brüchen auf beiden Seiten) lösen können." },
+  "m2-1c-seq": { d: "Setze eine Zahlenfolge fort (additiv, multiplikativ, mit wachsender Differenz, abwechselnd, Fibonacci-artig oder Quadratzahlen).", g: "Verschiedene Muster in Zahlenfolgen erkennen und fortsetzen." },
   "m2-1c-root": { d: "Berechne eine Quadratwurzel.", g: "Quadratzahlen und Quadratwurzeln kennen." },
   "m2-2a-1": { d: "Berechne die Hypotenuse in einem rechtwinkligen Dreieck.", g: "Satz des Pythagoras anwenden." },
   "m2-2b-1": { d: "Berechne eine Kathete in einem rechtwinkligen Dreieck.", g: "Satz des Pythagoras umstellen und anwenden." },
@@ -4117,8 +4194,9 @@ const JAHR2_CHAPTERS = [
     ex("m2-1b-wurzel", "Wurzeln vergleichen", generateSquareRootCompareMC, "Ziehe von jeder Wurzel näherungsweise die Quadratwurzel (z.B. mit dem Taschenrechner oder durch Abschätzen zwischen zwei Quadratzahlen) und vergleiche die Werte.")
   ]),
   chapter("1c", "Gleichungen, Folgen und Wurzeln", [
-    ex("m2-1c-eq", "Gleichung lösen", generateEquation2Step, "Bringe zuerst die Zahl ohne x auf die andere Seite, dann teile durch die Zahl vor dem x."),
-    ex("m2-1c-seq", "Zahlenfolge fortsetzen", generateSequence, "Berechne die Differenz zwischen den ersten Gliedern und wende sie auf das letzte Glied an."),
+    ex("m2-1c-eq", "Lineare Gleichungen lösen", generateEquation2Step, "Bringe zuerst die Zahl ohne x auf die andere Seite, dann teile durch die Zahl vor dem x."),
+    ex("m2-1c-fraceq", "Bruchgleichungen lösen", generateFractionEquationBothSides, "Bringe zuerst die Zahlen ohne x auf eine Seite und die Brüche mit x auf die andere Seite. Bringe die Brüche auf den Hauptnenner (kgV der beiden Nenner) und löse dann nach x auf."),
+    ex("m2-1c-seq", "Zahlenfolge fortsetzen", generateSequence, "Vergleiche die Glieder: Werden sie immer um denselben Betrag addiert/subtrahiert, mit derselben Zahl multipliziert/dividiert, wird die Differenz grösser, wechseln sich zwei Rechenschritte ab, ist jedes Glied die Summe der beiden vorherigen, oder sind es Quadratzahlen (plus/minus einer festen Zahl)?"),
     ex("m2-1c-root", "Quadratwurzel berechnen", generateSquareRoot, "Überlege, welche Zahl mit sich selbst multipliziert die gegebene Zahl ergibt.")
   ]),
   chapter("2a", "Sätze von Thales und Pythagoras", [
@@ -5601,8 +5679,9 @@ function superscriptExponents(text) {
 // Ziffer/Ziffer-Mustern sicher (kein HTML im Ausgangstext möglich). Hochzahlen (5^4)
 // werden im selben Zug in echte hochgestellte Ziffern umgewandelt.
 function fractionizePromptHtml(text) {
-  const esc = escapeHtml(text);
-  const withFractions = esc.replace(/(\d+)\/(\d+)/g, (m, n, d) => stackedFractionHtml(n, d));
+  const esc = escapeHtml(text).replace(/\n/g, "<br>");
+  const withXFractions = esc.replace(/(-?\d+)x\/(\d+)/g, (m, n, d) => stackedFractionHtml(`${n}x`, d));
+  const withFractions = withXFractions.replace(/(\d+)\/(\d+)/g, (m, n, d) => stackedFractionHtml(n, d));
   return superscriptExponents(withFractions);
 }
 function formatCorrectAnswerHtml(task) {

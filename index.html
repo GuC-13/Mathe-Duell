@@ -34,7 +34,7 @@
   #klassenPlayView.klassen-waiting-bg { background: #e5e9ef; }
   @media (prefers-reduced-motion: reduce) { #klassenPlayView { transition: none; } }
   @keyframes klassenPingPulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.12); } }
-  @media (prefers-reduced-motion: reduce) { #klassenPingOverlay { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { #klassenPingOverlay, #klassenDoubleOverlay { animation: none; } }
   .view.view-fade-in { opacity: 0; }
   @media (prefers-reduced-motion: reduce) { .view { transition: none; } }
   h1 { font-size: 1.4rem; text-align: center; margin: 6px 0 18px; }
@@ -101,6 +101,8 @@
   .btn-duell { background: linear-gradient(135deg, #dc2626, #7f1d1d); }
   .btn-vk { background: linear-gradient(135deg, #f59e0b, #b45309); color: white; grid-column: 1 / -1; }
   .btn-kampagne { background: linear-gradient(135deg, #0ea5e9, #075985); }
+  .btn-pruefung { background: linear-gradient(135deg, #7c3aed, #4c1d95); color: white; }
+  #klassenDoublePointsToggle.active { background: linear-gradient(135deg, #7c3aed, #4c1d95); color: white; border-color: #4c1d95; }
 
   /* Kampagne */
   .kmp-stage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; justify-items: center; margin-top: 14px; }
@@ -334,7 +336,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-21.3</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-22.3</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -459,6 +461,7 @@
   <div id="klassenHostPlayView" class="view hidden">
     <div class="row back-row"><button class="btn btn-secondary" id="klassenHostPlayStopBtn">Abbrechen</button></div>
     <h2 class="sub" id="klassenHostQNum"></h2>
+    <p class="hidden" id="klassenHostDoubleBadge" style="text-align:center; font-weight:800; color:#7c3aed; margin:-8px 0 8px;">🔥 Doppelte Punkte</p>
     <div id="klassenHostVisual" style="text-align:center;"></div>
     <div class="task-prompt" style="text-align:center;" id="klassenHostPrompt"></div>
     <div style="text-align:center; font-size:2.4rem; font-weight:800; margin:14px 0;" id="klassenHostCountdown"></div>
@@ -490,6 +493,7 @@
     <div id="klassenCorrectList" class="hidden setup-card" style="display:flex; flex-direction:column; gap:10px;"></div>
     <div id="klassenPodium" style="display:flex; flex-direction:column; gap:10px; margin:20px 0;"></div>
     <div id="klassenFullList" class="hidden" style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px;"></div>
+    <button class="btn btn-secondary" id="klassenDoublePointsToggle" style="width:100%; margin-bottom:10px; border:2px solid #7c3aed; color:#7c3aed; background:white;">🔥 Nächste Frage: Doppelte Punkte</button>
     <div class="row">
       <button class="btn btn-secondary" style="flex:1;" id="klassenShowFullListBtn">Ganze Liste zeigen</button>
       <button class="btn btn-big btn-duell" style="flex:1;" id="klassenNextBtn">Weiter</button>
@@ -505,6 +509,7 @@
   <div id="klassenHostPracticeView" class="view hidden">
     <h1>🧠 Übung läuft</h1>
     <p class="sub">Die Klasse übt gerade unabhängig voneinander (nicht gewertet). Sobald du bereit bist, geht es mit dem Quiz weiter.</p>
+    <p class="sub" id="klassenHostPracticeTopics" style="font-weight:700;"></p>
     <p class="klassen-offline-banner hidden" style="text-align:center; color:#b45309; font-weight:700;"></p>
     <button class="btn btn-big btn-duell" id="klassenEndPracticeBtn">Übung beenden &amp; weiter</button>
   </div>
@@ -513,6 +518,7 @@
   <div id="klassenPlayView" class="view hidden">
     <div class="row back-row"><span></span></div>
     <h2 class="sub" id="klassen_qnum"></h2>
+    <p class="hidden" id="klassenStudentDoubleBadge" style="text-align:center; font-weight:800; color:#7c3aed; margin:-8px 0 8px;">🔥 Doppelte Punkte</p>
     <div style="text-align:center; font-weight:800; font-size:1.3rem;" id="klassen_countdown"></div>
     <div id="duell_klassen_visual"></div>
     <div class="task-prompt" id="duell_klassen_prompt"></div>
@@ -632,6 +638,7 @@
       <button class="btn btn-big btn-duell" id="goDuellSetupBtn">⚔️ Duell starten</button>
       <button class="btn btn-big btn-vk" id="goVkSetupBtn">🏁 Vierkampf starten</button>
     </div>
+    <button class="btn btn-big btn-pruefung hidden" id="goPruefungSetupBtn" style="width:100%; margin-top:12px;">📝 Prüfungsmodus</button>
     <div style="text-align:right; margin-top:28px;">
       <button id="goKlassenHostSetupBtn" style="background:none; border:none; color:var(--muted); font-size:0.78rem; text-decoration:underline; cursor:pointer; padding:6px;">🏫 Klassenduell (für Lehrpersonen)</button>
     </div>
@@ -717,6 +724,104 @@
     </div>
     <div class="row" style="margin-top:10px;">
       <button class="btn btn-duell" style="flex:1;" id="solo_result_againBtn">Nochmals üben</button>
+      <button class="btn btn-secondary" style="flex:1;" data-back-tochapter>← Zum Kapitel</button>
+      <button class="btn btn-secondary" style="flex:1;" data-back-home>Zur Startseite</button>
+    </div>
+  </div>
+
+  <!-- PRÜFUNGSMODUS SETUP -->
+  <div id="pruefungSetupView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-mode>← Zurück</button></div>
+    <h1 id="pruefung_setup_title">📝 Prüfungsmodus</h1>
+    <div class="ex-desc-card">
+      <p class="ex-desc-text">Keine Hilfen, keine sofortige Rückmeldung ob richtig oder falsch. Am Ende: Auswertung mit Note und Übersicht aller Aufgaben.</p>
+    </div>
+    <div class="setup-card">
+      <label class="field-label">Anzahl Aufgaben</label>
+      <div class="choice-row">
+        <button class="choice-btn" data-pruefung-count="10">10</button>
+        <button class="choice-btn active" data-pruefung-count="15">15</button>
+        <button class="choice-btn" data-pruefung-count="20">20</button>
+        <button class="choice-btn" data-pruefung-count="25">25</button>
+        <button class="choice-btn" data-pruefung-count="30">30</button>
+      </div>
+    </div>
+    <div class="setup-card">
+      <div class="toggle-line">
+        <label class="field-label" style="margin:0;">Zeitlimit pro Aufgabe</label>
+        <label class="switch"><input type="checkbox" id="sw_pruefungTimer"><span class="slider"></span></label>
+      </div>
+      <div class="choice-row hidden" id="pruefungTimerRow">
+        <button class="choice-btn" data-pruefung-timer="15">15 Sek.</button>
+        <button class="choice-btn active" data-pruefung-timer="30">30 Sek.</button>
+        <button class="choice-btn" data-pruefung-timer="60">60 Sek.</button>
+        <button class="choice-btn" data-pruefung-timer="90">90 Sek.</button>
+      </div>
+    </div>
+    <button class="btn btn-big btn-pruefung" id="startPruefungBtn">Prüfung starten</button>
+  </div>
+
+  <!-- PRÜFUNGSMODUS PLAY -->
+  <div id="pruefungPlayView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="pruefungStopBtn">Abbrechen</button></div>
+    <div class="solo-card">
+      <div class="solo-top-row">
+        <div class="solo-score" id="pruefung_qnum">Aufgabe 1/15</div>
+        <div class="solo-score hidden" id="pruefung_timerDisplay">30</div>
+      </div>
+      <div id="duell_pruefung_visual"></div>
+      <div class="task-prompt" id="duell_pruefung_prompt"></div>
+      <div class="answer-display" id="duell_pruefung_input">&nbsp;</div>
+      <div id="duell_pruefung_pairWrap" class="pair-wrap hidden">
+        <div class="pair-boxes style-coord" id="duell_pruefung_pairBoxes">
+          <button class="pair-box" data-side="pruefung" data-part="a" id="duell_pruefung_pairA">?</button>
+          <div class="pair-sep" id="duell_pruefung_pairSep">|</div>
+          <button class="pair-box" data-side="pruefung" data-part="b" id="duell_pruefung_pairB">?</button>
+        </div>
+      </div>
+      <div id="duell_pruefung_varRow" class="var-row hidden">
+        <button data-side="pruefung" data-key="x">x</button>
+        <button data-side="pruefung" data-key="y">y</button>
+        <button data-side="pruefung" data-key="a">a</button>
+        <button data-side="pruefung" data-key="n">n</button>
+      </div>
+      <div id="duell_pruefung_keypadWrap"><div class="keypad" data-side="pruefung"></div></div>
+      <div id="duell_pruefung_boolWrap" class="bool-wrap hidden">
+        <button class="bool-btn true-btn" data-side="pruefung" data-bool="1">Wahr / Ja</button>
+        <button class="bool-btn false-btn" data-side="pruefung" data-bool="0">Falsch / Nein</button>
+      </div>
+      <div id="duell_pruefung_textWrap" class="text-wrap hidden">
+        <input type="text" id="duell_pruefung_textInput">
+        <button data-side="pruefung" data-textsubmit="1">✓</button>
+      </div>
+      <div id="duell_pruefung_mcWrap" class="mc-wrap hidden">
+        <button class="mc-btn" data-side="pruefung" data-mc="0"></button>
+        <button class="mc-btn" data-side="pruefung" data-mc="1"></button>
+        <button class="mc-btn" data-side="pruefung" data-mc="2"></button>
+        <button class="mc-btn" data-side="pruefung" data-mc="3"></button>
+      </div>
+      <div id="duell_pruefung_hotspotWrap" class="hotspot-wrap hidden">
+        <div class="hotspot-hint">Tippe auf die richtige Stelle im Bild, dann bestätige.</div>
+        <button class="hotspot-confirm-btn" data-side="pruefung" data-hotspotsubmit="1">✓ Bestätigen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRÜFUNGSMODUS ERGEBNIS -->
+  <div id="pruefungResultView" class="view hidden">
+    <h1>📝 Prüfungsergebnis</h1>
+    <p class="sub" id="pruefungResultSubtitle"></p>
+    <div class="result-card">
+      <div class="result-winner" id="pruefungResultNote"></div>
+      <div class="result-scores" id="pruefungResultDetail"></div>
+    </div>
+    <div class="summary-row" style="display:flex; gap:10px; margin:16px 0;">
+      <div class="setup-card" style="flex:1; text-align:center; padding:10px;"><span style="font-size:1.4rem; font-weight:800; color:var(--success); display:block;" id="pruefungResultCorrectN">0</span><span style="font-size:0.72rem; color:var(--muted);">richtig</span></div>
+      <div class="setup-card" style="flex:1; text-align:center; padding:10px;"><span style="font-size:1.4rem; font-weight:800; color:var(--danger); display:block;" id="pruefungResultWrongN">0</span><span style="font-size:0.72rem; color:var(--muted);">falsch</span></div>
+    </div>
+    <div id="pruefungResultList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <div class="row" style="margin-top:18px;">
+      <button class="btn btn-pruefung" style="flex:1;" id="pruefungResultAgainBtn">Nochmals prüfen</button>
       <button class="btn btn-secondary" style="flex:1;" data-back-tochapter>← Zum Kapitel</button>
       <button class="btn btn-secondary" style="flex:1;" data-back-home>Zur Startseite</button>
     </div>
@@ -1650,6 +1755,11 @@
   <div style="font-size:4rem;">📍</div>
   <div style="font-family:'Baloo 2', sans-serif; font-size:2.4rem; font-weight:800; color:#1e2a3a; text-align:center; padding:0 20px;" id="klassenPingName"></div>
   <div style="font-size:1rem; color:#1e2a3a; opacity:0.7;">Das ist dein Gerät! (Tippen zum Schliessen)</div>
+</div>
+<div class="hidden" id="klassenDoubleOverlay" style="position:fixed; inset:0; z-index:400; background:linear-gradient(135deg, #7c3aed, #4c1d95); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; animation:klassenPingPulse 1s ease-in-out infinite;">
+  <div style="font-size:4rem;">🔥</div>
+  <div style="font-family:'Baloo 2', sans-serif; font-size:2.6rem; font-weight:800; color:white; text-align:center; padding:0 20px;">Doppelte Punkte!</div>
+  <div style="font-size:1.1rem; color:white; opacity:0.85; text-align:center; padding:0 20px;">Mach dich bereit – die nächste Aufgabe zählt doppelt.</div>
 </div>
 <div class="modal-overlay hidden" id="klassenPlayerEditOverlay">
   <div class="modal-box">
@@ -4437,6 +4547,17 @@ function findExerciseById(id) {
   }
   return null;
 }
+// Findet eine einzelne Blatt-Aufgabe (kein "...-mixed") über alle Kapitel hinweg -
+// wird für die Themenauswahl im Klassenduell-Übungsmodus gebraucht, da deren Pool
+// auch mehrere Kapitel überspannen kann (Kategorie-gemischt).
+function findRawExerciseById(id) {
+  const allChapters = [...BASISWISSEN_CHAPTERS, ...JAHR1_CHAPTERS, ...JAHR2_CHAPTERS, ...JAHR3_CHAPTERS];
+  for (const chapter of allChapters) {
+    const ex = chapter.exercises.find(e => e.id === id);
+    if (ex) return ex;
+  }
+  return null;
+}
 
 /* ================= Kampagne: Etappen & Level (aus den Kapitel-Daten abgeleitet) ================= */
 const KAMPAGNE_STAGES = [
@@ -4517,6 +4638,7 @@ function selectExercise(exercise) {
     const info = EXERCISE_INFO[exercise.id];
     descEl.innerHTML = info ? `<p class="ex-desc-text">${escapeHtml(info.d)}</p><p class="ex-desc-goal">🎯 Lernziel: ${escapeHtml(info.g)}</p>` : "";
   }
+  document.getElementById("goPruefungSetupBtn").classList.toggle("hidden", !exercise.isMixed);
   showView("modeChoice");
 }
 
@@ -4560,8 +4682,8 @@ document.getElementById("goSearchBtn").addEventListener("click", () => {
 /* =========================================================================
    KEYPAD / EINGABE-WIDGETS (gemeinsam für Solo & Duell)
    ========================================================================= */
-let inputBuffers = { solo: "", top: "", bottom: "", vk0: "", vk1: "", vk2: "", vk3: "" };
-let activePart = { solo: "a", top: "a", bottom: "a", vk0: "a", vk1: "a", vk2: "a", vk3: "a" };
+let inputBuffers = { solo: "", pruefung: "", top: "", bottom: "", vk0: "", vk1: "", vk2: "", vk3: "" };
+let activePart = { solo: "a", pruefung: "a", top: "a", bottom: "a", vk0: "a", vk1: "a", vk2: "a", vk3: "a" };
 function keypadHTML(side) {
   const k = (key, label, cls) => `<button data-side="${side}" data-key="${key}" class="${cls || ""}">${label}</button>`;
   return `
@@ -4572,7 +4694,7 @@ function keypadHTML(side) {
     <div class="keypad-row">${k("back","⌫")}${k("ok","✓","ok-key")}</div>`;
 }
 document.querySelectorAll(".keypad").forEach(el => { el.innerHTML = keypadHTML(el.dataset.side); });
-function currentTaskFor(side) { if (side === "solo") return soloCurrent; if (side === "klassen") return klassenStudentTask; if (side.startsWith("vk")) return vkTask; return duellTasks[side]; }
+function currentTaskFor(side) { if (side === "solo") return soloCurrent; if (side === "pruefung") return pruefungCurrent; if (side === "klassen") return klassenStudentTask; if (side.startsWith("vk")) return vkTask; return duellTasks[side]; }
 // Zahlen-/Auswahl-Buttons: Pointer-Events statt "click" - manche mobilen Browser
 // synthetisieren bei ECHT gleichzeitigen Berührungen auf zwei verschiedenen Elementen
 // (z.B. beide Duell-Spieler drücken im selben Moment eine Taste) nicht zuverlässig für
@@ -5075,6 +5197,136 @@ function finishSolo() {
   document.getElementById("solo_result_detail").textContent =
     `Trainingszeit: ${formatTime(elapsedSec)} · Schnitt pro richtige Aufgabe: ${avg ? avg.toFixed(1) + " s" : "–"}`;
   showView("soloResult");
+}
+
+/* =========================================================================
+   PRÜFUNGSMODUS (nur bei gemischten Aufgaben wählbar)
+   Kein Hilfe-Button, keine sofortige Richtig/Falsch-Rückmeldung. Am Ende:
+   Note (klassische Formel 1 + 5×richtig/max, wie in kriterien-app) + Review
+   aller Aufgaben (Muster wie klassenMyAnswers im Klassenduell).
+   ========================================================================= */
+let pruefungExercise = null, pruefungCurrent = null, pruefungCount = 15, pruefungIndex = 0;
+let pruefungTimerOn = false, pruefungTimerSec = 30, pruefungTimeRemaining = 0, pruefungInterval = null, pruefungRunning = false;
+let pruefungAnswers = [];
+
+document.getElementById("goPruefungSetupBtn").addEventListener("click", () => {
+  pruefungExercise = currentExercise;
+  document.getElementById("pruefung_setup_title").innerHTML = "📝 " + titleWithCalc(escapeHtml(currentExercise.title), currentExercise.calc);
+  showView("pruefungSetup");
+});
+document.querySelectorAll(".choice-btn[data-pruefung-count]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    pruefungCount = Number(btn.dataset.pruefungCount);
+    document.querySelectorAll(".choice-btn[data-pruefung-count]").forEach(b => b.classList.toggle("active", b === btn));
+  });
+});
+document.querySelectorAll(".choice-btn[data-pruefung-timer]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    pruefungTimerSec = Number(btn.dataset.pruefungTimer);
+    document.querySelectorAll(".choice-btn[data-pruefung-timer]").forEach(b => b.classList.toggle("active", b === btn));
+  });
+});
+document.getElementById("sw_pruefungTimer").addEventListener("change", (e) => {
+  pruefungTimerOn = e.target.checked;
+  document.getElementById("pruefungTimerRow").classList.toggle("hidden", !pruefungTimerOn);
+});
+document.getElementById("startPruefungBtn").addEventListener("click", () => startPruefungSession());
+document.getElementById("pruefungResultAgainBtn").addEventListener("click", () => showView("pruefungSetup"));
+document.getElementById("pruefungStopBtn").addEventListener("click", () => {
+  openConfirm("Prüfung wirklich abbrechen? Der Fortschritt geht verloren.", () => {
+    pruefungRunning = false;
+    clearInterval(pruefungInterval);
+    showView("modeChoice");
+  }, "Abbrechen");
+});
+
+function startPruefungSession() {
+  pruefungIndex = 0;
+  pruefungAnswers = [];
+  pruefungRunning = true;
+  nextPruefungTask();
+  showView("pruefungPlay");
+}
+function nextPruefungTask() {
+  clearInterval(pruefungInterval);
+  pruefungCurrent = pruefungExercise.generate();
+  inputBuffers.pruefung = "";
+  activePart.pruefung = "a";
+  document.getElementById("duell_pruefung_visual").innerHTML = pruefungCurrent.visual || "";
+  document.getElementById("duell_pruefung_prompt").innerHTML = fractionizePromptHtml(pruefungCurrent.prompt);
+  setWidgetMode("duell_pruefung", pruefungCurrent.answerType, pruefungCurrent.pairStyle);
+  renderMcOptions("duell_pruefung", pruefungCurrent);
+  document.getElementById("duell_pruefung_textInput").value = "";
+  renderBuffer("pruefung");
+  renderPairBuffer("pruefung");
+  document.getElementById("pruefung_qnum").textContent = `Aufgabe ${pruefungIndex + 1}/${pruefungCount}`;
+  const timerDisp = document.getElementById("pruefung_timerDisplay");
+  if (pruefungTimerOn) {
+    pruefungTimeRemaining = pruefungTimerSec;
+    timerDisp.classList.remove("hidden");
+    timerDisp.textContent = String(pruefungTimeRemaining);
+    pruefungInterval = setInterval(() => {
+      pruefungTimeRemaining--;
+      timerDisp.textContent = String(Math.max(0, pruefungTimeRemaining));
+      if (pruefungTimeRemaining <= 0) {
+        clearInterval(pruefungInterval);
+        recordPruefungAnswer(false, "");
+        advancePruefung();
+      }
+    }, 1000);
+  } else {
+    timerDisp.classList.add("hidden");
+  }
+}
+function submitPruefung() {
+  if (!pruefungRunning) return;
+  clearInterval(pruefungInterval);
+  const ok = checkAnswer(pruefungCurrent, inputBuffers.pruefung);
+  recordPruefungAnswer(ok, inputBuffers.pruefung);
+  advancePruefung();
+}
+function recordPruefungAnswer(ok, bufferStr) {
+  pruefungAnswers.push({
+    prompt: pruefungCurrent.prompt,
+    myAnswer: formatMyAnswerForDisplayHtml(pruefungCurrent, bufferStr),
+    correctAnswer: formatCorrectAnswerHtml(pruefungCurrent),
+    correct: ok
+  });
+}
+function advancePruefung() {
+  pruefungIndex++;
+  if (pruefungIndex >= pruefungCount) { finishPruefung(); return; }
+  nextPruefungTask();
+}
+function formatPruefungNote(n) {
+  const r = Math.round(n * 4) / 4;
+  if (Number.isInteger(r)) return String(r);
+  if (Number.isInteger(r * 10)) return r.toFixed(1);
+  return r.toFixed(2);
+}
+function finishPruefung() {
+  pruefungRunning = false;
+  clearInterval(pruefungInterval);
+  const correctN = pruefungAnswers.filter(a => a.correct).length;
+  const wrongN = pruefungAnswers.length - correctN;
+  const note = Math.max(1, Math.min(6, 1 + 5 * (correctN / pruefungAnswers.length)));
+  document.getElementById("pruefungResultSubtitle").textContent = `${pruefungExercise.title} · ${pruefungAnswers.length} Aufgaben`;
+  document.getElementById("pruefungResultNote").textContent = `Note ${formatPruefungNote(note)}`;
+  document.getElementById("pruefungResultDetail").textContent = `${correctN} von ${pruefungAnswers.length} richtig`;
+  document.getElementById("pruefungResultCorrectN").textContent = String(correctN);
+  document.getElementById("pruefungResultWrongN").textContent = String(wrongN);
+  document.getElementById("pruefungResultList").innerHTML = pruefungAnswers.map((a, i) => `
+    <div class="setup-card" style="display:flex; gap:10px; align-items:flex-start; padding:12px 14px; ${a.correct ? "background:#f0fdf4; border-color:#dcfce7;" : "background:#fef2f2; border-color:#fecaca;"}">
+      <span style="font-size:1.3rem;">${a.correct ? "✅" : "❌"}</span>
+      <div style="flex:1;">
+        <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px;">${i + 1}. ${fractionizePromptHtml(a.prompt)}</div>
+        <div style="font-size:0.85rem; color:var(--muted);">
+          Deine Antwort: <span style="font-weight:700; ${a.correct ? "color:var(--success);" : "color:var(--danger); text-decoration:line-through;"}">${a.myAnswer}</span>
+          ${a.correct ? "" : `&nbsp;·&nbsp; Richtig: <span style="font-weight:700; color:var(--success);">${a.correctAnswer}</span>`}
+        </div>
+      </div>
+    </div>`).join("");
+  showView("pruefungResult");
 }
 
 /* Kamera-Funktion: Ergebnis als Bild sichern (Solo-Training) */
@@ -5796,6 +6048,7 @@ function nextRound(side) {
 }
 function submitAnswer(side) {
   if (side === "solo") { submitSolo(); return; }
+  if (side === "pruefung") { submitPruefung(); return; }
   if (side === "klassen") { klassenSubmitAnswer(); return; }
   if (side.startsWith("vk")) { vkSubmitAnswer(side); return; }
   if (!duellRunning) return;
@@ -6475,7 +6728,7 @@ document.getElementById("klassenStartBtn").addEventListener("click", async () =>
     openConfirm("Spiel konnte nicht gestartet werden.", null, "OK");
   }
 });
-async function klassenHostNextQuestion() {
+async function klassenHostNextQuestion(doublePoints) {
   const roomRef = firebaseDb.collection("rooms").doc(klassenRoomPin);
   const roomSnap = await roomRef.get();
   const room = roomSnap.data();
@@ -6483,9 +6736,33 @@ async function klassenHostNextQuestion() {
   if (nextIndex >= room.numQuestions) { klassenHostShowRanking(true); return; }
   const rawTask = currentExercise.generate();
   const task = JSON.parse(JSON.stringify(rawTask));
+  if (doublePoints) task.doublePoints = true;
   const startedAt = Date.now();
   await roomRef.update({ currentQuestionIndex: nextIndex, currentTask: task, questionStartedAt: startedAt, phase: "playing", answerRevealed: false });
   klassenHostRenderPlay(nextIndex, task, startedAt, room.timerSec, room.numQuestions);
+}
+// Aktiviert von der Zwischenrangliste aus (Toggle neben "Weiter"): die NÄCHSTE Frage
+// zählt doppelt, wie beim Kahoot-"Doppelte Punkte"-Powerup. Vor der Frage sehen
+// Host UND Klasse 3 Sekunden lang eine grosse Ankündigung (klassenDoubleOverlay),
+// damit sich alle darauf einstellen können, bevor die eigentliche Frage kommt.
+let klassenNextDoublePoints = false;
+function klassenToggleDoublePoints() {
+  klassenNextDoublePoints = !klassenNextDoublePoints;
+  document.getElementById("klassenDoublePointsToggle").classList.toggle("active", klassenNextDoublePoints);
+}
+async function klassenHostAdvance() {
+  if (!klassenNextDoublePoints) { klassenHostNextQuestion(false); return; }
+  klassenNextDoublePoints = false;
+  document.getElementById("klassenDoublePointsToggle").classList.remove("active");
+  // Overlay sofort lokal zeigen (blockiert weitere Klicks auf "Weiter" durch die
+  // fixierte Vollbild-Fläche) - erst danach der Firestore-Schreibvorgang, damit kein
+  // Zeitfenster für einen zweiten Klick auf "Weiter" offenbleibt.
+  document.getElementById("klassenDoubleOverlay").classList.remove("hidden");
+  try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "doubleAnnounce" }); } catch (e) { console.error("Klassenmodus: Ankündigung konnte nicht gesendet werden.", e); }
+  setTimeout(() => {
+    document.getElementById("klassenDoubleOverlay").classList.add("hidden");
+    klassenHostNextQuestion(true);
+  }, 3000);
 }
 let klassenCurrentHostIndex = -1, klassenQuestionEnding = false, klassenCurrentHostTask = null, klassenCurrentTotalPlayers = 0;
 let klassenCurrentTimerSec = 30, klassenCurrentQuestionStartedAt = 0;
@@ -6497,6 +6774,7 @@ function klassenHostRenderPlay(index, task, startedAt, timerSec, numQuestions) {
   klassenCurrentQuestionStartedAt = startedAt;
   showView("klassenHostPlay");
   document.getElementById("klassenHostQNum").textContent = `Frage ${index + 1} von ${numQuestions}`;
+  document.getElementById("klassenHostDoubleBadge").classList.toggle("hidden", !task.doublePoints);
   document.getElementById("klassenHostVisual").innerHTML = task.visual || "";
   document.getElementById("klassenHostPrompt").textContent = task.prompt;
   document.getElementById("klassenHostAnsweredCount").textContent = "0";
@@ -6644,10 +6922,26 @@ function klassenHostQuestionEnd(index) {
 }
 let klassenLastRankIsFinal = false, klassenLastRevealToStudents = false;
 async function klassenStartPractice() {
-  try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "practice" }); } catch (e) { console.error("Klassenmodus: Übung konnte nicht gestartet werden.", e); }
+  // Bei gemischten Aufgaben kann der Host hier gezielt einschränken, welche
+  // Aufgabentypen die Klasse gerade übt (z.B. weil ein Bereich noch nicht sitzt) -
+  // unabhängig von der Themenauswahl des Hauptspiels.
+  if (currentExercise && currentExercise.isMixed) {
+    openMixedSelectModal(currentExercise.mixedPool.map(e => ({ id: e.id, title: e.title })), (checked) => {
+      klassenSetPracticePhase(checked);
+    });
+  } else {
+    klassenSetPracticePhase(null);
+  }
+}
+async function klassenSetPracticePhase(poolIds) {
+  try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "practice", practicePoolIds: poolIds || null }); } catch (e) { console.error("Klassenmodus: Übung konnte nicht gestartet werden.", e); }
+  const isSubset = currentExercise && currentExercise.isMixed && poolIds && poolIds.length < currentExercise.mixedPool.length;
+  document.getElementById("klassenHostPracticeTopics").textContent = isSubset
+    ? `Eingeschränkt auf ${poolIds.length} von ${currentExercise.mixedPool.length} Aufgabentypen.` : "";
   showView("klassenHostPractice");
 }
 document.getElementById("klassenPracticeBtnRank").addEventListener("click", klassenStartPractice);
+document.getElementById("klassenDoublePointsToggle").addEventListener("click", klassenToggleDoublePoints);
 document.getElementById("klassenEndPracticeBtn").addEventListener("click", async () => {
   try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "playing" }); } catch (e) { console.error("Klassenmodus: Übung konnte nicht beendet werden.", e); }
   klassenHostShowRanking(klassenLastRankIsFinal, klassenLastRevealToStudents);
@@ -6685,7 +6979,10 @@ function klassenRenderHostRanking(players, isFinal) {
   };
   const nextBtn = document.getElementById("klassenNextBtn");
   nextBtn.textContent = isFinal ? "Fertig" : "Nächste Aufgabe";
-  nextBtn.onclick = isFinal ? () => { klassenStopListening(); showView("home"); } : () => klassenHostNextQuestion();
+  nextBtn.onclick = isFinal ? () => { klassenStopListening(); showView("home"); } : () => klassenHostAdvance();
+  klassenNextDoublePoints = false;
+  document.getElementById("klassenDoublePointsToggle").classList.remove("active");
+  document.getElementById("klassenDoublePointsToggle").classList.toggle("hidden", isFinal);
 }
 document.getElementById("klassenShowFullListBtn").addEventListener("click", () => {
   document.getElementById("klassenFullList").classList.toggle("hidden");
@@ -6704,9 +7001,11 @@ document.getElementById("klassenPlayerRankHomeBtn").addEventListener("click", ()
 
 /* ---- Klassenmodus: Schüler-seitiger Spielablauf ---- */
 let klassenLastSeenPhase = null, klassenMode = "quiz", klassenExerciseId = null, klassenAnswerRevealed = false, klassenLastAnswerCorrect = null;
-let klassenStudentCurrentTimerSec = 30;
+let klassenStudentCurrentTimerSec = 30, klassenPracticePoolIds = null;
 function klassenStudentHandleRoomUpdate(room) {
   klassenExerciseId = room.exerciseId;
+  klassenPracticePoolIds = room.practicePoolIds || null;
+  document.getElementById("klassenDoubleOverlay").classList.toggle("hidden", room.phase !== "doubleAnnounce");
   if (room.phase === "practice") {
     if (klassenLastSeenPhase !== "practice") klassenEnterPracticeMode();
   } else if (room.phase === "playing") {
@@ -6772,8 +7071,15 @@ function klassenEnterPracticeMode() {
 }
 function klassenPracticeNextTask() {
   clearInterval(klassenCountdownIv);
-  const ex = findExerciseById(klassenExerciseId);
-  const task = ex ? ex.generate() : generateAdd();
+  let task;
+  if (klassenPracticePoolIds && klassenPracticePoolIds.length) {
+    const pool = klassenPracticePoolIds.map(findRawExerciseById).filter(Boolean);
+    const sub = pool.length ? pool[rnd(0, pool.length - 1)] : null;
+    task = sub ? sub.generate() : generateAdd();
+  } else {
+    const ex = findExerciseById(klassenExerciseId);
+    task = ex ? ex.generate() : generateAdd();
+  }
   klassenStudentTask = task;
   showView("klassenPlay");
   document.getElementById("klassen_qnum").textContent = "🧠 Übung (nicht gewertet)";
@@ -6796,6 +7102,7 @@ function klassenRenderStudentQuestion(room) {
   klassenStudentTask = task;
   showView("klassenPlay");
   document.getElementById("klassen_qnum").textContent = `Frage ${room.currentQuestionIndex + 1} von ${room.numQuestions}`;
+  document.getElementById("klassenStudentDoubleBadge").classList.toggle("hidden", !task.doublePoints);
   document.getElementById("duell_klassen_visual").innerHTML = task.visual || "";
   document.getElementById("duell_klassen_prompt").innerHTML = fractionizePromptHtml(task.prompt);
   document.getElementById("klassenAnsweredNote").classList.add("hidden");
@@ -6849,7 +7156,8 @@ async function klassenSubmitAnswer() {
   const roomSnap = await firebaseDb.collection("rooms").doc(klassenRoomPin).get();
   const room = roomSnap.data();
   const elapsedSec = (Date.now() - room.questionStartedAt) / 1000;
-  const points = ok ? Math.max(0, Math.round(1000 * (1 - Math.min(1, elapsedSec / room.timerSec)))) : 0;
+  let points = ok ? Math.max(0, Math.round(1000 * (1 - Math.min(1, elapsedSec / room.timerSec)))) : 0;
+  if (task.doublePoints) points *= 2;
   klassenLockAnswerUI(true);
   klassenMyAnswers.push({ prompt: task.prompt, myAnswer: formatMyAnswerForDisplayHtml(task, inputBuffers.klassen), myAnswerText: formatMyAnswerForDisplay(task, inputBuffers.klassen), correctAnswer: formatCorrectAnswerHtml(task), correctAnswerText: formatCorrectAnswer(task), correct: ok, points });
   try {

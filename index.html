@@ -336,7 +336,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-23.2</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-23.3</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -644,7 +644,7 @@
       <button class="btn btn-big btn-duell" id="goDuellSetupBtn">⚔️ Duell starten</button>
       <button class="btn btn-big btn-vk" id="goVkSetupBtn">🏁 Vierkampf starten</button>
     </div>
-    <button class="btn btn-big btn-pruefung hidden" id="goPruefungSetupBtn" style="width:100%; margin-top:12px;">📝 Prüfungsmodus</button>
+    <button class="btn btn-big btn-pruefung" id="goPruefungSetupBtn" style="width:100%; margin-top:12px;">📝 Prüfungsmodus</button>
     <div style="text-align:right; margin-top:28px;">
       <button id="goKlassenHostSetupBtn" style="background:none; border:none; color:var(--muted); font-size:0.78rem; text-decoration:underline; cursor:pointer; padding:6px;">🏫 Klassenduell (für Lehrpersonen)</button>
     </div>
@@ -4644,7 +4644,6 @@ function selectExercise(exercise) {
     const info = EXERCISE_INFO[exercise.id];
     descEl.innerHTML = info ? `<p class="ex-desc-text">${escapeHtml(info.d)}</p><p class="ex-desc-goal">🎯 Lernziel: ${escapeHtml(info.g)}</p>` : "";
   }
-  document.getElementById("goPruefungSetupBtn").classList.toggle("hidden", !exercise.isMixed);
   showView("modeChoice");
 }
 
@@ -5213,7 +5212,7 @@ function finishSolo() {
    ========================================================================= */
 let pruefungExercise = null, pruefungCurrent = null, pruefungCount = 15, pruefungIndex = 0;
 let pruefungTimerOn = false, pruefungTimerSec = 30, pruefungTimeRemaining = 0, pruefungInterval = null, pruefungRunning = false;
-let pruefungAnswers = [];
+let pruefungAnswers = [], pruefungQuestionStartedAt = 0;
 
 document.getElementById("goPruefungSetupBtn").addEventListener("click", () => {
   pruefungExercise = currentExercise;
@@ -5255,6 +5254,7 @@ function startPruefungSession() {
 }
 function nextPruefungTask() {
   clearInterval(pruefungInterval);
+  pruefungQuestionStartedAt = Date.now();
   pruefungCurrent = pruefungExercise.generate();
   inputBuffers.pruefung = "";
   activePart.pruefung = "a";
@@ -5292,11 +5292,13 @@ function submitPruefung() {
   advancePruefung();
 }
 function recordPruefungAnswer(ok, bufferStr) {
+  const timeSec = Math.max(0, (Date.now() - pruefungQuestionStartedAt) / 1000);
   pruefungAnswers.push({
     prompt: pruefungCurrent.prompt,
     myAnswer: formatMyAnswerForDisplayHtml(pruefungCurrent, bufferStr),
     correctAnswer: formatCorrectAnswerHtml(pruefungCurrent),
-    correct: ok
+    correct: ok,
+    timeSec
   });
 }
 function advancePruefung() {
@@ -5316,16 +5318,17 @@ function finishPruefung() {
   const correctN = pruefungAnswers.filter(a => a.correct).length;
   const wrongN = pruefungAnswers.length - correctN;
   const note = Math.max(1, Math.min(6, 1 + 5 * (correctN / pruefungAnswers.length)));
+  const avgTime = pruefungAnswers.reduce((sum, a) => sum + a.timeSec, 0) / pruefungAnswers.length;
   document.getElementById("pruefungResultSubtitle").textContent = `${pruefungExercise.title} · ${pruefungAnswers.length} Aufgaben`;
   document.getElementById("pruefungResultNote").textContent = `Note ${formatPruefungNote(note)}`;
-  document.getElementById("pruefungResultDetail").textContent = `${correctN} von ${pruefungAnswers.length} richtig`;
+  document.getElementById("pruefungResultDetail").textContent = `${correctN} von ${pruefungAnswers.length} richtig · Ø ${avgTime.toFixed(1)}s pro Aufgabe`;
   document.getElementById("pruefungResultCorrectN").textContent = String(correctN);
   document.getElementById("pruefungResultWrongN").textContent = String(wrongN);
   document.getElementById("pruefungResultList").innerHTML = pruefungAnswers.map((a, i) => `
     <div class="setup-card" style="display:flex; gap:10px; align-items:flex-start; padding:12px 14px; ${a.correct ? "background:#f0fdf4; border-color:#dcfce7;" : "background:#fef2f2; border-color:#fecaca;"}">
       <span style="font-size:1.3rem;">${a.correct ? "✅" : "❌"}</span>
       <div style="flex:1;">
-        <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px;">${i + 1}. ${fractionizePromptHtml(a.prompt)}</div>
+        <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px;">${i + 1}. ${fractionizePromptHtml(a.prompt)} <span style="font-weight:400; color:var(--muted); font-size:0.8rem;">⏱ ${a.timeSec.toFixed(1)}s</span></div>
         <div style="font-size:0.85rem; color:var(--muted);">
           Deine Antwort: <span style="font-weight:700; ${a.correct ? "color:var(--success);" : "color:var(--danger); text-decoration:line-through;"}">${a.myAnswer}</span>
           ${a.correct ? "" : `&nbsp;·&nbsp; Richtig: <span style="font-weight:700; color:var(--success);">${a.correctAnswer}</span>`}

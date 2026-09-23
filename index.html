@@ -336,7 +336,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-23.5</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-23.6</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -490,6 +490,8 @@
     </div>
     <h1 id="klassenRankTitle">🏆 Zwischenstand</h1>
     <div class="setup-card" style="text-align:center;">
+      <p style="font-size:1rem; color:var(--muted); margin:0;">Aufgabe</p>
+      <p style="font-size:1.1rem; font-weight:700; margin:4px 0 12px;" id="klassenRankQuestion"></p>
       <p style="font-size:1rem; color:var(--muted); margin:0;">Richtige Antwort</p>
       <p style="font-size:1.8rem; font-weight:800; margin:4px 0 0;" id="klassenRankCorrectAnswer">–</p>
     </div>
@@ -5137,7 +5139,7 @@ function renderMcOptions(prefix, task) {
 /* =========================================================================
    SOLO-MODUS
    ========================================================================= */
-let soloExercise = null, soloScore = 0, soloCurrent = null;
+let soloExercise = null, soloScore = 0, soloWrong = 0, soloCurrent = null;
 let soloDuration = 0, soloTimeRemaining = 0, soloInterval = null, soloRunning = false, soloStartedAt = 0;
 
 document.getElementById("goSoloBtn").addEventListener("click", () => {
@@ -5156,6 +5158,7 @@ document.getElementById("solo_result_againBtn").addEventListener("click", () => 
 
 function startSoloSession() {
   soloScore = 0;
+  soloWrong = 0;
   soloRunning = true;
   soloStartedAt = Date.now();
   soloTimeRemaining = soloDuration > 0 ? soloDuration : 0;
@@ -5180,6 +5183,9 @@ document.getElementById("soloStopBtn").addEventListener("click", () => {
   if (!soloRunning) { stopDuellTimerIfRunning(); showView("modeChoice"); return; }
   openConfirm("Training beenden und Ergebnis anzeigen?", () => finishSolo(), "Beenden");
 });
+function updateSoloScoreDisplay() {
+  document.getElementById("solo_score").textContent = `Richtig: ${soloScore} · Falsch: ${soloWrong}`;
+}
 function nextSoloTask() {
   soloCurrent = soloExercise.generate();
   inputBuffers.solo = "";
@@ -5191,7 +5197,7 @@ function nextSoloTask() {
   document.getElementById("solo_textInput").value = "";
   renderBuffer("solo");
   renderPairBuffer("solo");
-  document.getElementById("solo_score").textContent = `Richtig: ${soloScore}`;
+  updateSoloScoreDisplay();
   document.getElementById("kampagne_dots").classList.add("hidden");
 }
 function submitSolo() {
@@ -5199,15 +5205,15 @@ function submitSolo() {
   if (!soloRunning) return;
   const ok = checkAnswer(soloCurrent, inputBuffers.solo);
   const soloFlashId = soloCurrent.answerType === "mc" ? "solo_mcWrap" : soloCurrent.answerType === "hotspot" ? "solo_visual" : "solo_input";
-  if (ok) { soloScore++; document.getElementById("solo_score").textContent = `Richtig: ${soloScore}`; flash(soloFlashId, "correct-flash"); celebrateCorrect(document.getElementById(soloFlashId)); setTimeout(nextSoloTask, 250); }
-  else { flash(soloFlashId, "wrong-flash"); celebrateWrong(document.getElementById(soloFlashId)); inputBuffers.solo = ""; renderBuffer("solo"); }
+  if (ok) { soloScore++; updateSoloScoreDisplay(); flash(soloFlashId, "correct-flash"); celebrateCorrect(document.getElementById(soloFlashId)); setTimeout(nextSoloTask, 250); }
+  else { soloWrong++; updateSoloScoreDisplay(); flash(soloFlashId, "wrong-flash"); celebrateWrong(document.getElementById(soloFlashId)); inputBuffers.solo = ""; renderBuffer("solo"); }
 }
 function finishSolo() {
   clearInterval(soloInterval);
   soloRunning = false;
   const elapsedSec = Math.max(1, Math.round((Date.now() - soloStartedAt) / 1000));
   const avg = soloScore > 0 ? elapsedSec / soloScore : null;
-  document.getElementById("solo_result_score").textContent = `${soloScore} Aufgaben richtig gelöst`;
+  document.getElementById("solo_result_score").textContent = `${soloScore} richtig · ${soloWrong} falsch`;
   document.getElementById("solo_result_detail").textContent =
     `Trainingszeit: ${formatTime(elapsedSec)} · Schnitt pro richtige Aufgabe: ${avg ? avg.toFixed(1) + " s" : "–"}`;
   showView("soloResult");
@@ -7033,6 +7039,7 @@ function klassenRenderHostRanking(players, isFinal) {
   showView("klassenHostRank");
   klassenUpdateHostPinBadges();
   document.getElementById("klassenRankTitle").textContent = isFinal ? "🏆 Schlussrangliste" : "🏆 Zwischenstand";
+  document.getElementById("klassenRankQuestion").innerHTML = fractionizePromptHtml(klassenCurrentHostTask.prompt);
   document.getElementById("klassenRankCorrectAnswer").innerHTML = formatCorrectAnswerHtml(klassenCurrentHostTask);
   document.getElementById("klassenCorrectList").classList.toggle("hidden", !klassenCorrectListOpen);
   klassenRenderCorrectList();

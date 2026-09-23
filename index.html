@@ -336,7 +336,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-22.3</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-23.2</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -459,7 +459,10 @@
 
   <!-- KLASSENMODUS: Host-Spielbildschirm (Beamer) -->
   <div id="klassenHostPlayView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" id="klassenHostPlayStopBtn">Abbrechen</button></div>
+    <div class="row back-row" style="justify-content:space-between; align-items:center;">
+      <button class="btn btn-secondary" id="klassenHostPlayStopBtn">Abbrechen</button>
+      <span style="color:var(--muted); font-size:0.78rem; font-weight:700;">PIN <span class="klassen-host-pin-live"></span></span>
+    </div>
     <h2 class="sub" id="klassenHostQNum"></h2>
     <p class="hidden" id="klassenHostDoubleBadge" style="text-align:center; font-weight:800; color:#7c3aed; margin:-8px 0 8px;">🔥 Doppelte Punkte</p>
     <div id="klassenHostVisual" style="text-align:center;"></div>
@@ -481,7 +484,10 @@
 
   <!-- KLASSENMODUS: Rangliste (Host) -->
   <div id="klassenHostRankView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" id="klassenRankStopBtn">Abbrechen</button></div>
+    <div class="row back-row" style="justify-content:space-between; align-items:center;">
+      <button class="btn btn-secondary" id="klassenRankStopBtn">Abbrechen</button>
+      <span style="color:var(--muted); font-size:0.78rem; font-weight:700;">PIN <span class="klassen-host-pin-live"></span></span>
+    </div>
     <h1 id="klassenRankTitle">🏆 Zwischenstand</h1>
     <div class="setup-card" style="text-align:center;">
       <p style="font-size:1rem; color:var(--muted); margin:0;">Richtige Antwort</p>
@@ -6455,14 +6461,26 @@ function klassenStopListening() {
 let klassenSelfUnsub = null, klassenLastPingSeenMs = 0, klassenSeenSelfOnce = false;
 const KLASSEN_OFFLINE_MS = 15000;
 let klassenHeartbeatIv = null;
+// Schreibt sofort "aktiv/nicht aktiv" bei Sichtbarkeitswechsel (App-Wechsel,
+// Bildschirm sperren) - der reine Herzschlag-Timer allein reicht nicht: mobile
+// Browser lassen Hintergrund-Tabs oft noch länger weiterlaufen, wodurch SuS
+// für die Lehrperson fälschlich "online" bleiben, obwohl sie die Oberfläche
+// längst verlassen haben (analog zum Schreibraum-Feature).
+function klassenWriteActive() {
+  if (!klassenRoomPin || !klassenPlayerId) return;
+  firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").doc(klassenPlayerId)
+    .update({ active: !document.hidden, lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(() => {});
+}
 function klassenStartHeartbeat() {
   klassenStopHeartbeat();
-  klassenHeartbeatIv = setInterval(() => {
-    if (!klassenRoomPin || !klassenPlayerId) return;
-    firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").doc(klassenPlayerId).update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(() => {});
-  }, 5000);
+  document.addEventListener("visibilitychange", klassenWriteActive);
+  klassenWriteActive();
+  klassenHeartbeatIv = setInterval(klassenWriteActive, 5000);
 }
-function klassenStopHeartbeat() { clearInterval(klassenHeartbeatIv); klassenHeartbeatIv = null; }
+function klassenStopHeartbeat() {
+  clearInterval(klassenHeartbeatIv); klassenHeartbeatIv = null;
+  document.removeEventListener("visibilitychange", klassenWriteActive);
+}
 let klassenOfflineCheckIv = null;
 function klassenStartOfflineWatch() {
   clearInterval(klassenOfflineCheckIv);
@@ -6473,6 +6491,7 @@ function klassenStopOfflineWatch() { clearInterval(klassenOfflineCheckIv); klass
 function klassenRenderOfflineBanner() {
   const now = Date.now();
   const offline = klassenAllPlayers.filter(p => {
+    if (p.active === false) return true;
     const ms = p.lastSeen && typeof p.lastSeen.toMillis === "function" ? p.lastSeen.toMillis() : 0;
     return ms > 0 && (now - ms > KLASSEN_OFFLINE_MS);
   });
@@ -6518,6 +6537,32 @@ document.querySelectorAll('.choice-btn[data-klassen-rankint]').forEach(btn => bt
   klassenSettings.rankInterval = Number(btn.dataset.klassenRankint);
   document.querySelectorAll('.choice-btn[data-klassen-rankint]').forEach(b => b.classList.toggle("active", b === btn));
 }));
+/* Kleiner synthetisierter Jingle beim Öffnen des PIN-Bildschirms (Web Audio API,
+   keine Audio-Datei nötig - passt zum "kein Build-Schritt"-Ansatz der App). */
+let klassenAudioCtx = null;
+function playKlassenPinJingle() {
+  try {
+    if (!klassenAudioCtx) klassenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = klassenAudioCtx;
+    if (ctx.state === "suspended") ctx.resume();
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    const noteDuration = 0.14;
+    notes.forEach((freq, i) => {
+      const startAt = ctx.currentTime + i * noteDuration;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, startAt);
+      gain.gain.linearRampToValueAtTime(0.2, startAt + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, startAt + noteDuration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(startAt);
+      osc.stop(startAt + noteDuration);
+    });
+  } catch (e) { console.error("Klassenmodus: Jingle konnte nicht abgespielt werden.", e); }
+}
 document.getElementById("klassenCreateRoomBtn").addEventListener("click", async () => {
   const ok = await klassenCheckReady();
   if (!ok) { openConfirm("Verbindung nicht möglich. Prüfe die Internetverbindung.", null, "OK"); return; }
@@ -6545,10 +6590,11 @@ document.getElementById("klassenCreateRoomBtn").addEventListener("click", async 
   document.getElementById("klassenPlayerList").innerHTML = "";
   document.getElementById("klassenJoinCount").textContent = "0";
   showView("klassenHost");
+  playKlassenPinJingle();
   klassenStopListening();
   klassenPlayersUnsub = firebaseDb.collection("rooms").doc(pin).collection("players").onSnapshot(snap => {
     klassenAllPlayers = [];
-    snap.forEach(d => klassenAllPlayers.push({ id: d.id, name: d.data().name, lastSeen: d.data().lastSeen }));
+    snap.forEach(d => klassenAllPlayers.push({ id: d.id, name: d.data().name, lastSeen: d.data().lastSeen, active: d.data().active }));
     document.getElementById("klassenJoinCount").textContent = String(klassenAllPlayers.length);
     document.getElementById("klassenPlayerList").innerHTML = klassenAllPlayers.map(p => `<button class="choice-btn active" data-player-id="${p.id}">${escapeHtml(p.name)}</button>`).join("");
     klassenRenderOfflineBanner();
@@ -6573,10 +6619,14 @@ document.getElementById("goKlassenJoinBtn").addEventListener("click", () => {
 document.querySelectorAll("[data-back-klassenchoice]").forEach(b => b.addEventListener("click", () => showView("klassenChoice")));
 const KLASSEN_SESSION_KEY = "matheDuellKlassenSession";
 function klassenSaveSession() {
-  try { sessionStorage.setItem(KLASSEN_SESSION_KEY, JSON.stringify({ pin: klassenRoomPin, playerId: klassenPlayerId, name: klassenPlayerName })); } catch (e) {}
+  // localStorage statt sessionStorage: sessionStorage wird beim Schliessen des
+  // Tabs/Browsers geleert - genau das führte dazu, dass SuS nach einem
+  // versehentlich geschlossenen Tab keinen Zugang mehr zu ihrem laufenden
+  // Spiel hatten (der Server-seitige Spieler-Eintrag blieb aber bestehen).
+  try { localStorage.setItem(KLASSEN_SESSION_KEY, JSON.stringify({ pin: klassenRoomPin, playerId: klassenPlayerId, name: klassenPlayerName })); } catch (e) {}
 }
 function klassenClearSession() {
-  try { sessionStorage.removeItem(KLASSEN_SESSION_KEY); } catch (e) {}
+  try { localStorage.removeItem(KLASSEN_SESSION_KEY); } catch (e) {}
 }
 function klassenAttachStudentListeners(roomRef, pin) {
   klassenStopListening();
@@ -6688,14 +6738,17 @@ document.getElementById("klassenJoinBtn").addEventListener("click", async () => 
 });
 (async function klassenResumeSession() {
   let saved = null;
-  try { saved = JSON.parse(sessionStorage.getItem(KLASSEN_SESSION_KEY)); } catch (e) {}
+  try { saved = JSON.parse(localStorage.getItem(KLASSEN_SESSION_KEY)); } catch (e) {}
   if (!saved || !saved.pin || !saved.playerId) return;
   const ok = await ensureFirebase();
   if (!ok) return;
   try {
     const roomRef = firebaseDb.collection("rooms").doc(saved.pin);
+    const roomSnap = await roomRef.get();
+    if (!roomSnap.exists || roomSnap.data().phase === "finished") { klassenClearSession(); return; }
     const playerDoc = await roomRef.collection("players").doc(saved.playerId).get();
     if (!playerDoc.exists) { klassenClearSession(); return; }
+    await roomRef.collection("players").doc(saved.playerId).update({ active: true, lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
     klassenIsHost = false;
     klassenPlayerId = saved.playerId;
     klassenPlayerName = saved.name;
@@ -6766,7 +6819,11 @@ async function klassenHostAdvance() {
 }
 let klassenCurrentHostIndex = -1, klassenQuestionEnding = false, klassenCurrentHostTask = null, klassenCurrentTotalPlayers = 0;
 let klassenCurrentTimerSec = 30, klassenCurrentQuestionStartedAt = 0;
+function klassenUpdateHostPinBadges() {
+  document.querySelectorAll(".klassen-host-pin-live").forEach(el => { el.textContent = klassenRoomPin || "----"; });
+}
 function klassenHostRenderPlay(index, task, startedAt, timerSec, numQuestions) {
+  klassenUpdateHostPinBadges();
   klassenCurrentHostIndex = index;
   klassenCurrentHostTask = task;
   klassenQuestionEnding = false;
@@ -6821,7 +6878,7 @@ function klassenHostRenderPlay(index, task, startedAt, timerSec, numQuestions) {
   klassenPlayersUnsub = firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").onSnapshot(snap => {
     klassenCurrentTotalPlayers = snap.size;
     klassenAllPlayers = [];
-    snap.forEach(d => klassenAllPlayers.push({ id: d.id, name: d.data().name, lastSeen: d.data().lastSeen }));
+    snap.forEach(d => klassenAllPlayers.push({ id: d.id, name: d.data().name, lastSeen: d.data().lastSeen, active: d.data().active }));
     document.getElementById("klassenHostTotalPlayers").textContent = String(snap.size);
     klassenRenderPendingList();
     klassenRenderOfflineBanner();
@@ -6962,6 +7019,7 @@ async function klassenHostShowRanking(isFinal, revealToStudents) {
 function klassenRenderHostRanking(players, isFinal) {
   clearInterval(klassenCountdownIv);
   showView("klassenHostRank");
+  klassenUpdateHostPinBadges();
   document.getElementById("klassenRankTitle").textContent = isFinal ? "🏆 Schlussrangliste" : "🏆 Zwischenstand";
   document.getElementById("klassenRankCorrectAnswer").innerHTML = formatCorrectAnswerHtml(klassenCurrentHostTask);
   document.getElementById("klassenCorrectList").classList.toggle("hidden", !klassenCorrectListOpen);

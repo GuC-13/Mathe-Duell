@@ -336,7 +336,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-23.4</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-23.5</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -4757,6 +4757,15 @@ function svgPointFromClientCoords(svg, clientX, clientY) {
   const vb = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width ? svg.viewBox.baseVal : { x: 0, y: 0, width: rect.width, height: rect.height };
   let x = vb.x + (clientX - rect.left) / rect.width * vb.width;
   let y = vb.y + (clientY - rect.top) / rect.height * vb.height;
+  if (svg.closest(".duell-top, .vk-flip")) {
+    // Diese Seite sitzt der anderen gegenüber und ist per CSS um 180° gedreht
+    // (.duell-top / .vk-quad.vk-flip). getBoundingClientRect() liefert die
+    // Bildschirm-Position NACH der Drehung, die viewBox-Koordinaten sind aber im
+    // ungedrehten lokalen SVG-Koordinatensystem definiert - ohne diese Korrektur
+    // wird jede gezeichnete Linie/jeder Tap für diese Seite spiegelverkehrt.
+    x = vb.x + vb.width - (x - vb.x);
+    y = vb.y + vb.height - (y - vb.y);
+  }
   // Ein Tap knapp ausserhalb der sichtbaren Fläche (z.B. am Bildrand) ergäbe sonst eine
   // Koordinate ausserhalb der viewBox - der Marker würde dort vom SVG unsichtbar
   // abgeschnitten, obwohl der Tap registriert wurde. Deshalb an den Rand klemmen.
@@ -7063,6 +7072,7 @@ document.getElementById("klassenPlayerRankHomeBtn").addEventListener("click", ()
 /* ---- Klassenmodus: Schüler-seitiger Spielablauf ---- */
 let klassenLastSeenPhase = null, klassenMode = "quiz", klassenExerciseId = null, klassenAnswerRevealed = false, klassenLastAnswerCorrect = null;
 let klassenStudentCurrentTimerSec = 30, klassenPracticePoolIds = null;
+let klassenPracticeCorrect = 0, klassenPracticeWrong = 0;
 function klassenStudentHandleRoomUpdate(room) {
   klassenExerciseId = room.exerciseId;
   klassenPracticePoolIds = room.practicePoolIds || null;
@@ -7128,6 +7138,8 @@ function klassenShowWaitingForNext() {
 }
 function klassenEnterPracticeMode() {
   klassenMode = "practice";
+  klassenPracticeCorrect = 0;
+  klassenPracticeWrong = 0;
   klassenPracticeNextTask();
 }
 function klassenPracticeNextTask() {
@@ -7143,7 +7155,7 @@ function klassenPracticeNextTask() {
   }
   klassenStudentTask = task;
   showView("klassenPlay");
-  document.getElementById("klassen_qnum").textContent = "🧠 Übung (nicht gewertet)";
+  document.getElementById("klassen_qnum").textContent = `🧠 Übung (nicht gewertet) · ✅ ${klassenPracticeCorrect} · ❌ ${klassenPracticeWrong}`;
   document.getElementById("klassen_countdown").textContent = "";
   document.getElementById("duell_klassen_visual").innerHTML = task.visual || "";
   document.getElementById("duell_klassen_prompt").innerHTML = fractionizePromptHtml(task.prompt);
@@ -7197,6 +7209,7 @@ async function klassenSubmitAnswer() {
     const task = klassenStudentTask;
     if (!task) return;
     const ok = checkAnswer(task, inputBuffers.klassen);
+    if (ok) klassenPracticeCorrect++; else klassenPracticeWrong++;
     const inputElId = task.answerType === "mc" ? "duell_klassen_mcWrap" : task.answerType === "hotspot" ? "duell_klassen_visual" : "duell_klassen_input";
     flash(inputElId, ok ? "correct-flash" : "wrong-flash");
     if (ok) celebrateCorrect(document.getElementById(inputElId)); else celebrateWrong(document.getElementById(inputElId));

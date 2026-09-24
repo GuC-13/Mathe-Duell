@@ -336,7 +336,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-24.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-24.2</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -2057,9 +2057,12 @@ const UNIT_SETS = [
   { from: "m", to: "km", factor: 0.001 }, { from: "km", to: "m", factor: 1000 },
   { from: "g", to: "kg", factor: 0.001 }, { from: "kg", to: "g", factor: 1000 },
   { from: "ml", to: "l", factor: 0.001 }, { from: "l", to: "ml", factor: 1000 },
-  { from: "min", to: "h", factor: 1 / 60 }, { from: "h", to: "min", factor: 60 }
+  // min → h nur mit Werten, die ein "schönes" Ergebnis im Kopf ergeben (Zehntel,
+  // Viertel, halbe/ganze Stunden) - bei beliebigen Minuten käme z.B. 37 min = 0.617 h.
+  { from: "min", to: "h", factor: 1 / 60, values: [6, 12, 15, 18, 24, 30, 36, 42, 45, 48, 54, 60, 90, 120, 150, 180] },
+  { from: "h", to: "min", factor: 60 }
 ];
-function generateUnitConversion() { const s = UNIT_SETS[rnd(0, UNIT_SETS.length - 1)]; const val = rnd(1, 50); return { visual: null, prompt: `Wandle um: ${val} ${s.from} = ? ${s.to}`, answerType: "number", correct: Math.round(val * s.factor * 1000) / 1000 }; }
+function generateUnitConversion() { const s = UNIT_SETS[rnd(0, UNIT_SETS.length - 1)]; const val = s.values ? s.values[rnd(0, s.values.length - 1)] : rnd(1, 50); return { visual: null, prompt: `Wandle um: ${val} ${s.from} = ? ${s.to}`, answerType: "number", correct: Math.round(val * s.factor * 1000) / 1000 }; }
 const AREA_UNIT_SETS = [
   { from: "mm²", to: "cm²", factor: 0.01 }, { from: "cm²", to: "mm²", factor: 100 },
   { from: "cm²", to: "dm²", factor: 0.01 }, { from: "dm²", to: "cm²", factor: 100 },
@@ -4478,7 +4481,7 @@ function makeMixedExercise(ch, selectedIds) {
     title: showNum ? `Kapitel ${ch.id} gemischte Aufgaben${isSubset ? " (Auswahl)" : ""}` : `Gemischte Aufgaben: ${ch.title}${isSubset ? " (Auswahl)" : ""}`,
     isMixed: true,
     mixedPool: pool,
-    generate: () => { const sub = pool[rnd(0, pool.length - 1)]; const t = sub.generate(); t.sourceHelp = sub.help; return t; },
+    generate: () => { const sub = pool[rnd(0, pool.length - 1)]; const t = sub.generate(); t.sourceHelp = sub.help; t.sourceExerciseId = sub.id; return t; },
     help: "Diese Übung mischt die verschiedenen Aufgabentypen dieses Kapitels. Der Hilfe-Button zeigt jeweils den Lösungsweg zur aktuellen Aufgabe.",
     calc: pool.some(e => e.calc)
   };
@@ -4496,7 +4499,7 @@ function makeCategoryMixedExercise(cat, selectedChapterIds) {
     isMixed: true,
     mixedPool: pool,
     mixedChapterTitles: chapters.map(ch => ch.title),
-    generate: () => { const sub = pool[rnd(0, pool.length - 1)]; const t = sub.generate(); t.sourceHelp = sub.help; return t; },
+    generate: () => { const sub = pool[rnd(0, pool.length - 1)]; const t = sub.generate(); t.sourceHelp = sub.help; t.sourceExerciseId = sub.id; return t; },
     help: "Diese Übung mischt Aufgaben aus mehreren Kapiteln. Der Hilfe-Button zeigt jeweils den Lösungsweg zur aktuellen Aufgabe.",
     calc: pool.some(e => e.calc)
   };
@@ -4506,15 +4509,21 @@ function makeCategoryMixedExercise(cat, selectedChapterIds) {
    Standard ist immer "Alle". Generisch gehalten, damit beide Ebenen dasselbe Modal
    nutzen können. ---- */
 let mixedModalOnConfirm = null;
-function openMixedSelectModal(items, onConfirm) {
+// preselectedIds (optional): nur diese Einträge sind vorab angehakt, sonst alle.
+function openMixedSelectModal(items, onConfirm, preselectedIds) {
+  const isChecked = it => !preselectedIds || preselectedIds.includes(it.id);
   document.getElementById("mixedTopicList").innerHTML = items.map(it => `
     <label class="toggle-line" style="padding:5px 0;">
       <span>${escapeHtml(it.title)}</span>
-      <input type="checkbox" class="mixed-topic-check" data-id="${escapeHtml(it.id)}" checked>
+      <input type="checkbox" class="mixed-topic-check" data-id="${escapeHtml(it.id)}"${isChecked(it) ? " checked" : ""}>
     </label>`).join("");
-  document.getElementById("mixedTopicAllCheck").checked = true;
+  document.getElementById("mixedTopicAllCheck").checked = items.every(isChecked);
   mixedModalOnConfirm = onConfirm;
   document.getElementById("mixedTopicModal").classList.remove("hidden");
+  if (preselectedIds) {
+    const first = document.querySelector("#mixedTopicList .mixed-topic-check:checked");
+    if (first) first.closest("label").scrollIntoView({ block: "center" });
+  }
 }
 function openMixedTopicModal(ch) {
   openMixedSelectModal(ch.exercises.map(e => ({ id: e.id, title: e.title })), (checked) => {
@@ -7001,11 +7010,14 @@ let klassenLastRankIsFinal = false, klassenLastRevealToStudents = false;
 async function klassenStartPractice() {
   // Bei gemischten Aufgaben kann der Host hier gezielt einschränken, welche
   // Aufgabentypen die Klasse gerade übt (z.B. weil ein Bereich noch nicht sitzt) -
-  // unabhängig von der Themenauswahl des Hauptspiels.
+  // unabhängig von der Themenauswahl des Hauptspiels. Vorausgewählt ist genau der
+  // Aufgabentyp der gerade gespielten Frage (meist will man genau den nochmals üben).
   if (currentExercise && currentExercise.isMixed) {
+    const lastId = klassenCurrentHostTask && klassenCurrentHostTask.sourceExerciseId;
+    const preselect = lastId && currentExercise.mixedPool.some(e => e.id === lastId) ? [lastId] : null;
     openMixedSelectModal(currentExercise.mixedPool.map(e => ({ id: e.id, title: e.title })), (checked) => {
       klassenSetPracticePhase(checked);
-    });
+    }, preselect);
   } else {
     klassenSetPracticePhase(null);
   }

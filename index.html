@@ -336,7 +336,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-23.6</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-24.1</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -1972,9 +1972,11 @@ function generateOrderOfOperations() {
   const b = rnd(2, 9), d = rnd(2, 9);
   const product = b * d;
   const useSub = Math.random() < 0.5;
-  const a = useSub ? rnd(product + 1, product + 20) : rnd(2, 30);
   const mulFirst = Math.random() < 0.5;
-  const correct = useSub ? a - product : a + product;
+  // Bei Subtraktion muss das Ergebnis zur Reihenfolge passen und positiv bleiben:
+  // "a − b × d" braucht a > b·d, "b × d − a" braucht a < b·d.
+  const a = !useSub ? rnd(2, 30) : mulFirst ? rnd(product + 1, product + 20) : rnd(1, product - 1);
+  const correct = !useSub ? a + product : mulFirst ? a - product : product - a;
   const prompt = mulFirst
     ? `Berechne: ${a} ${useSub ? "−" : "+"} ${b} × ${d} =`
     : `Berechne: ${b} × ${d} ${useSub ? "−" : "+"} ${a} =`;

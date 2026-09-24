@@ -104,8 +104,44 @@
   .btn-pruefung { background: linear-gradient(135deg, #7c3aed, #4c1d95); color: white; }
   .klassen-mult-btn { flex: 1; border: 2px solid #7c3aed; color: #7c3aed; background: white; }
   .klassen-mult-btn.active { background: linear-gradient(135deg, #7c3aed, #4c1d95); color: white; border-color: #4c1d95; box-shadow: 0 0 0 3px #c4b5fd; }
-  .klassen-next-card { border: 2px dashed var(--muted); }
-  .klassen-next-card .visual-wrap svg, .klassen-next-card-visual svg { max-width: 220px; height: auto; }
+  .klassen-next-card { border: 2px dashed var(--border); border-radius: 12px; padding: 8px 12px; background: var(--card); }
+  .klassen-next-card .visual-wrap svg { max-width: 110px; height: auto; }
+  /* Klassenduell-Zwischenstand (Host): kompakt, zwei Spalten ab Tablet-Breite */
+  .krank { padding-bottom: 16px; }
+  .krank p { margin: 0; }
+  .krank-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .krank-title { flex: 1; text-align: center; }
+  .krank-title h1 { font-size: 1.1rem; margin: 0; }
+  #klassenRankQInfo { font-size: 0.78rem; color: var(--muted); font-weight: 700; }
+  .krank-pin { color: var(--muted); font-size: 0.72rem; font-weight: 700; min-width: 70px; text-align: right; }
+  .krank-small-btn { padding: 6px 12px; font-size: 0.8rem; border-radius: 12px; }
+  .krank-tiny-btn { flex: 1; padding: 3px 8px; font-size: 0.72rem; border-radius: 10px; }
+  .krank-offline { background: #fff7ed; border: 1px solid #fed7aa; color: #b45309; font-weight: 700; font-size: 0.8rem; border-radius: 10px; padding: 6px 12px; margin-bottom: 10px !important; text-align: center; }
+  .krank-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 600px) { .krank-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; } }
+  .krank-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .krank-box { background: var(--card); border-radius: 12px; padding: 10px 12px; }
+  .krank-correct-toggle { padding: 2px; font-size: 0.8rem; color: var(--text); }
+  .krank-correct-list { display: flex; flex-direction: column; gap: 6px; font-size: 0.78rem; }
+  .krank-correct-list .choice-btn { flex: 0 0 auto; min-width: 0; padding: 2px 9px; font-size: 0.74rem; border-width: 1px; border-radius: 10px; }
+  .krank-correct-list div > div { gap: 5px !important; }
+  .krank-podium { display: flex; flex-direction: column; gap: 6px; }
+  .krank-podium-row { display: flex; justify-content: space-between; gap: 8px; background: var(--card); border-radius: 10px; padding: 7px 12px; font-size: 0.9rem; font-weight: 800; }
+  .krank-fulllist { display: flex; flex-direction: column; max-height: 32vh; overflow-y: auto; background: var(--card); border-radius: 10px; }
+  .krank-fulllist .chapter-row { padding: 6px 12px; font-size: 0.8rem; justify-content: space-between; }
+  .krank-solution { text-align: center; }
+  .krank-label { font-size: 0.7rem; color: var(--muted); }
+  .krank-prompt { font-size: 0.92rem; font-weight: 700; margin: 2px 0 6px !important; }
+  .krank-answer { font-size: 1.35rem; font-weight: 800; line-height: 1.2; }
+  .krank-next-btn { width: 100%; padding: 11px; font-size: 1.05rem; }
+  .krank-mult-row { gap: 8px; margin-top: -4px; }
+  .krank-mult-row .klassen-mult-btn { padding: 4px 8px; font-size: 0.75rem; border-radius: 10px; }
+  .krank-mult-note { text-align: center; font-weight: 800; color: #7c3aed; font-size: 0.72rem; margin-top: -4px !important; }
+  .krank-next-head { font-size: 0.7rem; color: var(--muted); }
+  .krank-next-prompt { font-size: 0.8rem; margin-top: 2px !important; }
+  .krank-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+  .krank-foot-spacer { width: 110px; }
+  .klassen-next-card-visual svg { max-width: 220px; height: auto; }
 
   /* Kampagne */
   .kmp-stage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; justify-items: center; margin-top: 14px; }
@@ -339,7 +375,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-24.3</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-24.7</div>
   </div>
 
   <!-- ÜBUNGS-SUCHE -->
@@ -485,51 +521,57 @@
     <button class="btn btn-secondary" style="display:block; margin:20px auto 0;" id="klassenSkipBtn">⏭️ Aufgabe überspringen</button>
   </div>
 
-  <!-- KLASSENMODUS: Rangliste (Host) -->
-  <div id="klassenHostRankView" class="view hidden">
-    <div class="row back-row" style="justify-content:space-between; align-items:center;">
-      <button class="btn btn-secondary" id="klassenRankStopBtn">Abbrechen</button>
-      <span style="color:var(--muted); font-size:0.78rem; font-weight:700;">PIN <span class="klassen-host-pin-live"></span></span>
+  <!-- KLASSENMODUS: Rangliste (Host). Zwei Spalten (links Klasse, rechts Aufgabe/Steuerung),
+       kompakt, damit auf dem iPad (hoch und quer) alles ohne Scrollen sichtbar ist. -->
+  <div id="klassenHostRankView" class="view hidden krank">
+    <div class="krank-head">
+      <button class="btn btn-secondary krank-small-btn" id="klassenRankStopBtn">Abbrechen</button>
+      <div class="krank-title">
+        <h1 id="klassenRankTitle">🏆 Zwischenstand</h1>
+        <p id="klassenRankQInfo"></p>
+      </div>
+      <span class="krank-pin">PIN <span class="klassen-host-pin-live"></span></span>
     </div>
-    <h1 id="klassenRankTitle">🏆 Zwischenstand</h1>
-    <p class="sub" id="klassenRankQInfo" style="font-weight:700; margin-top:-6px; text-align:center;"></p>
-    <div class="setup-card" style="text-align:center;">
-      <p style="font-size:1rem; color:var(--muted); margin:0;">Aufgabe</p>
-      <p style="font-size:1.1rem; font-weight:700; margin:4px 0 12px;" id="klassenRankQuestion"></p>
-      <p style="font-size:1rem; color:var(--muted); margin:0;">Richtige Antwort</p>
-      <p style="font-size:1.8rem; font-weight:800; margin:4px 0 0;" id="klassenRankCorrectAnswer">–</p>
-    </div>
-    <div style="text-align:center;">
-      <button class="klassen-practice-link" id="klassenCorrectToggleBtn">✅ Wer hatte es richtig?</button>
-    </div>
-    <div id="klassenCorrectList" class="hidden setup-card" style="display:flex; flex-direction:column; gap:10px;"></div>
-    <div id="klassenPodium" style="display:flex; flex-direction:column; gap:10px; margin:20px 0;"></div>
-    <div id="klassenFullList" class="hidden" style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px;"></div>
-    <!-- Vorschau der nächsten Frage (nur Lehrperson - der Zwischenstand wird nicht gebeamt) -->
-    <div class="setup-card klassen-next-card" id="klassenNextPreview">
-      <p style="font-size:0.85rem; color:var(--muted); margin:0;" id="klassenNextPreviewNum">Nächste Aufgabe</p>
-      <p style="font-size:1rem; font-weight:800; margin:2px 0 8px;" id="klassenNextPreviewTopic"></p>
-      <div class="visual-wrap" style="text-align:center;" id="klassenNextPreviewVisual"></div>
-      <p style="font-size:1.05rem; margin:4px 0;" id="klassenNextPreviewPrompt"></p>
-      <p style="font-size:0.85rem; color:var(--muted); margin:4px 0 10px;">Lösung: <span id="klassenNextPreviewAnswer"></span></p>
-      <div class="row" style="gap:8px;">
-        <button class="btn btn-secondary" style="flex:1; padding:8px 10px; font-size:0.9rem;" id="klassenNextRerollBtn">🔀 Andere Aufgabe</button>
-        <button class="btn btn-secondary hidden" style="flex:1; padding:8px 10px; font-size:0.9rem;" id="klassenNextOtherTopicBtn">🎲 Anderes Thema</button>
+    <p class="klassen-offline-banner krank-offline hidden"></p>
+    <div class="krank-grid">
+      <!-- Links: die Klasse -->
+      <div class="krank-col">
+        <button class="klassen-practice-link krank-correct-toggle" id="klassenCorrectToggleBtn">✅ Wer hatte es richtig?</button>
+        <div id="klassenCorrectList" class="hidden krank-box krank-correct-list"></div>
+        <div id="klassenPodium" class="krank-podium"></div>
+        <button class="btn btn-secondary krank-small-btn" id="klassenShowFullListBtn">Ganze Liste zeigen</button>
+        <div id="klassenFullList" class="hidden krank-fulllist"></div>
+      </div>
+      <!-- Rechts: letzte Aufgabe + Lösung zuoberst, dann Steuerung und Vorschau -->
+      <div class="krank-col">
+        <div class="krank-box krank-solution">
+          <p class="krank-label">Aufgabe</p>
+          <p class="krank-prompt" id="klassenRankQuestion"></p>
+          <p class="krank-label">Richtige Antwort</p>
+          <p class="krank-answer" id="klassenRankCorrectAnswer">–</p>
+        </div>
+        <button class="btn btn-duell krank-next-btn" id="klassenNextBtn">Weiter</button>
+        <div class="row krank-mult-row" id="klassenMultiplierRow">
+          <button class="btn btn-secondary klassen-mult-btn" data-mult="2" id="klassenDoublePointsToggle">🔥 2× Punkte</button>
+          <button class="btn btn-secondary klassen-mult-btn" data-mult="3" id="klassenTriplePointsToggle">⚡ 3× Punkte</button>
+        </div>
+        <p class="hidden krank-mult-note" id="klassenMultiplierNote"></p>
+        <!-- Vorschau der nächsten Frage (nur Lehrperson - der Zwischenstand wird nicht gebeamt) -->
+        <div class="klassen-next-card" id="klassenNextPreview">
+          <p class="krank-next-head"><span id="klassenNextPreviewNum">Nächste Aufgabe</span> · <strong id="klassenNextPreviewTopic"></strong></p>
+          <div class="visual-wrap" style="text-align:center;" id="klassenNextPreviewVisual"></div>
+          <p class="krank-next-prompt"><span id="klassenNextPreviewPrompt"></span> <span style="color:var(--muted);">(Lösung: <span id="klassenNextPreviewAnswer"></span>)</span></p>
+          <div class="row" style="gap:6px; margin-top:6px;">
+            <button class="btn btn-secondary krank-tiny-btn" id="klassenNextRerollBtn">🔀 Andere Aufgabe</button>
+            <button class="btn btn-secondary krank-tiny-btn hidden" id="klassenNextOtherTopicBtn">🎲 Anderes Thema</button>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="row" id="klassenMultiplierRow" style="gap:8px; margin-bottom:10px;">
-      <button class="btn btn-secondary klassen-mult-btn" data-mult="2" id="klassenDoublePointsToggle">🔥 2× Punkte</button>
-      <button class="btn btn-secondary klassen-mult-btn" data-mult="3" id="klassenTriplePointsToggle">⚡ 3× Punkte</button>
-    </div>
-    <p class="hidden" id="klassenMultiplierNote" style="text-align:center; font-weight:800; color:#7c3aed; margin:-4px 0 10px;"></p>
-    <div class="row">
-      <button class="btn btn-secondary" style="flex:1;" id="klassenShowFullListBtn">Ganze Liste zeigen</button>
-      <button class="btn btn-big btn-duell" style="flex:1;" id="klassenNextBtn">Weiter</button>
-    </div>
-    <button class="btn btn-secondary" style="margin-top:14px;" id="klassenRankHomeBtn">Zur Startseite</button>
-    <p class="klassen-offline-banner hidden" style="text-align:center; color:#b45309; font-weight:700; margin-top:12px;"></p>
-    <div style="text-align:center; margin-top:16px;">
+    <div class="krank-foot">
+      <button class="btn btn-secondary krank-small-btn" id="klassenRankHomeBtn">Zur Startseite</button>
       <button id="klassenPracticeBtnRank" class="klassen-practice-link">🧠 Übung</button>
+      <span class="krank-foot-spacer"></span>
     </div>
   </div>
 
@@ -6480,7 +6522,7 @@ async function ensureFirebase() {
   }
 }
 let klassenRoomPin = null;
-let klassenPlayersUnsub = null, klassenAnswersUnsub = null, klassenRoomUnsub = null;
+let klassenPlayersUnsub = null, klassenAnswersUnsub = null, klassenRoomUnsub = null, klassenRankUnsub = null;
 let klassenCountdownIv = null;
 let klassenSettings = { numQuestions: 10, timerSec: 30, rankInterval: 0 };
 let klassenIsHost = false;
@@ -6512,6 +6554,7 @@ function klassenStopListening() {
   if (klassenAnswersUnsub) { klassenAnswersUnsub(); klassenAnswersUnsub = null; }
   if (klassenRoomUnsub) { klassenRoomUnsub(); klassenRoomUnsub = null; }
   if (klassenSelfUnsub) { klassenSelfUnsub(); klassenSelfUnsub = null; }
+  klassenStopRankListener();
   clearInterval(klassenCountdownIv); klassenCountdownIv = null;
   klassenStopHeartbeat();
   klassenStopOfflineWatch();
@@ -6887,7 +6930,7 @@ function klassenSetNextMultiplier(m) {
     btn.textContent = `${on ? "✓ " : ""}${bm === 3 ? "⚡" : "🔥"} ${bm}× Punkte`;
   });
   const note = document.getElementById("klassenMultiplierNote");
-  note.textContent = m > 1 ? `Nächste Frage zählt ${m === 3 ? "dreifach" : "doppelt"} (nochmals antippen zum Abwählen)` : "";
+  note.textContent = m > 1 ? `Nächste Frage zählt ${m === 3 ? "dreifach" : "doppelt"} · antippen zum Abwählen` : "";
   note.classList.toggle("hidden", m === 1);
 }
 document.querySelectorAll(".klassen-mult-btn").forEach(btn => btn.addEventListener("click", () => {
@@ -6957,6 +7000,7 @@ function klassenUpdateHostPinBadges() {
   document.querySelectorAll(".klassen-host-pin-live").forEach(el => { el.textContent = klassenRoomPin || "----"; });
 }
 function klassenHostRenderPlay(index, task, startedAt, timerSec, numQuestions) {
+  klassenStopRankListener();
   klassenUpdateHostPinBadges();
   klassenCurrentHostIndex = index;
   klassenCurrentHostTask = task;
@@ -7031,6 +7075,9 @@ function klassenRenderCorrectList() {
   const html = correctHtml + wrongHtml;
   const el1 = document.getElementById("klassenCorrectList");
   if (el1) el1.innerHTML = html;
+  // Im Zwischenstand stehen die Zahlen direkt im Knopf, die Namen gibt es per Antippen.
+  const toggle = document.getElementById("klassenCorrectToggleBtn");
+  if (toggle) toggle.textContent = `✅ ${klassenLastCorrectNames.length} richtig · ❌ ${klassenLastWrongNames.length} falsch · Namen ${klassenCorrectListOpen ? "▴" : "▾"}`;
   const el2 = document.getElementById("klassenLiveCorrectList");
   if (el2) el2.innerHTML = html;
 }
@@ -7042,7 +7089,7 @@ document.getElementById("klassenLivePendingToggle").addEventListener("click", ()
 document.getElementById("klassenCorrectToggleBtn").addEventListener("click", () => {
   klassenCorrectListOpen = !klassenCorrectListOpen;
   document.getElementById("klassenCorrectList").classList.toggle("hidden", !klassenCorrectListOpen);
-  if (klassenCorrectListOpen) klassenRenderCorrectList();
+  klassenRenderCorrectList();
 });
 let klassenEditingPlayerId = null;
 function klassenOpenPlayerEdit(id, name) {
@@ -7133,6 +7180,7 @@ async function klassenSetPracticePhase(poolIds) {
   const isSubset = currentExercise && currentExercise.isMixed && poolIds && poolIds.length < currentExercise.mixedPool.length;
   document.getElementById("klassenHostPracticeTopics").textContent = isSubset
     ? `Eingeschränkt auf ${poolIds.length} von ${currentExercise.mixedPool.length} Aufgabentypen.` : "";
+  klassenStopRankListener();
   showView("klassenHostPractice");
 }
 document.getElementById("klassenPracticeBtnRank").addEventListener("click", klassenStartPractice);
@@ -7146,12 +7194,22 @@ async function klassenHostShowRanking(isFinal, revealToStudents) {
   try {
     const newPhase = isFinal ? "finished" : (revealToStudents ? "ranking" : "playing");
     await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: newPhase, answerRevealed: true });
-    const snap = await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").get();
+  } catch (e) { console.error("Klassenmodus: Rangliste konnte nicht geladen werden.", e); }
+  // Live auf die Punkte hören statt einmalig zu laden: Die SuS schreiben zuerst ihr
+  // Antwort-Dokument und erst danach das score-Increment. Die Frage endet schon, wenn
+  // alle Antworten da sind - ein einmaliges .get() sah deshalb oft noch 0 Punkte.
+  klassenStopRankListener();
+  let firstSnap = true;
+  klassenRankUnsub = firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").onSnapshot(snap => {
     const players = [];
     snap.forEach(d => players.push({ id: d.id, ...d.data() }));
     players.sort((a, b) => (b.score || 0) - (a.score || 0));
-    klassenRenderHostRanking(players, isFinal);
-  } catch (e) { console.error("Klassenmodus: Rangliste konnte nicht geladen werden.", e); }
+    if (firstSnap) { firstSnap = false; klassenRenderHostRanking(players, isFinal); }
+    else if (!document.getElementById("klassenHostRankView").classList.contains("hidden")) klassenRenderHostRankingLists(players);
+  }, err => console.error("Klassenmodus: Rangliste konnte nicht geladen werden.", err));
+}
+function klassenStopRankListener() {
+  if (klassenRankUnsub) { klassenRankUnsub(); klassenRankUnsub = null; }
 }
 function klassenRenderHostRanking(players, isFinal) {
   clearInterval(klassenCountdownIv);
@@ -7163,13 +7221,9 @@ function klassenRenderHostRanking(players, isFinal) {
   document.getElementById("klassenRankCorrectAnswer").innerHTML = formatCorrectAnswerHtml(klassenCurrentHostTask);
   document.getElementById("klassenCorrectList").classList.toggle("hidden", !klassenCorrectListOpen);
   klassenRenderCorrectList();
-  const medals = ["🥇", "🥈", "🥉"];
-  const top3 = players.slice(0, 3);
-  document.getElementById("klassenPodium").innerHTML = top3.length
-    ? top3.map((p, i) => `<div class="setup-card" style="text-align:center; font-size:1.2rem; font-weight:800;">${medals[i]} ${escapeHtml(p.name)} — ${p.score || 0} Punkte</div>`).join("")
-    : "<p>Noch keine Punkte.</p>";
-  document.getElementById("klassenFullList").innerHTML = players.map((p, i) => `<div class="chapter-row" data-player-id="${p.id}" style="cursor:pointer;"><span>${i + 1}. ${escapeHtml(p.name)}</span><span>${p.score || 0} Punkte 📍</span></div>`).join("");
+  klassenRenderHostRankingLists(players);
   document.getElementById("klassenFullList").classList.add("hidden");
+  document.getElementById("klassenShowFullListBtn").textContent = "Ganze Liste zeigen";
   document.getElementById("klassenFullList").onclick = (e) => {
     const row = e.target.closest("[data-player-id]");
     if (row) klassenPingPlayer(row.dataset.playerId);
@@ -7186,8 +7240,19 @@ function klassenRenderHostRanking(players, isFinal) {
     klassenRenderNextPreview();
   }
 }
+// Nur Podium und ganze Liste - wird bei jeder Punkte-Änderung neu gezeichnet, ohne
+// den Rest des Zwischenstands (auf-/zugeklappte Liste, Vorschau) zurückzusetzen.
+function klassenRenderHostRankingLists(players) {
+  const medals = ["🥇", "🥈", "🥉"];
+  const top3 = players.slice(0, 3);
+  document.getElementById("klassenPodium").innerHTML = top3.length
+    ? top3.map((p, i) => `<div class="krank-podium-row"><span>${medals[i]} ${escapeHtml(p.name)}</span><span>${p.score || 0} Punkte</span></div>`).join("")
+    : "<p style='color:var(--muted); font-size:0.85rem;'>Noch keine Punkte.</p>";
+  document.getElementById("klassenFullList").innerHTML = players.map((p, i) => `<div class="chapter-row" data-player-id="${p.id}" style="cursor:pointer;"><span>${i + 1}. ${escapeHtml(p.name)}</span><span>${p.score || 0} Punkte 📍</span></div>`).join("");
+}
 document.getElementById("klassenShowFullListBtn").addEventListener("click", () => {
-  document.getElementById("klassenFullList").classList.toggle("hidden");
+  const hidden = document.getElementById("klassenFullList").classList.toggle("hidden");
+  document.getElementById("klassenShowFullListBtn").textContent = hidden ? "Ganze Liste zeigen" : "Ganze Liste ausblenden";
 });
 document.getElementById("klassenRankHomeBtn").addEventListener("click", () => { klassenStopListening(); showView("home"); });
 function klassenAbortGame() {
@@ -7210,6 +7275,7 @@ function klassenStudentHandleRoomUpdate(room) {
   klassenPracticePoolIds = room.practicePoolIds || null;
   if (room.phase === "doubleAnnounce") klassenSetMultiplierOverlay(room.announceMultiplier || 2);
   document.getElementById("klassenDoubleOverlay").classList.toggle("hidden", room.phase !== "doubleAnnounce");
+  if (room.phase !== "ranking" && room.phase !== "finished") klassenStopRankListener();
   if (room.phase === "practice") {
     if (klassenLastSeenPhase !== "practice") klassenEnterPracticeMode();
   } else if (room.phase === "playing") {
@@ -7414,21 +7480,26 @@ async function klassenRenderStudentRanking(isFinal, room) {
   document.getElementById("klassenPlayerRankWaitNote").classList.toggle("hidden", isFinal);
   document.getElementById("klassenPlayerRankHomeBtn").classList.toggle("hidden", !isFinal);
   document.getElementById("klassenMyAnswersBtn").classList.toggle("hidden", !isFinal);
-  try {
-    const snap = await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").get();
+  // Live mithören (wie beim Host): Die score-Increments der anderen SuS kommen oft erst
+  // nach dem Phasenwechsel an. Nur einmal starten - jedes Raum-Update landet hier.
+  if (klassenRankUnsub) return;
+  klassenRankUnsub = firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").onSnapshot(snap => {
     const players = [];
     snap.forEach(d => players.push({ id: d.id, ...d.data() }));
     players.sort((a, b) => (b.score || 0) - (a.score || 0));
-    const myIndex = players.findIndex(p => p.id === klassenPlayerId);
-    const me = players[myIndex];
-    document.getElementById("klassenPlayerRankPlace").textContent = myIndex >= 0 ? `Platz ${myIndex + 1} von ${players.length}` : "–";
-    document.getElementById("klassenPlayerRankScore").textContent = me ? `${me.score || 0} Punkte` : "";
-    const top5 = players.slice(0, 5);
-    document.getElementById("klassenPlayerRankTop5").innerHTML = top5.map((p, i) => {
-      const isMe = p.id === klassenPlayerId;
-      return `<div class="chapter-row"${isMe ? ' style="font-weight:800;"' : ""}><span>${i + 1}. ${escapeHtml(p.name)}${isMe ? " (du)" : ""}</span><span>${p.score || 0} Punkte</span></div>`;
-    }).join("");
-  } catch (e) { console.error("Klassenmodus: Rangliste konnte nicht geladen werden.", e); }
+    klassenRenderStudentRankingLists(players);
+  }, err => console.error("Klassenmodus: Rangliste konnte nicht geladen werden.", err));
+}
+function klassenRenderStudentRankingLists(players) {
+  const myIndex = players.findIndex(p => p.id === klassenPlayerId);
+  const me = players[myIndex];
+  document.getElementById("klassenPlayerRankPlace").textContent = myIndex >= 0 ? `Platz ${myIndex + 1} von ${players.length}` : "–";
+  document.getElementById("klassenPlayerRankScore").textContent = me ? `${me.score || 0} Punkte` : "";
+  const top5 = players.slice(0, 5);
+  document.getElementById("klassenPlayerRankTop5").innerHTML = top5.map((p, i) => {
+    const isMe = p.id === klassenPlayerId;
+    return `<div class="chapter-row"${isMe ? ' style="font-weight:800;"' : ""}><span>${i + 1}. ${escapeHtml(p.name)}${isMe ? " (du)" : ""}</span><span>${p.score || 0} Punkte</span></div>`;
+  }).join("");
 }
 
 document.getElementById("klassenMyAnswersBtn").addEventListener("click", () => {

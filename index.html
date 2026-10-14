@@ -395,8 +395,6 @@
   .home-mode-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 14px; padding: 12px 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
   .home-mode-btn:active { transform: scale(0.97); }
   .hm-ico { font-size: 1.5rem; }
-  .klassen-role-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
-  .klassen-role-title { font-weight: 800; font-size: 1.05rem; }
   .solo-tools { display: flex; gap: 6px; align-items: center; }
   .solo-hint { margin: 8px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--soft); color: var(--text); font-weight: 700; font-size: 0.95rem; }
   .solo-hint-wrong { background: var(--wrong-bg); }
@@ -460,7 +458,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-14.4</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-14.5</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -534,15 +532,10 @@
     <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
     <h1>🏫 Klassenduell</h1>
     <h2 class="sub">Live-Quiz für die ganze Klasse. Jede Person braucht ein eigenes Gerät mit Internetverbindung.</h2>
-    <div class="klassen-role-card">
-      <div class="klassen-role-title">🙋 Ich bin Schülerin / Schüler</div>
-      <button class="btn btn-big btn-solo" id="goKlassenJoinBtn" style="margin:8px 0 0;">Raum beitreten</button>
+    <div class="mode-choice-grid">
+      <button class="btn btn-big btn-vk" id="goKlassenJoinBtn">🙋 Raum beitreten</button>
     </div>
-    <div class="klassen-role-card">
-      <div class="klassen-role-title">🧑‍🏫 Ich bin Lehrperson</div>
-      <p style="color:var(--muted); font-size:0.9rem; margin:6px 0 10px;">Wähle zuerst ein Thema bzw. eine Übung. Dort findest du unten den Link „🏫 Klassenduell (für Lehrpersonen)“.</p>
-      <button class="btn btn-outline" id="klassenPickTopicBtn" style="width:100%;">Thema auswählen</button>
-    </div>
+    <p style="color:var(--muted); font-size:0.9rem; margin-top:16px;">Möchtest du als Lehrperson einen Raum eröffnen? Wähle zuerst über eine Kategorie ein Thema/eine Übung aus und tippe dort auf "🏫 Klassenduell".</p>
     <p id="klassenSetupNote" class="hidden" style="color:var(--muted); font-size:0.9rem; margin-top:16px;"></p>
   </div>
 
@@ -1620,6 +1613,8 @@
         <ul class="lp21-list">
           <li><strong>Basiswissen:</strong> Kopfrechnen (bis 100 / 200 / 500)</li>
           <li><strong>Basiswissen:</strong> Grundrechenarten</li>
+          <li><strong>Basiswissen:</strong> Dezimalzahlen und Brüche im Kopf (Mit Dezimalzahlen rechnen)</li>
+          <li><strong>Basiswissen:</strong> Überschlagen und Sachaufgaben (Ergebnis überschlagen – Ergebnisse überprüfen)</li>
         </ul>
       </div>
 
@@ -1636,8 +1631,9 @@
         <p class="lp21-desc">„können Brüche mit den Nennern 2, 3, 4, 5, 6, 8, 10, 20, 50, 100 am Rechteckmodell kürzen, erweitern, addieren und subtrahieren.“</p>
         <ul class="lp21-list">
           <li><strong>Basiswissen:</strong> Brüche erweitern und kürzen</li>
+          <li><strong>Basiswissen:</strong> Dezimalzahlen und Brüche im Kopf (Brüche addieren/subtrahieren)</li>
           <li><strong>Jahr 2:</strong> Brüche</li>
-          <li><strong>Jahr 2:</strong> Grundoperationen mit Brüchen</li>
+          <li><strong>Jahr 2:</strong> Grundoperationen mit Brüchen (inkl. Fehler finden beim Addieren)</li>
         </ul>
       </div>
 
@@ -1660,6 +1656,7 @@
           <li><strong>Jahr 1:</strong> Grundoperationen (mit Vorzeichen)</li>
           <li><strong>Jahr 2:</strong> Gleichungen, Folgen und Wurzeln</li>
           <li><strong>Jahr 3:</strong> Potenzen und Wurzeln</li>
+          <li><strong>Jahr 3:</strong> Gleichungen und Ungleichungen (x² = c mit beiden Lösungen)</li>
         </ul>
       </div>
 
@@ -1668,6 +1665,7 @@
         <p class="lp21-desc">„können die Rechenregeln Punkt vor Strich und die Klammerregeln befolgen (z.B. 4 + 8 - 2 · 3 = 6; (4 + 8 - 2) · 3 = 30).“</p>
         <ul class="lp21-list">
           <li><strong>Jahr 1:</strong> Potenzen/Regeln und Gesetze (Punkt-vor-Strich-Teil)</li>
+          <li><strong>Jahr 1:</strong> Terme und Termumformungen (Klammern ausmultiplizieren)</li>
         </ul>
       </div>
 
@@ -1676,9 +1674,9 @@
         <p class="lp21-desc">„Erweiterung: können lineare Gleichungen mit einer Variablen mit Äquivalenzumformungen lösen … können Terme mit Variablen addieren und subtrahieren.“</p>
         <ul class="lp21-list">
           <li><strong>Jahr 1:</strong> Terme und Termumformungen</li>
-          <li><strong>Jahr 1:</strong> Gleichungen</li>
+          <li><strong>Jahr 1:</strong> Gleichungen (inkl. Gleichungen mit Klammern und Fehler finden)</li>
           <li><strong>Jahr 2:</strong> Gleichungen, Folgen und Wurzeln (Gleichung-lösen-Teil)</li>
-          <li><strong>Jahr 3:</strong> Gleichungen und Ungleichungen</li>
+          <li><strong>Jahr 3:</strong> Gleichungen und Ungleichungen (inkl. Ungleichungen und Gleichungen mit Klammern)</li>
         </ul>
       </div>
 
@@ -1747,7 +1745,7 @@
         <p class="lp21-desc">„können Drei- und Vierecke nach Winkel, Parallelität, Diagonalen, Seitenlängen charakterisieren.“</p>
         <ul class="lp21-list">
           <li><strong>Jahr 1:</strong> Vielfalt der Vierecksformen</li>
-          <li><strong>Jahr 1:</strong> Dreiecke</li>
+          <li><strong>Jahr 1:</strong> Dreiecke (Dreiecksart bestimmen, Höhe einzeichnen)</li>
           <li><strong>Jahr 1:</strong> Körper untersuchen und skizzieren (Vierecke/Dreiecke im Würfel)</li>
         </ul>
       </div>
@@ -1758,6 +1756,7 @@
         <ul class="lp21-list">
           <li><strong>Jahr 1:</strong> Flächen und Volumen</li>
           <li><strong>Jahr 1:</strong> Umfang und Flächeninhalt von Rechtecken</li>
+          <li><strong>Jahr 1:</strong> Dreiecke (Fläche Dreieck)</li>
           <li><strong>Jahr 1:</strong> Volumen und Oberflächeninhalt (Würfel)</li>
         </ul>
       </div>
@@ -1848,6 +1847,7 @@
         <p class="lp21-desc">„können Grössen (Geld, Längen, Gewicht bzw. Masse, Zeit, Volumen) schätzen, bestimmen, vergleichen, runden, mit ihnen rechnen, in benachbarte Masseinheiten umwandeln.“</p>
         <ul class="lp21-list">
           <li><strong>Jahr 1:</strong> Grössen und Prozente</li>
+          <li><strong>Basiswissen:</strong> Überschlagen und Sachaufgaben (Kurze Sachaufgaben: Geld, Zeit, Mengen)</li>
         </ul>
       </div>
 
@@ -1867,8 +1867,9 @@
           <li><strong>Jahr 2:</strong> Preise – Aktionen – Mehrwertsteuer</li>
           <li><strong>Jahr 2:</strong> Währungen und Budget</li>
           <li><strong>Jahr 2:</strong> Steigung und Gefälle</li>
-          <li><strong>Jahr 3:</strong> Jahreszins und Marchzins</li>
+          <li><strong>Jahr 3:</strong> Jahreszins und Marchzins (inkl. Zinseszins)</li>
           <li><strong>Jahr 3:</strong> Konsumkredit und Leasing</li>
+          <li><strong>Jahr 3:</strong> Wiederholung und Vertiefung (Wachstumsfaktor, prozentuale Veränderung in zwei Schritten)</li>
         </ul>
       </div>
 
@@ -1876,8 +1877,8 @@
         <div class="lp21-code">M.3.A.3 j, k <span class="lp21-zyklus">Zyklus 3</span></div>
         <p class="lp21-desc">„können zu einer Funktionsgleichung Wertepaare bestimmen und in einem Koordinatensystem einzeichnen … können zu linearen Funktionen den Funktionsgraphen zeichnen, die Steigung, den y-Achsenabschnitt und die Nullstelle bestimmen.“</p>
         <ul class="lp21-list">
-          <li><strong>Jahr 3:</strong> Geraden</li>
-          <li><strong>Jahr 3:</strong> Lineare und nicht lineare Funktionen</li>
+          <li><strong>Jahr 3:</strong> Geraden (Steigung und y-Achsenabschnitt am Graphen, Funktionsgleichung zum Graphen)</li>
+          <li><strong>Jahr 3:</strong> Lineare und nicht lineare Funktionen (Funktionswert, Nullstelle, Wertetabelle)</li>
         </ul>
       </div>
 
@@ -1895,6 +1896,7 @@
         <div class="lp21-code">M.3.B.2 c, d <span class="lp21-zyklus">Zyklus 3</span></div>
         <p class="lp21-desc">„können auszählbare Kombinationen und Permutationen erforschen … können in auszählbaren Variationen und Kombinationen alle Möglichkeiten systematisch aufschreiben.“</p>
         <ul class="lp21-list">
+          <li><strong>Jahr 2:</strong> Baumdarstellungen, Wiederholung und Vertiefung (Kombinationen zählen mit der Produktregel)</li>
           <li><strong>Jahr 3:</strong> Kombinatorik</li>
         </ul>
       </div>
@@ -1920,7 +1922,7 @@
       <p class="lp21-chapters">
         • Exaktes Konstruieren mit Zirkel, Lineal und Geodreieck<br>
         • Freihändiges Skizzieren von Figuren und Körpern (echtes Zeichnen von Hand)<br>
-        • Schriftliches oder mündliches Begründen/Argumentieren (Beweise, Herleitungen in eigenen Worten)<br>
+        • Schriftliches oder mündliches Begründen/Argumentieren (Beweise, Herleitungen in eigenen Worten) – die Aufgaben „Fehler finden“ üben nur das Prüfen vorgegebener Rechenwege<br>
         • Offenes Modellieren komplexer Sachaufgaben ohne vorgegebene Formel oder mit mehreren Lösungswegen<br>
         • Arbeiten mit konkretem Material (Messen mit Massstab, Bauen von Körpermodellen)<br>
         • Dokumentation des Rechenwegs (schriftliche Verfahren aufschreiben, nicht nur das Resultat eingeben)<br>
@@ -7727,7 +7729,6 @@ document.getElementById("goKlassenBtn").addEventListener("click", async () => {
   const ok = await klassenCheckReady();
   joinBtn.disabled = !ok;
 });
-document.getElementById("klassenPickTopicBtn").addEventListener("click", () => showView("home"));
 document.getElementById("goKlassenHostSetupBtn").addEventListener("click", () => {
   document.getElementById("klassen_exercise_title").innerHTML = titleWithCalc(escapeHtml(currentExercise.title), currentExercise.calc);
   showView("klassenHostSetup");
@@ -7895,10 +7896,23 @@ document.getElementById("klassenJoinBtn").addEventListener("click", async () => 
     const roomDoc = await roomRef.get();
     if (!roomDoc.exists) { errEl.textContent = "Diese PIN existiert nicht."; errEl.classList.remove("hidden"); return; }
     klassenIsHost = false;
+    if (klassenLeavePromise) await klassenLeavePromise; // Aufräumen nach "Verlassen" erst abschliessen
+    // War dieses Gerät schon im selben Raum (z.B. zurück, um den Namen zu ändern)? Dann den
+    // bestehenden Eintrag umbenennen statt einen zweiten anzulegen - sonst bleibt der alte
+    // Name als "offline" in der Liste der Lehrperson stehen (Punkte bleiben so auch erhalten).
+    let ownId = null;
+    try {
+      const saved = JSON.parse(localStorage.getItem(KLASSEN_SESSION_KEY) || "null");
+      if (saved && saved.pin === pin && saved.playerId) {
+        const ownSnap = await roomRef.collection("players").doc(saved.playerId).get();
+        if (ownSnap.exists) ownId = saved.playerId;
+      }
+    } catch (e) {}
     const dupeSnap = await roomRef.collection("players").where("name", "==", name).get();
+    const dupeDocs = dupeSnap.docs.filter(doc => doc.id !== ownId);
     let resumeId = null;
-    if (!dupeSnap.empty) {
-      const existing = dupeSnap.docs[0];
+    if (dupeDocs.length) {
+      const existing = dupeDocs[0];
       const d = existing.data();
       const lastSeenMs = d.lastSeen && typeof d.lastSeen.toMillis === "function" ? d.lastSeen.toMillis() : 0;
       const isStale = d.active === false || lastSeenMs === 0 || (Date.now() - lastSeenMs > KLASSEN_OFFLINE_MS);
@@ -7918,6 +7932,11 @@ document.getElementById("klassenJoinBtn").addEventListener("click", async () => 
     if (resumeId) {
       await roomRef.collection("players").doc(resumeId).update({ active: true, lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
       playerId = resumeId;
+      // Der frühere eigene Eintrag (anderer Name) ist damit überflüssig
+      if (ownId && ownId !== resumeId) await klassenRemoveOwnPlayer(roomRef, ownId, true);
+    } else if (ownId) {
+      await roomRef.collection("players").doc(ownId).update({ name, active: true, lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
+      playerId = ownId;
     } else {
       const playerRef = await roomRef.collection("players").add({ name, joinedAt: Date.now(), score: 0, lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
       playerId = playerRef.id;
@@ -7973,10 +7992,38 @@ document.getElementById("klassenJoinBtn").addEventListener("click", async () => 
     console.error("Klassenmodus: Sitzung konnte nicht wiederhergestellt werden.", e);
   }
 })();
-document.getElementById("klassenWaitLeaveBtn").addEventListener("click", () => {
+// Eigenen Spieler-Eintrag aufräumen. force = immer löschen; sonst nur vor Spielbeginn (lobby) bzw.
+// ohne Punkte löschen - während eines laufenden Spiels nur als offline markieren, damit die
+// Punkte beim Wiederbeitritt (auch mit neuem Namen, s. Beitritt) erhalten bleiben.
+async function klassenRemoveOwnPlayer(roomRef, playerId, force) {
+  try {
+    const ref = roomRef.collection("players").doc(playerId);
+    const snap = await ref.get();
+    if (!snap.exists) return true;
+    const room = (await roomRef.get()).data() || {};
+    if (force || room.phase === "lobby" || !(snap.data().score > 0)) { await ref.delete(); return true; }
+    await ref.update({ active: false });
+    return false;
+  } catch (e) {
+    console.error("Klassenmodus: Spieler-Eintrag konnte nicht entfernt werden.", e);
+    return false;
+  }
+}
+document.getElementById("klassenWaitLeaveBtn").addEventListener("click", async () => {
+  const pin = klassenRoomPin, playerId = klassenPlayerId;
   klassenStopListening();
-  showView("klassenChoice");
+  // Name vorausfüllen, damit er beim Wiederbeitritt nur noch korrigiert werden muss
+  document.getElementById("klassenJoinPinInput").value = pin || "";
+  document.getElementById("klassenJoinNameInput").value = klassenPlayerName || "";
+  showView("klassenJoin");
+  if (pin && playerId && firebaseDb) {
+    klassenLeavePromise = klassenRemoveOwnPlayer(firebaseDb.collection("rooms").doc(pin), playerId, false)
+      .then(deleted => { if (deleted) klassenClearSession(); });
+    await klassenLeavePromise;
+    klassenLeavePromise = null;
+  }
 });
+let klassenLeavePromise = null;
 
 /* ---- Klassenmodus: Host-seitiger Spielablauf ---- */
 document.getElementById("klassenStartBtn").addEventListener("click", async () => {

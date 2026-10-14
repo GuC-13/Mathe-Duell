@@ -375,7 +375,7 @@
     <button class="btn btn-big btn-kampagne" id="goKampagneBtn" style="margin-top:10px;">🗺️ Kampagne</button>
     <button class="btn btn-big btn-duell" id="goKlassenBtn" style="margin-top:10px;">🏫 Klassenduell</button>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-09-24.8</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-14.3</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -2806,6 +2806,82 @@ function generateSequence() {
   return generateSequenceSquares();
 }
 function generateSquareRoot() { const r = rnd(2, 25); return { visual: null, prompt: `Berechne: √${r * r} =`, answerType: "number", correct: r }; }
+// Wurzelgesetze (2. Jahr, 1c): √a·√b = √(a·b) und √a : √b = √(a : b).
+// Beide Generatoren würfeln zwischen "zusammenfassen" (√8 · √18) und "aufteilen" (√(16 · 25)).
+const ROOT_SQUAREFREE_BASES = [2, 3, 5, 6, 7, 10];
+const ROOT_DIV_DIVISORS = [2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15];
+function generateRootMultiply() {
+  if (Math.random() < 0.6) {
+    // √(s·p²) · √(s·q²) = s·p·q  (Produkt der Radikanden ist eine Quadratzahl)
+    let s, p, q, a, b;
+    do {
+      s = ROOT_SQUAREFREE_BASES[rnd(0, ROOT_SQUAREFREE_BASES.length - 1)];
+      p = rnd(1, 10); q = rnd(1, 10);
+      a = s * p * p; b = s * q * q;
+    } while (p === q || s * p * q > 20);
+    return { visual: null, prompt: `Berechne ohne Taschenrechner:\n√${a} · √${b} =`, answerType: "number", correct: s * p * q };
+  }
+  const u = rnd(2, 20), v = rnd(2, 9);
+  return { visual: null, prompt: `Berechne ohne Taschenrechner:\n√(${u * u} · ${v * v}) =`, answerType: "number", correct: u * v };
+}
+function generateRootDivide() {
+  if (Math.random() < 0.6) {
+    // √(b·r²) : √b = r
+    let b, r, a;
+    do {
+      b = ROOT_DIV_DIVISORS[rnd(0, ROOT_DIV_DIVISORS.length - 1)];
+      r = rnd(2, 12);
+      a = b * r * r;
+    } while (a > 1500);
+    const shown = Math.random() < 0.5 ? `√${a}/√${b}` : `√${a} : √${b}`;
+    return { visual: null, prompt: `Berechne ohne Taschenrechner:\n${shown} =`, answerType: "number", correct: r };
+  }
+  let v, r;
+  do { v = rnd(2, 6); r = rnd(2, 9); } while (v * r > 20);
+  const a = (v * r) * (v * r), b = v * v;
+  return { visual: null, prompt: `Berechne ohne Taschenrechner:\n√(${a} : ${b}) =`, answerType: "number", correct: r };
+}
+// Potenzen mit gleichem Exponenten: a²·b² = (a·b)² und a² : b² = (a : b)².
+function generatePowerSameExponent() {
+  if (Math.random() < 0.5) {
+    let a, b;
+    do { a = rnd(2, 25); b = rnd(2, 25); } while (!(a * b <= 20 || (a * b % 10 === 0 && a * b <= 100)));
+    return { visual: null, prompt: `Berechne ohne Taschenrechner:\n${a}^2 · ${b}^2 =`, answerType: "number", correct: (a * b) * (a * b) };
+  }
+  let a, b, r;
+  do { b = rnd(2, 25); r = rnd(2, 15); a = b * r; } while (a > 120);
+  const shown = Math.random() < 0.5 ? `${a}^2/${b}^2` : `${a}^2 : ${b}^2`;
+  return { visual: null, prompt: `Berechne ohne Taschenrechner:\n${shown} =`, answerType: "number", correct: r * r };
+}
+// "Stimmt die Gleichung?": Rechenregeln gelten bei · und :, aber NICHT bei + und −.
+function generateRootRuleTruth() {
+  const squares = [4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225, 256, 289, 324, 361, 400];
+  const bases = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+  const kind = rnd(0, 7);
+  let text, ok;
+  if (kind <= 3) {
+    // Wurzeln
+    let a = squares[rnd(0, squares.length - 1)], b = squares[rnd(0, squares.length - 1)];
+    if (a === b) a = squares[(squares.indexOf(b) + 1) % squares.length];
+    if (kind === 0) { text = `√(${a} · ${b}) = √${a} · √${b}`; ok = true; }
+    else if (kind === 1) {
+      // Division: a muss ein Vielfaches von b sein, damit die Aufgabe ordentlich aussieht
+      const m = rnd(2, 4); const bb = [4, 9, 16, 25][rnd(0, 3)]; // bb·m² höchstens 400
+      text = `√(${bb * m * m} : ${bb}) = √${bb * m * m} : √${bb}`; ok = true;
+    }
+    else if (kind === 2) { text = `√(${a} + ${b}) = √${a} + √${b}`; ok = false; }
+    else { const hi = Math.max(a, b), lo = Math.min(a, b); text = `√(${hi} − ${lo}) = √${hi} − √${lo}`; ok = false; }
+  } else {
+    // Quadrate
+    let a = bases[rnd(0, bases.length - 1)], b = bases[rnd(0, bases.length - 1)];
+    if (a === b) a = a === 20 ? 2 : a + 1;
+    if (kind === 4) { text = `(${a} · ${b})² = ${a}² · ${b}²`; ok = true; }
+    else if (kind === 5) { const bb = rnd(2, 6), m = rnd(2, Math.floor(20 / bb)); text = `(${bb * m} : ${bb})² = ${bb * m}² : ${bb}²`; ok = true; }
+    else if (kind === 6) { text = `(${a} + ${b})² = ${a}² + ${b}²`; ok = false; }
+    else { const hi = Math.max(a, b), lo = Math.min(a, b); text = `(${hi} − ${lo})² = ${hi}² − ${lo}²`; ok = false; }
+  }
+  return { visual: null, prompt: `Stimmt diese Gleichung?\n${text}`, answerType: "boolean", correct: ok ? 1 : 0 };
+}
 
 function generatePythagorasHyp() { const a = rnd(3, 20), b = rnd(3, 20); return { visual: null, prompt: `Ein rechtwinkliges Dreieck hat die Katheten ${a} cm und ${b} cm. Wie lang ist die Hypotenuse? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.sqrt(a * a + b * b) * 10) / 10 }; }
 function generatePythagorasLeg() {
@@ -4332,6 +4408,10 @@ const EXERCISE_INFO = {
   "m2-1c-fraceq": { d: "Löse eine Gleichung mit einem Bruch vor dem x auf beiden Seiten nach x auf.", g: "Bruchgleichungen (lineare Gleichungen mit Brüchen auf beiden Seiten) lösen können." },
   "m2-1c-seq": { d: "Setze eine Zahlenfolge fort (additiv, multiplikativ, mit wachsender Differenz, abwechselnd, Fibonacci-artig oder Quadratzahlen).", g: "Verschiedene Muster in Zahlenfolgen erkennen und fortsetzen." },
   "m2-1c-root": { d: "Berechne eine Quadratwurzel.", g: "Quadratzahlen und Quadratwurzeln kennen." },
+  "m2-1c-root-mul": { d: "Multipliziere zwei Wurzeln bzw. ziehe die Wurzel aus einem Produkt, ohne Taschenrechner.", g: "Die Wurzelregel für die Multiplikation (√a · √b = √(a · b)) anwenden können." },
+  "m2-1c-root-div": { d: "Dividiere zwei Wurzeln bzw. ziehe die Wurzel aus einem Quotienten, ohne Taschenrechner.", g: "Die Wurzelregel für die Division (√a : √b = √(a : b)) anwenden können." },
+  "m2-1c-pow-same": { d: "Multipliziere oder dividiere zwei Quadratzahlen mit gleichem Exponenten geschickt, ohne Taschenrechner.", g: "Potenzregeln für gleiche Exponenten (a² · b² = (a · b)², a² : b² = (a : b)²) anwenden können." },
+  "m2-1c-root-rule": { d: "Entscheide, ob eine Gleichung mit Wurzeln oder Quadraten stimmt.", g: "Wissen, dass die Regeln für Wurzeln und Potenzen bei · und : gelten, bei + und − aber nicht." },
   "m2-2a-1": { d: "Berechne die Hypotenuse in einem rechtwinkligen Dreieck.", g: "Satz des Pythagoras anwenden." },
   "m2-2b-1": { d: "Berechne eine Kathete in einem rechtwinkligen Dreieck.", g: "Satz des Pythagoras umstellen und anwenden." },
   "m2-2c-1": { d: "Löse eine Anwendungsaufgabe zum Satz des Pythagoras (Leiter-Problem).", g: "Satz des Pythagoras auf Alltagssituationen anwenden." },
@@ -4593,7 +4673,11 @@ const JAHR2_CHAPTERS = [
     ex("m2-1c-eq", "Lineare Gleichungen lösen", generateEquation2Step, "Bringe zuerst die Zahl ohne x auf die andere Seite, dann teile durch die Zahl vor dem x."),
     ex("m2-1c-fraceq", "Bruchgleichungen lösen", generateFractionEquationBothSides, "Bringe zuerst die Zahlen ohne x auf eine Seite und die Brüche mit x auf die andere Seite. Bringe die Brüche auf den Hauptnenner (kgV der beiden Nenner) und löse dann nach x auf."),
     ex("m2-1c-seq", "Zahlenfolge fortsetzen", generateSequence, "Vergleiche die Glieder: Werden sie immer um denselben Betrag addiert/subtrahiert, mit derselben Zahl multipliziert/dividiert, wird die Differenz grösser, wechseln sich zwei Rechenschritte ab, ist jedes Glied die Summe der beiden vorherigen, oder sind es Quadratzahlen (plus/minus einer festen Zahl)?"),
-    ex("m2-1c-root", "Quadratwurzel berechnen", generateSquareRoot, "Überlege, welche Zahl mit sich selbst multipliziert die gegebene Zahl ergibt.")
+    ex("m2-1c-root", "Quadratwurzel berechnen", generateSquareRoot, "Überlege, welche Zahl mit sich selbst multipliziert die gegebene Zahl ergibt."),
+    ex("m2-1c-root-mul", "Wurzeln multiplizieren", generateRootMultiply, "Beim Multiplizieren gilt √a · √b = √(a · b). Fasse die Radikanden zusammen und ziehe die Wurzel aus dem Produkt (z.B. √3 · √75 = √(3 · 75) = √225 = 15) – oder ziehe bei √(a · b) einzeln die Wurzel und multipliziere."),
+    ex("m2-1c-root-div", "Wurzeln dividieren", generateRootDivide, "Beim Dividieren gilt √a : √b = √(a : b). Teile zuerst die Zahlen unter den Wurzeln (z.B. √192 : √3 = √(192 : 3) = √64 = 8) – oder ziehe bei √(a : b) einzeln die Wurzel und dividiere. Der Bruchstrich bedeutet ebenfalls „geteilt durch“."),
+    ex("m2-1c-pow-same", "Potenzen mit gleichem Exponenten", generatePowerSameExponent, "Gleicher Exponent: a² · b² = (a · b)² und a² : b² = (a : b)². Rechne zuerst in der Klammer und quadriere erst danach (z.B. 5² · 2² = 10² = 100 oder 42² : 6² = 7² = 49). Auch der Bruchstrich bedeutet „geteilt durch“."),
+    ex("m2-1c-root-rule", "Rechenregeln: stimmt die Gleichung?", generateRootRuleTruth, "Bei Multiplikation und Division darf man Wurzeln bzw. Quadrate aufteilen oder zusammenfassen. Bei Addition und Subtraktion geht das NICHT: √(a + b) ≠ √a + √b und (a + b)² ≠ a² + b². Rechne im Zweifel beide Seiten aus.")
   ]),
   chapter("2a", "Sätze von Thales und Pythagoras", [
     ex("m2-2a-1", "Hypotenuse berechnen", generatePythagorasHyp, "Satz des Pythagoras: c = √(a² + b²).", true),
@@ -6240,7 +6324,8 @@ function superscriptExponents(text) {
 // werden im selben Zug in echte hochgestellte Ziffern umgewandelt.
 function fractionizePromptHtml(text) {
   const esc = escapeHtml(text).replace(/\n/g, "<br>");
-  const withXFractions = esc.replace(/(-?\d+)x\/(\d+)/g, (m, n, d) => stackedFractionHtml(`${n}x`, d));
+  const withTermFractions = esc.replace(/(√\d+|\d+\^\d+)\/(√\d+|\d+\^\d+)/g, (m, n, d) => stackedFractionHtml(n, d));
+  const withXFractions = withTermFractions.replace(/(-?\d+)x\/(\d+)/g, (m, n, d) => stackedFractionHtml(`${n}x`, d));
   const withFractions = withXFractions.replace(/(\d+)\/(\d+)/g, (m, n, d) => stackedFractionHtml(n, d));
   return superscriptExponents(withFractions);
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = "mathe-duell-cache-v47";
+const CACHE_NAME = "mathe-duell-cache-v48";
 const FILES_TO_CACHE = ["./", "./index.html"];
 
 self.addEventListener("install", (event) => {
@@ -13,32 +13,31 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-const FONT_CACHE_NAME = "mathe-duell-fonts-v1";
-const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
-
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
-  if (FONT_HOSTS.includes(url.hostname)) {
-    // Google Fonts: stale-while-revalidate — fonts never change once fetched,
-    // so serve from cache instantly and refresh the cache in the background.
-    event.respondWith(
-      caches.open(FONT_CACHE_NAME).then((cache) =>
-        cache.match(event.request).then((cached) => {
-          const fetchPromise = fetch(event.request)
-            .then((response) => {
-              cache.put(event.request, response.clone());
-              return response;
-            })
-            .catch(() => cached);
-          return cached || fetchPromise;
-        })
-      )
-    );
-    return;
-  }
 
-  // Everything else (including Firebase/Firestore requests used by Klassenduell)
-  // is left completely untouched — this app relies on live, uncached network
-  // traffic for real-time sync, so the service worker must not intercept it.
+  // Fremde Adressen (Firebase/Firestore fürs Klassenduell) bleiben unangetastet -
+  // die Echtzeit-Synchronisation braucht live Netzverkehr. Die Schriften sind seit
+  // v48 direkt in index.html eingebettet (kein Google Fonts mehr).
   if (url.origin !== self.location.origin) return;
+
+  // Eigene Dateien (index.html): zuerst Netz (damit Updates sofort ankommen),
+  // ohne Verbindung aus dem Cache - sonst startet die App offline gar nicht.
+  if (event.request.method !== "GET") return;
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.ok) {
+          const copy = response.clone();
+          // ohne ?v=… speichern, damit nicht pro Cache-Busting-Query ein Eintrag entsteht
+          caches.open(CACHE_NAME).then((cache) => cache.put(url.origin + url.pathname, copy));
+        }
+        return response;
+      })
+      .catch(() =>
+        caches.match(event.request, { ignoreSearch: true }).then((cached) =>
+          cached || (event.request.mode === "navigate" ? caches.match("./index.html") : Response.error())
+        )
+      )
+  );
 });

@@ -458,7 +458,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-14.5</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-15.1</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -736,6 +736,7 @@
       <div id="klassenPlayerRankTop5" style="display:flex; flex-direction:column; gap:6px;"></div>
     </div>
     <p id="klassenPlayerRankWaitNote" style="text-align:center; color:var(--muted);">Warte auf die Lehrperson …</p>
+    <button class="btn btn-secondary hidden" id="klassenPlayerRankLeaveBtn" style="display:block; margin:8px auto 0;">Spiel verlassen</button>
     <button class="btn btn-secondary hidden" id="klassenMyAnswersBtn" style="display:block; width:100%; margin-top:16px;">📋 Meine Antworten</button>
     <button class="btn btn-big btn-duell hidden" id="klassenPlayerRankHomeBtn" style="margin-top:10px;">Zurück zum Start</button>
   </div>
@@ -1971,6 +1972,11 @@
   </div>
 </div>
 
+<!-- Klassenduell (SuS): Lehrperson sendet keinen Herzschlag mehr -->
+<div id="klassenHostGoneBar" class="hidden" role="status" style="position:fixed; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); z-index:900; background:var(--card, #fff); color:var(--text, inherit); border:2px solid #b45309; border-radius:14px; padding:10px 14px; box-shadow:0 6px 20px rgba(0,0,0,.18); display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center;">
+  <span style="font-weight:700; color:#b45309;">Keine Verbindung zur Lehrperson.</span>
+  <button class="btn btn-secondary" id="klassenHostGoneLeaveBtn" style="padding:8px 14px;">Spiel verlassen</button>
+</div>
 <div class="modal-overlay hidden" id="confirmOverlay">
   <div class="modal-box">
     <p id="confirmMessage" style="font-size:1.05rem; margin:0 0 16px;"></p>
@@ -7665,6 +7671,53 @@ function klassenStopListening() {
   clearInterval(klassenCountdownIv); klassenCountdownIv = null;
   klassenStopHeartbeat();
   klassenStopOfflineWatch();
+  klassenStopHostHeartbeat();
+  klassenStopHostGoneWatch();
+}
+// Host-Herzschlag: Die Lehrperson schreibt regelmässig "hostSeen" in den Raum. Ohne das blieben
+// SuS nach einem nicht ordentlich beendeten Spiel (Lehrperson tippt beim Zwischenstand auf
+// "Zur Startseite", schliesst die App, Akku leer ...) für immer im Zwischenstand hängen - auch
+// nach Neustart der App, weil die gespeicherte Sitzung sie wieder in denselben Raum führte.
+const KLASSEN_HOST_HEARTBEAT_MS = 20000;
+const KLASSEN_HOST_GONE_MS = 120000;           // SuS sehen danach "Spiel verlassen"-Hinweis
+const KLASSEN_RESUME_MAX_HOST_IDLE_MS = 600000; // Sitzung beim App-Start nicht mehr fortsetzen
+const KLASSEN_RESUME_MAX_ROOM_AGE_MS = 3 * 3600000; // alte Räume ohne hostSeen
+let klassenHostHeartbeatIv = null;
+function klassenStartHostHeartbeat() {
+  klassenStopHostHeartbeat();
+  const beat = () => {
+    if (!klassenIsHost || !klassenRoomPin) return;
+    firebaseDb.collection("rooms").doc(klassenRoomPin).update({ hostSeen: Date.now() }).catch(() => {});
+  };
+  beat();
+  klassenHostHeartbeatIv = setInterval(beat, KLASSEN_HOST_HEARTBEAT_MS);
+}
+function klassenStopHostHeartbeat() { clearInterval(klassenHostHeartbeatIv); klassenHostHeartbeatIv = null; }
+// Raum für die SuS ordentlich beenden (fire-and-forget, die Lehrperson wartet nicht darauf)
+function klassenHostEndRoom() {
+  if (!klassenIsHost || !klassenRoomPin || !firebaseDb) return;
+  firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "finished" }).catch(() => {});
+}
+function klassenRoomLooksAbandoned(room) {
+  if (!room || room.phase === "finished") return true;
+  if (typeof room.hostSeen === "number") return Date.now() - room.hostSeen > KLASSEN_RESUME_MAX_HOST_IDLE_MS;
+  return typeof room.createdAt === "number" && Date.now() - room.createdAt > KLASSEN_RESUME_MAX_ROOM_AGE_MS;
+}
+let klassenHostGoneIv = null, klassenLastHostSeen = 0;
+function klassenStartHostGoneWatch() {
+  klassenStopHostGoneWatch();
+  klassenHostGoneIv = setInterval(klassenRenderHostGone, 5000);
+}
+function klassenStopHostGoneWatch() {
+  clearInterval(klassenHostGoneIv); klassenHostGoneIv = null;
+  klassenLastHostSeen = 0;
+  const bar = document.getElementById("klassenHostGoneBar");
+  if (bar) bar.classList.add("hidden");
+}
+function klassenRenderHostGone() {
+  // Nur Räume mit Host-Herzschlag prüfen (ältere App-Versionen der Lehrperson schreiben keinen)
+  const gone = klassenLastHostSeen > 0 && Date.now() - klassenLastHostSeen > KLASSEN_HOST_GONE_MS;
+  document.getElementById("klassenHostGoneBar").classList.toggle("hidden", !gone);
 }
 let klassenSelfUnsub = null, klassenLastPingSeenMs = 0, klassenSeenSelfOnce = false;
 const KLASSEN_OFFLINE_MS = 15000;
@@ -7808,6 +7861,7 @@ document.getElementById("klassenCreateRoomBtn").addEventListener("click", async 
     klassenRenderOfflineBanner();
   }, err => console.error("Klassenmodus: Spielerliste konnte nicht geladen werden.", err));
   klassenStartOfflineWatch();
+  klassenStartHostHeartbeat();
   document.getElementById("klassenPlayerList").onclick = (e) => {
     const btn = e.target.closest("[data-player-id]");
     if (!btn) return;
@@ -7816,6 +7870,7 @@ document.getElementById("klassenCreateRoomBtn").addEventListener("click", async 
 });
 document.getElementById("klassenHostCloseBtn").addEventListener("click", () => {
   klassenStopListening();
+  klassenHostEndRoom();
   showView("home");
 });
 document.getElementById("goKlassenJoinBtn").addEventListener("click", () => {
@@ -7839,8 +7894,10 @@ function klassenClearSession() {
 function klassenAttachStudentListeners(roomRef, pin) {
   klassenStopListening();
   klassenStartHeartbeat();
+  klassenStartHostGoneWatch();
   klassenLastPingSeenMs = 0;
   klassenSeenSelfOnce = false;
+  klassenLastRoomKey = null;
   klassenPlayersUnsub = roomRef.collection("players").onSnapshot(snap => {
     document.getElementById("klassenWaitCount").textContent = String(snap.size);
   }, err => console.error("Klassenmodus: Warteraum-Update fehlgeschlagen.", err));
@@ -7971,7 +8028,7 @@ document.getElementById("klassenJoinBtn").addEventListener("click", async () => 
   try {
     const roomRef = firebaseDb.collection("rooms").doc(saved.pin);
     const roomSnap = await roomRef.get();
-    if (!roomSnap.exists || roomSnap.data().phase === "finished") { klassenClearSession(); return; }
+    if (!roomSnap.exists || klassenRoomLooksAbandoned(roomSnap.data())) { klassenClearSession(); return; }
     const playerDoc = await roomRef.collection("players").doc(saved.playerId).get();
     if (!playerDoc.exists) { klassenClearSession(); return; }
     await roomRef.collection("players").doc(saved.playerId).update({ active: true, lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
@@ -8009,7 +8066,10 @@ async function klassenRemoveOwnPlayer(roomRef, playerId, force) {
     return false;
   }
 }
-document.getElementById("klassenWaitLeaveBtn").addEventListener("click", async () => {
+document.getElementById("klassenWaitLeaveBtn").addEventListener("click", klassenStudentLeave);
+document.getElementById("klassenPlayerRankLeaveBtn").addEventListener("click", klassenStudentLeave);
+document.getElementById("klassenHostGoneLeaveBtn").addEventListener("click", klassenStudentLeave);
+async function klassenStudentLeave() {
   const pin = klassenRoomPin, playerId = klassenPlayerId;
   klassenStopListening();
   // Name vorausfüllen, damit er beim Wiederbeitritt nur noch korrigiert werden muss
@@ -8022,7 +8082,7 @@ document.getElementById("klassenWaitLeaveBtn").addEventListener("click", async (
     await klassenLeavePromise;
     klassenLeavePromise = null;
   }
-});
+}
 let klassenLeavePromise = null;
 
 /* ---- Klassenmodus: Host-seitiger Spielablauf ---- */
@@ -8383,7 +8443,7 @@ function klassenRenderHostRanking(players, isFinal) {
   };
   const nextBtn = document.getElementById("klassenNextBtn");
   nextBtn.textContent = isFinal ? "Fertig" : "Nächste Aufgabe";
-  nextBtn.onclick = isFinal ? () => { klassenStopListening(); showView("home"); } : () => klassenHostAdvance();
+  nextBtn.onclick = isFinal ? () => { klassenStopListening(); klassenHostEndRoom(); showView("home"); } : () => klassenHostAdvance();
   // Gewählter 2×/3×-Faktor bleibt stehen (z.B. nach einer Übungsphase), bis "Weiter" ihn verbraucht.
   document.getElementById("klassenMultiplierRow").classList.toggle("hidden", isFinal);
   document.getElementById("klassenMultiplierNote").classList.toggle("hidden", isFinal || klassenNextMultiplier === 1);
@@ -8407,7 +8467,12 @@ document.getElementById("klassenShowFullListBtn").addEventListener("click", () =
   const hidden = document.getElementById("klassenFullList").classList.toggle("hidden");
   document.getElementById("klassenShowFullListBtn").textContent = hidden ? "Ganze Liste zeigen" : "Ganze Liste ausblenden";
 });
-document.getElementById("klassenRankHomeBtn").addEventListener("click", () => { klassenStopListening(); showView("home"); });
+// Beim Zwischenstand bedeutet "Zur Startseite" das Spiel zu verlassen -> wie "Abbrechen" beenden,
+// sonst warten die SuS endlos auf die nächste Aufgabe.
+document.getElementById("klassenRankHomeBtn").addEventListener("click", () => {
+  if (!klassenLastRankIsFinal) { klassenAbortGame(); return; }
+  klassenStopListening(); klassenHostEndRoom(); showView("home");
+});
 function klassenAbortGame() {
   openConfirm("Klassenduell wirklich abbrechen?", async () => {
     klassenStopListening();
@@ -8423,7 +8488,22 @@ document.getElementById("klassenPlayerRankHomeBtn").addEventListener("click", ()
 let klassenLastSeenPhase = null, klassenMode = "quiz", klassenExerciseId = null, klassenAnswerRevealed = false, klassenLastAnswerCorrect = null;
 let klassenStudentCurrentTimerSec = 30, klassenPracticePoolIds = null;
 let klassenPracticeCorrect = 0, klassenPracticeWrong = 0;
+let klassenLastRoomKey = null;
 function klassenStudentHandleRoomUpdate(room) {
+  if (typeof room.hostSeen === "number") { klassenLastHostSeen = room.hostSeen; klassenRenderHostGone(); }
+  // Der Host-Herzschlag ändert nur hostSeen - deswegen nicht alles neu zeichnen.
+  const { hostSeen, ...rest } = room;
+  const key = JSON.stringify(rest);
+  if (key === klassenLastRoomKey) return;
+  klassenLastRoomKey = key;
+  if (room.phase === "finished" && !(room.currentQuestionIndex >= 0)) {
+    // Lehrperson hat den Raum vor Spielbeginn geschlossen
+    klassenStopListening();
+    klassenClearSession();
+    showView("home");
+    openConfirm("Die Lehrperson hat den Raum geschlossen.", null, "OK");
+    return;
+  }
   klassenExerciseId = room.exerciseId;
   klassenPracticePoolIds = room.practicePoolIds || null;
   if (room.phase === "doubleAnnounce") klassenSetMultiplierOverlay(room.announceMultiplier || 2);
@@ -8631,6 +8711,7 @@ async function klassenRenderStudentRanking(isFinal, room) {
     res.style.color = sawIt && klassenHasAnsweredCurrent && klassenLastAnswerCorrect ? "var(--success)" : "var(--danger)";
   }
   document.getElementById("klassenPlayerRankWaitNote").classList.toggle("hidden", isFinal);
+  document.getElementById("klassenPlayerRankLeaveBtn").classList.toggle("hidden", isFinal);
   document.getElementById("klassenPlayerRankHomeBtn").classList.toggle("hidden", !isFinal);
   document.getElementById("klassenMyAnswersBtn").classList.toggle("hidden", !isFinal);
   // Live mithören (wie beim Host): Die score-Increments der anderen SuS kommen oft erst

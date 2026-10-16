@@ -458,7 +458,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-16.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-16.2</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -562,7 +562,7 @@
         <button class="choice-btn" data-klassen-rankint="5">Nach 5 Aufgaben</button>
         <button class="choice-btn active" data-klassen-rankint="0">Nur am Schluss</button>
       </div>
-      <div id="klassenSqrtOpts" class="hidden">
+      <div class="sqrt-opts hidden">
         <label class="field-label">Wurzel-Zahlen (mehrere wählbar)</label>
         <div class="choice-row">
           <button class="choice-btn active" data-sqrt-variant="int">Ganze Zahlen (√144)</button>
@@ -807,6 +807,14 @@
     <div class="row back-row"><button class="btn btn-secondary" data-back-chapter>← Zurück</button></div>
     <h1 id="mode_exercise_title"></h1>
     <div class="ex-desc-card" id="mode_exercise_desc"></div>
+    <div class="setup-card sqrt-opts hidden">
+      <label class="field-label">Wurzel-Zahlen (mehrere wählbar)</label>
+      <div class="choice-row" style="margin-bottom:0;">
+        <button class="choice-btn active" data-sqrt-variant="int">Ganze Zahlen (√144)</button>
+        <button class="choice-btn" data-sqrt-variant="dec">Mit Komma (√1.44)</button>
+        <button class="choice-btn" data-sqrt-variant="tens">Mit Zehnern (√14'400)</button>
+      </div>
+    </div>
     <h2 class="sub">Wie möchtest du üben?</h2>
     <div class="mode-choice-grid">
       <button class="btn btn-big btn-solo" id="goSoloBtn">🧠 Solo üben</button>
@@ -5723,6 +5731,7 @@ function selectExercise(exercise) {
     const info = EXERCISE_INFO[exercise.id];
     descEl.innerHTML = info ? `<p class="ex-desc-text">${escapeHtml(info.d)}</p><p class="ex-desc-goal">🎯 Lernziel: ${escapeHtml(info.g)}</p>` : "";
   }
+  refreshSqrtOpts();
   showView("modeChoice");
 }
 
@@ -7807,17 +7816,24 @@ document.getElementById("goKlassenBtn").addEventListener("click", async () => {
 });
 document.getElementById("goKlassenHostSetupBtn").addEventListener("click", () => {
   document.getElementById("klassen_exercise_title").innerHTML = titleWithCalc(escapeHtml(currentExercise.title), currentExercise.calc);
-  const hasSqrt = currentExercise.id === "m2-1c-root" || (currentExercise.mixedPool || []).some(e => e.id === "m2-1c-root");
-  document.getElementById("klassenSqrtOpts").classList.toggle("hidden", !hasSqrt);
+  refreshSqrtOpts();
   showView("klassenHostSetup");
 });
-// Wurzel-Varianten: Mehrfachauswahl, mindestens eine bleibt aktiv.
+// Wurzel-Varianten (Moduswahl und Klassenduell-Einrichtung, gleiche Einstellung):
+// Mehrfachauswahl, mindestens eine bleibt aktiv. Nur sichtbar, wenn die Übung bzw. der Mix
+// "Quadratwurzel berechnen" enthält.
+function refreshSqrtOpts() {
+  const ex = currentExercise;
+  const hasSqrt = !!ex && (ex.id === "m2-1c-root" || (ex.mixedPool || []).some(e => e.id === "m2-1c-root"));
+  document.querySelectorAll(".sqrt-opts").forEach(el => el.classList.toggle("hidden", !hasSqrt));
+  document.querySelectorAll(".choice-btn[data-sqrt-variant]").forEach(b => b.classList.toggle("active", sqrtRootVariants.includes(b.dataset.sqrtVariant)));
+}
 document.querySelectorAll('.choice-btn[data-sqrt-variant]').forEach(btn => btn.addEventListener("click", () => {
   const v = btn.dataset.sqrtVariant;
   const on = sqrtRootVariants.includes(v);
   if (on && sqrtRootVariants.length === 1) return;
   sqrtRootVariants = on ? sqrtRootVariants.filter(x => x !== v) : [...sqrtRootVariants, v];
-  btn.classList.toggle("active", !on);
+  refreshSqrtOpts();
 }));
 document.getElementById("klassenNumqSlider").addEventListener("input", (e) => {
   klassenSettings.numQuestions = Number(e.target.value);

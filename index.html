@@ -458,7 +458,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-15.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-16.1</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -561,6 +561,14 @@
         <button class="choice-btn" data-klassen-rankint="3">Nach 3 Aufgaben</button>
         <button class="choice-btn" data-klassen-rankint="5">Nach 5 Aufgaben</button>
         <button class="choice-btn active" data-klassen-rankint="0">Nur am Schluss</button>
+      </div>
+      <div id="klassenSqrtOpts" class="hidden">
+        <label class="field-label">Wurzel-Zahlen (mehrere wählbar)</label>
+        <div class="choice-row">
+          <button class="choice-btn active" data-sqrt-variant="int">Ganze Zahlen (√144)</button>
+          <button class="choice-btn" data-sqrt-variant="dec">Mit Komma (√1.44)</button>
+          <button class="choice-btn" data-sqrt-variant="tens">Mit Zehnern (√14'400)</button>
+        </div>
       </div>
     </div>
     <button class="btn btn-big btn-duell" id="klassenCreateRoomBtn">Raum erstellen</button>
@@ -3060,7 +3068,22 @@ function generateSequence() {
   if (kind === 5) return generateSequenceFibonacciLike();
   return generateSequenceSquares();
 }
-function generateSquareRoot() { const r = rnd(2, 25); return { visual: null, prompt: `Berechne: √${r * r} =`, answerType: "number", correct: r, solution: `${r} × ${r} = ${r * r}, also √${r * r} = ${r}` }; }
+// Quadratwurzel: Basis sind die Quadratzahlen 1²–20² und 25². Varianten (im Klassenduell
+// wählbar): "int" √144 = 12, "dec" mit Komma √1.44 = 1.2, "tens" mit Zehnern √14400 = 120.
+let sqrtRootVariants = ["int"];
+const SQRT_ROOT_BASES = [...Array.from({ length: 20 }, (_, i) => i + 1), 25];
+function generateSquareRoot() {
+  const variants = sqrtRootVariants.length ? sqrtRootVariants : ["int"];
+  const variant = variants[rnd(0, variants.length - 1)];
+  // Bei Komma keine Vielfachen von 10 (sonst √1 = 1, √4 = 2 doppelt zu den ganzen Zahlen)
+  const bases = variant === "dec" ? SQRT_ROOT_BASES.filter(b => b % 10 !== 0) : SQRT_ROOT_BASES;
+  const b = bases[rnd(0, bases.length - 1)];
+  let root, sq;
+  if (variant === "dec") { root = String(b / 10); sq = String(b * b / 100); }
+  else if (variant === "tens") { root = String(b * 10); sq = fmtThousands(b * b * 100); }
+  else { root = String(b); sq = String(b * b); }
+  return { visual: null, prompt: `Berechne: √${sq} =`, answerType: "number", correct: Number(root), solution: `${root} × ${root} = ${sq}, also √${sq} = ${root}` };
+}
 // Wurzelgesetze (2. Jahr, 1c): √a·√b = √(a·b) und √a : √b = √(a : b).
 // Beide Generatoren würfeln zwischen "zusammenfassen" (√8 · √18) und "aufteilen" (√(16 · 25)).
 const ROOT_SQUAREFREE_BASES = [2, 3, 5, 6, 7, 10];
@@ -7784,8 +7807,18 @@ document.getElementById("goKlassenBtn").addEventListener("click", async () => {
 });
 document.getElementById("goKlassenHostSetupBtn").addEventListener("click", () => {
   document.getElementById("klassen_exercise_title").innerHTML = titleWithCalc(escapeHtml(currentExercise.title), currentExercise.calc);
+  const hasSqrt = currentExercise.id === "m2-1c-root" || (currentExercise.mixedPool || []).some(e => e.id === "m2-1c-root");
+  document.getElementById("klassenSqrtOpts").classList.toggle("hidden", !hasSqrt);
   showView("klassenHostSetup");
 });
+// Wurzel-Varianten: Mehrfachauswahl, mindestens eine bleibt aktiv.
+document.querySelectorAll('.choice-btn[data-sqrt-variant]').forEach(btn => btn.addEventListener("click", () => {
+  const v = btn.dataset.sqrtVariant;
+  const on = sqrtRootVariants.includes(v);
+  if (on && sqrtRootVariants.length === 1) return;
+  sqrtRootVariants = on ? sqrtRootVariants.filter(x => x !== v) : [...sqrtRootVariants, v];
+  btn.classList.toggle("active", !on);
+}));
 document.getElementById("klassenNumqSlider").addEventListener("input", (e) => {
   klassenSettings.numQuestions = Number(e.target.value);
   document.getElementById("klassenNumqLabel").textContent = e.target.value;

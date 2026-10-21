@@ -458,7 +458,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-21.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-21.2</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -7739,13 +7739,18 @@ function klassenRoomLooksAbandoned(room) {
 // Uhrzeit, als dieser Wert zuletzt neu war. Nur Letzteres mit Date.now() vergleichen - sonst gilt die
 // Lehrperson auf Geräten mit falsch gestellter Uhr (z.B. Handy) sofort als "weg".
 let klassenHostGoneIv = null, klassenLastHostSeen = 0, klassenHostSeenLocalAt = 0;
+// Abweichung Uhr der Lehrperson minus eigene Uhr. Countdown und Punkte rechnen mit
+// questionStartedAt (Uhr der Lehrperson) - ohne Ausgleich lief auf Handys mit falsch gestellter
+// Uhr die Zeit sofort ab bzw. gab es 0 Punkte. Gemessen an frisch eintreffenden Herzschlägen.
+let klassenHostClockOffset = 0;
+function klassenHostNow() { return Date.now() + klassenHostClockOffset; }
 function klassenStartHostGoneWatch() {
   klassenStopHostGoneWatch();
   klassenHostGoneIv = setInterval(klassenRenderHostGone, 5000);
 }
 function klassenStopHostGoneWatch() {
   clearInterval(klassenHostGoneIv); klassenHostGoneIv = null;
-  klassenLastHostSeen = 0; klassenHostSeenLocalAt = 0;
+  klassenLastHostSeen = 0; klassenHostSeenLocalAt = 0; klassenHostClockOffset = 0;
   const bar = document.getElementById("klassenHostGoneBar");
   if (bar) bar.classList.add("hidden");
 }
@@ -7943,6 +7948,25 @@ function klassenSaveSession() {
 function klassenClearSession() {
   try { localStorage.removeItem(KLASSEN_SESSION_KEY); } catch (e) {}
 }
+// "Meine Antworten" zusätzlich im Gerät speichern: Lädt die App neu (Tab im Hintergrund vom
+// Betriebssystem beendet, Neu-Beitritt), ging die Liste sonst verloren - am Schluss stand dann
+// nur noch die letzte Antwort da, obwohl die Punkte (Firebase) vollständig waren.
+const KLASSEN_ANSWERS_KEY = "matheDuellKlassenAnswers";
+function klassenSaveMyAnswers() {
+  try { localStorage.setItem(KLASSEN_ANSWERS_KEY, JSON.stringify({ pin: klassenRoomPin, playerId: klassenPlayerId, answers: klassenMyAnswers })); } catch (e) {}
+}
+function klassenLoadMyAnswers(pin, playerId) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(KLASSEN_ANSWERS_KEY) || "null");
+    if (saved && saved.pin === pin && saved.playerId === playerId && Array.isArray(saved.answers)) return saved.answers;
+  } catch (e) {}
+  return [];
+}
+function klassenRecordMyAnswer(entry) {
+  if (klassenMyAnswers.some(a => a.qIndex === klassenLastSeenQIndex)) return;
+  klassenMyAnswers.push({ qIndex: klassenLastSeenQIndex, ...entry });
+  klassenSaveMyAnswers();
+}
 function klassenAttachStudentListeners(roomRef, pin) {
   klassenStopListening();
   klassenStartHeartbeat();
@@ -8056,7 +8080,8 @@ document.getElementById("klassenJoinBtn").addEventListener("click", async () => 
     klassenLastSeenQIndex = -1;
     klassenLastSeenPhase = null;
     klassenAnswerRevealed = false;
-    klassenMyAnswers = [];
+    klassenMyAnswers = klassenLoadMyAnswers(pin, playerId);
+    klassenSaveMyAnswers();
     klassenMode = "quiz";
     klassenSaveSession();
     document.getElementById("klassenWaitName").textContent = name;
@@ -8091,7 +8116,7 @@ document.getElementById("klassenJoinBtn").addEventListener("click", async () => 
     klassenLastSeenQIndex = -1;
     klassenLastSeenPhase = null;
     klassenAnswerRevealed = false;
-    klassenMyAnswers = [];
+    klassenMyAnswers = klassenLoadMyAnswers(saved.pin, saved.playerId);
     klassenMode = "quiz";
     document.getElementById("klassenWaitName").textContent = saved.name;
     document.getElementById("klassenWaitPin").textContent = saved.pin;
@@ -8543,6 +8568,10 @@ let klassenPracticeCorrect = 0, klassenPracticeWrong = 0;
 let klassenLastRoomKey = null;
 function klassenStudentHandleRoomUpdate(room) {
   if (typeof room.hostSeen === "number" && room.hostSeen !== klassenLastHostSeen) {
+    const diff = room.hostSeen - Date.now();
+    // Erster Wert kann bis zu einem Herzschlag alt sein - nur übernehmen, wenn die Uhren
+    // offensichtlich stark abweichen; jeder spätere (live eingetroffene) Wert ist genau.
+    if (klassenLastHostSeen > 0 || Math.abs(diff) > 60000) klassenHostClockOffset = diff;
     klassenLastHostSeen = room.hostSeen; klassenHostSeenLocalAt = Date.now(); klassenRenderHostGone();
   }
   // Der Host-Herzschlag ändert nur hostSeen - deswegen nicht alles neu zeichnen.
@@ -8575,6 +8604,14 @@ function klassenStudentHandleRoomUpdate(room) {
       klassenLastAnswerCorrect = null;
       klassenAnswerRevealed = false;
       klassenRenderStudentQuestion(room);
+      const already = klassenMyAnswers.find(a => a.qIndex === room.currentQuestionIndex);
+      if (already) {
+        clearInterval(klassenCountdownIv);
+        klassenHasAnsweredCurrent = already.answered !== false;
+        klassenQuestionClosed = !klassenHasAnsweredCurrent;
+        klassenLastAnswerCorrect = already.correct;
+        klassenLockAnswerUI(klassenHasAnsweredCurrent);
+      }
     } else if (wasPractice) {
       klassenShowWaitingForNext();
     } else if (room.answerRevealed && !klassenAnswerRevealed) {
@@ -8618,7 +8655,7 @@ function klassenCloseUnanswered() {
   klassenLastAnswerCorrect = false;
   klassenLockAnswerUI(false);
   const task = klassenStudentTask;
-  klassenMyAnswers.push({ prompt: task.prompt, myAnswer: "(keine Antwort)", myAnswerText: "(keine Antwort)", correctAnswer: formatCorrectAnswerHtml(task), correctAnswerText: formatCorrectAnswer(task), correct: false, points: 0 });
+  klassenRecordMyAnswer({ answered: false, prompt: task.prompt, myAnswer: "(keine Antwort)", myAnswerText: "(keine Antwort)", correctAnswer: formatCorrectAnswerHtml(task), correctAnswerText: formatCorrectAnswer(task), correct: false, points: 0 });
 }
 function klassenRevealAnswerToStudent() {
   klassenCloseUnanswered();
@@ -8694,7 +8731,7 @@ function klassenRenderStudentQuestion(room) {
   const startedAt = room.questionStartedAt;
   klassenStudentCurrentTimerSec = room.timerSec;
   const tick = () => {
-    const remaining = Math.max(0, klassenStudentCurrentTimerSec - (Date.now() - startedAt) / 1000);
+    const remaining = Math.max(0, klassenStudentCurrentTimerSec - (klassenHostNow() - startedAt) / 1000);
     document.getElementById("klassen_countdown").textContent = Math.ceil(remaining) + "s";
     if (remaining <= 0) {
       clearInterval(klassenCountdownIv);
@@ -8729,11 +8766,11 @@ async function klassenSubmitAnswer() {
   klassenLastAnswerCorrect = ok;
   const roomSnap = await firebaseDb.collection("rooms").doc(klassenRoomPin).get();
   const room = roomSnap.data();
-  const elapsedSec = (Date.now() - room.questionStartedAt) / 1000;
+  const elapsedSec = (klassenHostNow() - room.questionStartedAt) / 1000;
   let points = ok ? Math.max(0, Math.round(1000 * (1 - Math.min(1, elapsedSec / room.timerSec)))) : 0;
   points *= klassenTaskMultiplier(task);
   klassenLockAnswerUI(true);
-  klassenMyAnswers.push({ prompt: task.prompt, myAnswer: formatMyAnswerForDisplayHtml(task, inputBuffers.klassen), myAnswerText: formatMyAnswerForDisplay(task, inputBuffers.klassen), correctAnswer: formatCorrectAnswerHtml(task), correctAnswerText: formatCorrectAnswer(task), correct: ok, points });
+  klassenRecordMyAnswer({ answered: true, prompt: task.prompt, myAnswer: formatMyAnswerForDisplayHtml(task, inputBuffers.klassen), myAnswerText: formatMyAnswerForDisplay(task, inputBuffers.klassen), correctAnswer: formatCorrectAnswerHtml(task), correctAnswerText: formatCorrectAnswer(task), correct: ok, points });
   try {
     await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("questions").doc(String(room.currentQuestionIndex)).collection("answers").doc(klassenPlayerId).set({
       name: klassenPlayerName, correct: ok, points, submittedAt: Date.now()

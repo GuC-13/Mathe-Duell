@@ -458,7 +458,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-21.2</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-21.3</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -4093,7 +4093,8 @@ function generateCalcChain() {
   for (let i = 0; i < steps; i++) {
     const t = rnd(0, 2);
     if (t === 0) { const n = rnd(2, 25); val += n; opsText.push(`+${n}`); }
-    else if (t === 1) { const n = rnd(2, Math.max(2, Math.min(25, val))); val -= n; opsText.push(`−${n}`); }
+    else if (t === 1 && val > 2) { const n = rnd(2, Math.min(25, val)); val -= n; opsText.push(`−${n}`); }
+    else if (t === 1) { const n = rnd(2, 25); val += n; opsText.push(`+${n}`); }
     else { const n = rnd(2, 4); val *= n; opsText.push(`×${n}`); }
   }
   return { visual: null, prompt: `Rechenkette: Starte bei ${start}. Rechne der Reihe nach: ${opsText.join(", ")}. Was ist das Ergebnis?`, answerType: "number", correct: val };
@@ -4666,7 +4667,21 @@ const EXERCISE_INFO = {
   "2a-berechnen": { d: "Berechne den Wert einer Potenz.", g: "Potenzen als wiederholte Multiplikation verstehen." },
   "2a-gesetz": { d: "Wende das Potenzgesetz für die Multiplikation gleicher Basen an.", g: "Potenzgesetze anwenden können." },
   "2a-reihenfolge": { d: "Berechne einen Term unter Beachtung von «Punkt vor Strich» und Klammern.", g: "Rechenreihenfolge korrekt anwenden." },
+  "2a-als-potenz": { d: "Schreibe ein Produkt aus gleichen Faktoren als Potenz.", g: "Basis und Hochzahl einer Potenz verstehen." },
+  "2a-vergleich": { d: "Vergleiche eine Potenz mit einem Produkt oder einer anderen Potenz.", g: "Potenzen ausrechnen und nicht mit Produkten verwechseln." },
+  "2a-klammer": { d: "Wähle die Stelle, an der ein Klammerpaar das gewünschte Ergebnis liefert.", g: "Klammerregeln und «Punkt vor Strich» sicher anwenden." },
+  "2a-wortterm": { d: "Übersetze eine Rechnung in Worten in einen Term und rechne aus.", g: "Sachverhalte als Terme notieren und berechnen." },
+  "2a-rechengesetze": { d: "Erkenne, ob das Kommutativ-, Assoziativ- oder Distributivgesetz angewendet wurde.", g: "Die Rechengesetze kennen und unterscheiden." },
+  "2a-vorteilhaft": { d: "Rechne mit Hilfe der Rechengesetze geschickt im Kopf.", g: "Rechenvorteile durch Vertauschen, Zerlegen und Ausklammern nutzen." },
+  "2a-stellenwert": { d: "Bestimme Stellenwert und Wert einer Ziffer in einer grossen Zahl.", g: "Das Stellenwertsystem verstehen." },
+  "2a-grosse-zahlen": { d: "Schreibe grosse Zahlen mit Zehnerpotenzen.", g: "Grosse Zahlen lesen und mit Zehnerpotenzen notieren." },
   "2b-1": { d: "Setze einen Wert für x in einen Term ein und berechne das Ergebnis.", g: "Terme mit Variablen auswerten können." },
+  "2b-zwei": { d: "Setze Zahlen für eine oder zwei Variablen ein und berechne den Term.", g: "Terme mit mehreren Variablen auswerten können." },
+  "2b-sachterm": { d: "Wähle den Term, der zu einer Alltagssituation passt.", g: "Sachverhalte mit Variablen als Term notieren." },
+  "2b-tabelle": { d: "Finde den Term, der zu einer Wertetabelle passt.", g: "Zusammenhänge zwischen Tabelle und Term erkennen." },
+  "2c-pfz-zahl": { d: "Berechne die Zahl aus ihrer Primfaktorzerlegung.", g: "Primfaktorzerlegungen lesen und ausrechnen." },
+  "2c-armreich": { d: "Entscheide mit der Teilersumme, ob eine Zahl arm, vollkommen oder reich ist.", g: "Alle Teiler bestimmen und Teilersummen vergleichen." },
+  "2c-sachaufgabe": { d: "Löse Alltagsaufgaben mit ggT oder kgV.", g: "Erkennen, wann ggT oder kgV gebraucht wird." },
   "2c-prim": { d: "Entscheide, ob eine Zahl eine Primzahl ist.", g: "Primzahlen erkennen und Teilbarkeit gezielt prüfen." },
   "2c-teiler": { d: "Bestimme, wie viele Teiler eine Zahl hat.", g: "Teiler einer Zahl systematisch bestimmen." },
   "2c-kgv": { d: "Bestimme das kleinste gemeinsame Vielfache zweier Zahlen.", g: "Vielfachenbeziehungen zwischen Zahlen erkennen." },
@@ -5146,6 +5161,193 @@ function generateQuadPropertyTruth() {
   return { visual: null, prompt: `Stimmt die Aussage? Ein ${q.name} hat (im Allgemeinen) ${shown} ${lab(shown)}.`, answerType: "boolean", correct: shown === q[p.key] ? 1 : 0, solution: `Ein ${q.name} hat ${q[p.key]} ${lab(q[p.key])}.` };
 }
 
+/* ---- Mathematik 1. Jahr: Kapitel 2a–2c nach Skript M1 K2 «Die Welt der natürlichen Zahlen» ---- */
+function shuffleArr(arr) { return arr.slice().sort(() => Math.random() - 0.5); }
+// Rechnet einen Term mit ·, :, +, − und Klammern aus (nur für intern erzeugte Terme)
+function evalDotTerm(term) { return Function(`return (${term.replace(/·/g, "*").replace(/:/g, "/").replace(/−/g, "-")});`)(); }
+// 2a: Produkt gleicher Faktoren als Potenz notieren
+function generateProductAsPowerMC() {
+  let b, e;
+  do { b = rnd(2, 12); e = rnd(2, 6); } while (b === e || Math.pow(b, e) > 100000);
+  const correct = `${b}^${e}`;
+  const options = shuffleArr([correct, `${e}^${b}`, `${b} · ${e}`, `${b * e}`]);
+  return { visual: null, prompt: `Wie schreibt man ${Array(e).fill(b).join(" · ")} als Potenz?`, answerType: "mc", options, correct, solution: `Die Basis ${b} kommt ${e}-mal als Faktor vor → ${b}^${e}\nWert: ${b}^${e} = ${fmtThousands(Math.pow(b, e))}\nAchtung: ${b}^${e} ist nicht ${b} · ${e} = ${b * e}.` };
+}
+// 2a: Grösser, kleiner oder gleich? (Potenz vs. Produkt bzw. zwei Potenzen)
+function generatePowerCompareMC() {
+  const t = rnd(0, 3);
+  let L, R, lv, rv;
+  if (t === 0) { const a = rnd(2, 6), n = rnd(2, 5); const p = Math.random() < 0.5; L = p ? `${a}^${n}` : `${a} · ${n}`; R = p ? `${a} · ${n}` : `${a}^${n}`; lv = p ? Math.pow(a, n) : a * n; rv = p ? a * n : Math.pow(a, n); }
+  else if (t === 1) { let a, b; do { a = rnd(2, 6); b = rnd(2, 6); } while (a === b); L = `${a}^${b}`; R = `${b}^${a}`; lv = Math.pow(a, b); rv = Math.pow(b, a); }
+  else if (t === 2) { const eq = [["9^2", "3^4"], ["4^2", "2^4"], ["8^2", "4^3"], ["2^6", "4^3"], ["16^2", "4^4"], ["27^2", "9^3"], ["2^2", "2 · 2"], ["1^15", "1 · 1"]]; [L, R] = eq[rnd(0, eq.length - 1)]; if (Math.random() < 0.5) [L, R] = [R, L]; lv = rv = evalDotTerm(L.replace(/(\d+)\^(\d+)/g, "($1**$2)")); }
+  else { const a = rnd(2, 10), m = rnd(2, 4), n = m + rnd(1, 2); const p = Math.random() < 0.5; L = `${a}^${p ? m : n}`; R = `${a}^${p ? n : m}`; lv = Math.pow(a, p ? m : n); rv = Math.pow(a, p ? n : m); }
+  const correct = lv < rv ? "<" : lv > rv ? ">" : "=";
+  return { visual: null, prompt: `Setze <, > oder = ein:\n${L}  ◯  ${R}`, answerType: "mc", options: ["<", ">", "="], correct, fixedOptions: true, solution: `${L} = ${fmtThousands(lv)}\n${R} = ${fmtThousands(rv)}\n→ ${L} ${correct} ${R}` };
+}
+// 2a: Rechengesetze erkennen (K, A, D)
+function generateLawRecognizeMC() {
+  const a = rnd(3, 40), b = rnd(3, 40), c = rnd(2, 15), k = rnd(2, 9);
+  const items = [
+    [`${a} + ${b} = ${b} + ${a}`, "Kommutativgesetz"],
+    [`${k} · ${b} = ${b} · ${k}`, "Kommutativgesetz"],
+    [`${a} + (${b} + ${c}) = (${a} + ${b}) + ${c}`, "Assoziativgesetz"],
+    [`${k} · (${c} · ${b}) = (${k} · ${c}) · ${b}`, "Assoziativgesetz"],
+    [`${k} · (${a} + ${b}) = ${k} · ${a} + ${k} · ${b}`, "Distributivgesetz"],
+    [`${k} · ${10 * c - 1} = ${k} · (${10 * c} − 1) = ${k} · ${10 * c} − ${k} · 1`, "Distributivgesetz"],
+    [`(${k * a} + ${k * c}) : ${k} = ${k * a} : ${k} + ${k * c} : ${k}`, "Distributivgesetz"]
+  ];
+  const [term, correct] = items[rnd(0, items.length - 1)];
+  const why = { Kommutativgesetz: "Die Zahlen wurden vertauscht (Vertauschungsgesetz).", Assoziativgesetz: "Nur die Klammern wurden verschoben – die Reihenfolge der Zahlen bleibt (Verbindungsgesetz).", Distributivgesetz: "Eine Zahl wird auf jeden Summanden in der Klammer verteilt (Verteilungsgesetz)." };
+  return { visual: null, prompt: `Welches Rechengesetz wurde angewendet?\n${term}`, answerType: "mc", options: ["Kommutativgesetz", "Assoziativgesetz", "Distributivgesetz"], correct, fixedOptions: true, solution: why[correct] };
+}
+// 2a: Vorteilhaft rechnen mit den Rechengesetzen
+function generateClever() {
+  const t = rnd(0, 5);
+  if (t === 0) { const pairs = [[25, 4], [50, 2], [20, 5], [125, 8]]; const [p, q] = pairs[rnd(0, pairs.length - 1)]; const m = rnd(3, 39); const r = p * q * m; return { visual: null, prompt: `Rechne geschickt: ${p} · ${m} · ${q} =`, answerType: "number", correct: r, solution: `Vertauschen: ${p} · ${q} · ${m} = ${p * q} · ${m} = ${fmtThousands(r)}` }; }
+  if (t === 1) { const k = rnd(3, 9), base = [100, 50, 200][rnd(0, 2)], d = rnd(1, 3), plus = Math.random() < 0.5; const n = plus ? base + d : base - d; const r = k * n; return { visual: null, prompt: `Rechne vorteilhaft: ${k} · ${n} =`, answerType: "number", correct: r, solution: `${k} · ${n} = ${k} · (${base} ${plus ? "+" : "−"} ${d}) = ${k * base} ${plus ? "+" : "−"} ${k * d} = ${fmtThousands(r)}` }; }
+  if (t === 2) { const k = rnd(3, 12), x = rnd(11, 60); const y = x - [10, 20, 30][rnd(0, 2)]; if (y < 1) return generateClever(); const r = k * (x - y); return { visual: null, prompt: `Klammere aus und rechne: ${k} · ${x} − ${k} · ${y} =`, answerType: "number", correct: r, solution: `${k} · ${x} − ${k} · ${y} = ${k} · (${x} − ${y}) = ${k} · ${x - y} = ${r}` }; }
+  if (t === 3) { const k = rnd(3, 12), x = rnd(11, 89); const y = 100 - x; const r = k * 100; return { visual: null, prompt: `Klammere aus und rechne: ${k} · ${x} + ${k} · ${y} =`, answerType: "number", correct: r, solution: `${k} · ${x} + ${k} · ${y} = ${k} · (${x} + ${y}) = ${k} · 100 = ${fmtThousands(r)}` }; }
+  if (t === 4) { const a = rnd(120, 600), b = rnd(12, 49); const tens = Math.floor(b / 10) * 10, ones = b - tens; if (ones === 0) return generateClever(); const r = a - b; return { visual: null, prompt: `Rechne geschickt: ${a} − ${b} =`, answerType: "number", correct: r, solution: `${a} − ${b} = ${a} − (${tens} + ${ones}) = ${a} − ${tens} − ${ones} = ${a - tens} − ${ones} = ${r}\n(Steht vor der Klammer ein Minus, wird jede Zahl subtrahiert.)` }; }
+  const [p, q] = [[25, 4], [5, 4], [2, 5], [5, 6], [4, 5]][rnd(0, 4)]; const r = rnd(3, 40); const n = r * p * q;
+  return { visual: null, prompt: `Rechne geschickt: ${fmtThousands(n)} : ${p} : ${q} =`, answerType: "number", correct: r, solution: `${fmtThousands(n)} : ${p} : ${q} = ${fmtThousands(n)} : (${p} · ${q}) = ${fmtThousands(n)} : ${p * q} = ${r}` };
+}
+// 2a: Ein Klammerpaar so setzen, dass die Rechnung stimmt
+function generateBracketPlacementMC() {
+  for (let tries = 0; tries < 200; tries++) {
+    const nums = [rnd(2, 12), rnd(2, 9), rnd(2, 9), rnd(1, 9)];
+    const ops = [0, 1, 2].map(() => ["+", "−", "·"][rnd(0, 2)]);
+    if (!ops.includes("·") || ops.every(o => o === "·")) continue;
+    const build = (i, j) => nums.map((n, k) => (k === i ? "(" : "") + n + (k === j ? ")" : "") + (k < 3 ? ` ${ops[k]} ` : "")).join("");
+    const base = evalDotTerm(build(-1, -1));
+    const places = [[0, 1], [1, 2], [2, 3], [0, 2], [1, 3]].map(([i, j]) => ({ s: build(i, j), v: evalDotTerm(build(i, j)) }));
+    const cands = places.filter(p => p.v !== base && p.v >= 0 && places.filter(q => q.v === p.v).length === 1);
+    if (!cands.length) continue;
+    const pick = cands[rnd(0, cands.length - 1)];
+    const others = shuffleArr(places.filter(p => p.v !== pick.v)).sort((p, q) => (p.v === base) - (q.v === base)).slice(0, 3);
+    if (others.length < 2) continue;
+    const options = shuffleArr([pick, ...others].map(p => p.s));
+    return { visual: null, prompt: `Wo muss das Klammerpaar stehen, damit das Ergebnis ${pick.v} ist?\n${build(-1, -1)} = ${pick.v}`, answerType: "mc", options, correct: pick.s, solution: `${pick.s} = ${pick.v}\nOhne Klammer (Punkt vor Strich) wäre das Ergebnis ${base}.\n` + others.map(p => `${p.s} = ${p.v}`).join("\n") };
+  }
+  return generateOrderOfOperations();
+}
+// 2a: Rechnung aus Worten als Term notieren und ausrechnen
+function generateWordTerm() {
+  const t = rnd(0, 6);
+  if (t === 0) { const d = [2, 5, 10][rnd(0, 2)]; const a = rnd(2, 20) * d, b = rnd(1, 15) * d; return { visual: null, prompt: `Bilde die Summe von ${a} und ${b}. Dividiere dann durch ${d}.`, answerType: "number", correct: (a + b) / d, solution: `(${a} + ${b}) : ${d} = ${a + b} : ${d} = ${(a + b) / d}` }; }
+  if (t === 1) { const a = rnd(3, 15), b = rnd(3, 12), c = rnd(2, 50); return { visual: null, prompt: `Addiere ${c} zum Produkt der Zahlen ${a} und ${b}.`, answerType: "number", correct: a * b + c, solution: `${a} · ${b} + ${c} = ${a * b} + ${c} = ${a * b + c}` }; }
+  if (t === 2) { const a = rnd(4, 15), b = rnd(3, 12); return { visual: null, prompt: `Bilde das Produkt von ${a} und ${b}. Subtrahiere dann die Summe dieser beiden Zahlen.`, answerType: "number", correct: a * b - (a + b), solution: `${a} · ${b} − (${a} + ${b}) = ${a * b} − ${a + b} = ${a * b - (a + b)}` }; }
+  if (t === 3) { const a = rnd(20, 60), b = a + rnd(3, 20); const d = b - a; return { visual: null, prompt: `Subtrahiere ${a} von ${b}. Quadriere das Ergebnis.`, answerType: "number", correct: d * d, solution: `(${b} − ${a})^2 = ${d}^2 = ${d * d}` }; }
+  if (t === 4) { const k = rnd(2, 9), e = rnd(2, 5); return { visual: null, prompt: `Multipliziere ${k} mit der ${e}. Potenz von 2.`, answerType: "number", correct: k * Math.pow(2, e), solution: `${k} · 2^${e} = ${k} · ${Math.pow(2, e)} = ${k * Math.pow(2, e)}` }; }
+  if (t === 5) { const d = rnd(2, 4), q = rnd(2, 6), r = rnd(2, 12); const a = r * d * d * q; return { visual: null, prompt: `Teile ${a} durch ${r}. Dividiere dann durch die zweite Potenz von ${d}.`, answerType: "number", correct: q, solution: `${a} : ${r} : ${d}^2 = ${a / r} : ${d * d} = ${q}` }; }
+  const a = rnd(50, 100), b = rnd(5, 20), c = rnd(2, 15); return { visual: null, prompt: `Subtrahiere von ${a} die Summe von ${b} und ${c}.`, answerType: "number", correct: a - b - c, solution: `${a} − (${b} + ${c}) = ${a} − ${b + c} = ${a - b - c}` };
+}
+// 2a: Stellenwert einer Ziffer (Name oder Wert)
+const PLACE_NAMES = ["Einer", "Zehner", "Hunderter", "Tausender", "Zehntausender", "Hunderttausender", "Millionen", "Zehnmillionen"];
+function generatePlaceValue() {
+  const len = rnd(4, 8);
+  let digits; do { digits = Array.from({ length: len }, (_, i) => i === 0 ? rnd(1, 9) : rnd(0, 9)); } while (new Set(digits).size < 3 || !digits.some(x => x !== 0 && digits.indexOf(x) === digits.lastIndexOf(x)));
+  let pos; do { pos = rnd(0, len - 1); } while (digits[pos] === 0 || digits.indexOf(digits[pos]) !== pos || digits.lastIndexOf(digits[pos]) !== pos);
+  const n = Number(digits.join("")), d = digits[pos], place = len - 1 - pos, val = d * Math.pow(10, place);
+  if (Math.random() < 0.5) {
+    const wrong = shuffleArr([place - 1, place + 1, place + 2, place - 2, place + 3].filter(p => p >= 0 && p < PLACE_NAMES.length)).slice(0, 3);
+    const options = shuffleArr([place, ...wrong].map(p => PLACE_NAMES[p] + "stelle"));
+    return { visual: null, prompt: `An welcher Stelle steht die Ziffer ${d} in der Zahl ${fmtThousands(n)}?`, answerType: "mc", options, correct: PLACE_NAMES[place] + "stelle", solution: `Von rechts gezählt: Einer, Zehner, Hunderter, Tausender, …\nDie ${d} steht an der ${PLACE_NAMES[place]}stelle und bedeutet ${fmtThousands(val)}.` };
+  }
+  return { visual: null, prompt: `Welchen Wert hat die Ziffer ${d} in der Zahl ${fmtThousands(n)}?`, answerType: "number", correct: val, solution: `Die ${d} steht an der ${PLACE_NAMES[place]}stelle → ${d} · ${fmtThousands(Math.pow(10, place))} = ${fmtThousands(val)}` };
+}
+// 2a: Grosse Zahlen mit Zehnerpotenzen
+function generateBigNumberPower() {
+  const units = [["Million", "Mio.", 6], ["Milliarde", "Mia.", 9], ["Billion", "Bio.", 12]];
+  const t = rnd(0, 2);
+  if (t === 0) { const all = [["1 Million", 6], ["1 Milliarde", 9], ["1 Billion", 12], ["1 Billiarde", 15], ["1 Trillion", 18]]; const [name, z] = all[rnd(0, all.length - 1)]; return { visual: null, prompt: `Wie viele Nullen hat ${name}?`, answerType: "number", correct: z, solution: `${name} = 10^${z} → ${z} Nullen` }; }
+  if (t === 1) {
+    const [, abbr, e] = units[rnd(0, 2)];
+    const mant = [rnd(2, 9), rnd(11, 99), rnd(101, 999), rnd(11, 99) + rnd(1, 9) / 10][rnd(0, 3)];
+    const digitsBefore = String(Math.floor(mant)).length;
+    const exp = e + digitsBefore - 1;
+    const sci = String(Math.round(mant / Math.pow(10, digitsBefore - 1) * 10000) / 10000);
+    return { visual: null, prompt: `Schreibe ${mant} ${abbr} so, dass vor dem Dezimalpunkt nur eine Ziffer steht:\n${mant} ${abbr} = ${sci} · 10ⁿ\nn = ?`, answerType: "number", correct: exp, solution: `1 ${abbr} = 10^${e}\n${mant} ${abbr} = ${mant} · 10^${e}` + (digitsBefore > 1 ? ` = ${sci} · 10^${exp}` : "") };
+  }
+  const n = rnd(11, 99) * Math.pow(10, rnd(2, 5)) + (Math.random() < 0.5 ? rnd(1, 9) * 100 : 0);
+  const exp = String(n).length - 1;
+  const sci = String(Math.round(n / Math.pow(10, exp) * 1e6) / 1e6);
+  return { visual: null, prompt: `${fmtThousands(n)} = ${sci} · 10ⁿ\nn = ?`, answerType: "number", correct: exp, solution: `Der Dezimalpunkt wandert ${exp} Stellen nach links:\n${fmtThousands(n)} = ${sci} · 10^${exp}` };
+}
+
+// 2b: Terme mit einer oder zwei Variablen auswerten (Tabelle aus dem Skript)
+function generateTwoVarEval() {
+  const t = rnd(0, 7);
+  if (t === 0) { const b = rnd(2, 12), c = rnd(2, 12), p = rnd(2, 6), q = rnd(2, 6); return { visual: null, prompt: `Berechne ${p} · b + ${q} · c für b = ${b} und c = ${c}.`, answerType: "number", correct: p * b + q * c, solution: `${p} · ${b} + ${q} · ${c} = ${p * b} + ${q * c} = ${p * b + q * c}` }; }
+  if (t === 1) { const d = rnd(2, 5); const s = d * rnd(3, 12); const p = rnd(1, s - 1); return { visual: null, prompt: `Berechne (p + q) : ${d} für p = ${p} und q = ${s - p}.`, answerType: "number", correct: s / d, solution: `(${p} + ${s - p}) : ${d} = ${s} : ${d} = ${s / d}` }; }
+  if (t === 2) { const n = rnd(1, 12), m = n + rnd(1, 10); return { visual: null, prompt: `Berechne 2 · (m − n) + 1 für m = ${m} und n = ${n}.`, answerType: "number", correct: 2 * (m - n) + 1, solution: `2 · (${m} − ${n}) + 1 = 2 · ${m - n} + 1 = ${2 * (m - n)} + 1 = ${2 * (m - n) + 1}` }; }
+  if (t === 3) { const a = rnd(3, 12), b = rnd(3, 12), c = rnd(1, 20); return { visual: null, prompt: `Berechne a · b − ${c} für a = ${a} und b = ${b}.`, answerType: "number", correct: a * b - c, solution: `${a} · ${b} − ${c} = ${a * b} − ${c} = ${a * b - c}` }; }
+  if (t === 4) { const a = rnd(10, 45), b = rnd(10, 45); return { visual: null, prompt: `Berechne 100 − (a + b) für a = ${a} und b = ${b}.`, answerType: "number", correct: 100 - a - b, solution: `100 − (${a} + ${b}) = 100 − ${a + b} = ${100 - a - b}` }; }
+  if (t === 5) { const n = rnd(2, 12), c = rnd(1, 9); return { visual: null, prompt: `Berechne n^2 + ${c} für n = ${n}.`, answerType: "number", correct: n * n + c, solution: `${n}^2 + ${c} = ${n * n} + ${c} = ${n * n + c}` }; }
+  if (t === 6) { const k = rnd(3, 9), c = rnd(2, 6), x = c + rnd(1, 9); return { visual: null, prompt: `Berechne ${k} · (x − ${c}) für x = ${x}.`, answerType: "number", correct: k * (x - c), solution: `${k} · (${x} − ${c}) = ${k} · ${x - c} = ${k * (x - c)}` }; }
+  const a = rnd(5, 25), b = rnd(5, 25); return { visual: null, prompt: `Berechne 2 · a + 3 · b für a = ${a} und b = ${b}.`, answerType: "number", correct: 2 * a + 3 * b, solution: `2 · ${a} + 3 · ${b} = ${2 * a} + ${3 * b} = ${2 * a + 3 * b}` };
+}
+// 2b: Passenden Term zu einem Sachverhalt wählen
+function generateSituationTermMC() {
+  const t = rnd(0, 7);
+  let prompt, correct, wrongs, sol;
+  if (t === 0) { const k = rnd(2, 5); let c; do { c = rnd(1, 9); } while (c === k); const less = Math.random() < 0.5; prompt = `Im Sack A sind x Kugeln. Im Sack B sind ${c} Kugel${c > 1 ? "n" : ""} ${less ? "weniger" : "mehr"} als die ${["", "", "doppelte", "dreifache", "vierfache", "fünffache"][k]} Anzahl von A. Welcher Term passt zu B?`; const s = less ? "−" : "+"; correct = `${k} · x ${s} ${c}`; wrongs = [`${c} · x ${s} ${k}`, `${k} · (x ${s} ${c})`, `x ${s} ${k} · ${c}`]; sol = `${["", "", "doppelte", "dreifache", "vierfache", "fünffache"][k]} Anzahl: ${k} · x, dann ${less ? "minus" : "plus"} ${c} → ${correct}`; }
+  else if (t === 1) { const p = rnd(2, 4); let g; do { g = rnd(3, 9); } while (g === p); prompt = `Ein Taxi kostet ${g} Fr. Grundpreis und ${p} Fr. pro Kilometer. Term für die Kosten bei k Kilometern?`; correct = `${g} + ${p} · k`; wrongs = [`${p} + ${g} · k`, `(${g} + ${p}) · k`, `${g} · ${p} + k`]; sol = `Grundpreis einmal: ${g}, dazu ${p} Fr. für jeden der k Kilometer: ${p} · k → ${correct}`; }
+  else if (t === 2) { prompt = `Ein Rechteck hat die Länge l und die Breite b. Welcher Term beschreibt den Umfang?`; correct = `2 · l + 2 · b`; wrongs = [`l · b`, `2 · l · b`, `l + b`]; sol = `Der Umfang besteht aus zwei Längen und zwei Breiten: 2 · l + 2 · b (oder 2 · (l + b)).`; }
+  else if (t === 3) { const d = rnd(2, 8); const names = ["Anna", "Ben", "Chiara", "David", "Elena"]; const nm1 = names[rnd(0, 4)]; prompt = `${nm1} ist a Jahre alt. Der Bruder ist ${d} Jahre jünger. Wie alt ist der Bruder?`; correct = `a − ${d}`; wrongs = [`a + ${d}`, `${d} − a`, `${d} · a`]; sol = `jünger → weniger Jahre: a − ${d}`; }
+  else if (t === 4) { const p = rnd(2, 6); let c; do { c = rnd(1, 5); } while (c === p); prompt = `Sarah kauft n kg Äpfel zu ${p} Fr. pro kg und eine Tasche für ${c} Fr. Welcher Term beschreibt den Preis?`; correct = `${p} · n + ${c}`; wrongs = [`${p} · (n + ${c})`, `${c} · n + ${p}`, `n + ${p} + ${c}`]; sol = `n kg zu je ${p} Fr.: ${p} · n, dazu einmal ${c} Fr. → ${correct}`; }
+  else if (t === 5) { const v = rnd(5, 12) * 10; prompt = `Ein Zug fährt t Stunden lang mit ${v} km pro Stunde. Welcher Term beschreibt die Strecke in km?`; correct = `${v} · t`; wrongs = [`${v} + t`, `${v} : t`, `t : ${v}`]; sol = `In jeder Stunde ${v} km → nach t Stunden ${v} · t km.`; }
+  else if (t === 6) { prompt = `Ein Velo kostet v Franken. Der Helm kostet 25 Fr. weniger als das halbe Velo. Welcher Term beschreibt den Preis des Helms?`; correct = `v : 2 − 25`; wrongs = [`(v − 25) : 2`, `2 · v − 25`, `25 − v : 2`]; sol = `Halbes Velo: v : 2, davon 25 Fr. weniger → v : 2 − 25`; }
+  else { const e = rnd(6, 12), k = rnd(3, 5); prompt = `Erwachsene zahlen ${e} Fr., Kinder ${k} Fr. Welcher Term beschreibt den Preis für a Erwachsene und b Kinder?`; correct = `${e} · a + ${k} · b`; wrongs = [`${k} · a + ${e} · b`, `(${e} + ${k}) · a · b`, `${e} + ${k} · (a + b)`]; sol = `a Erwachsene zu je ${e} Fr.: ${e} · a, b Kinder zu je ${k} Fr.: ${k} · b → ${correct}`; }
+  return { visual: null, prompt, answerType: "mc", options: shuffleArr([correct, ...wrongs]), correct, solution: sol };
+}
+// 2b: Term zu einer Wertetabelle finden
+function generateTableTermMC() {
+  let m, c; do { m = rnd(2, 6); c = rnd(-3, 8); } while (c === 0 || c === m);
+  const f = n => m * n + c;
+  const fmt = (mm, cc) => `${mm === 1 ? "" : mm + " · "}n${cc === 0 ? "" : ` ${cc < 0 ? "−" : "+"} ${Math.abs(cc)}`}`;
+  const correct = fmt(m, c);
+  const start = c < 0 ? 1 : 0;
+  const ns = [start, start + 1, start + 2, start + 3];
+  const cands = [fmt(m + 1, c), fmt(m - 1, c), fmt(m, -c), fmt(m, 0), c > 0 ? fmt(c, m) : fmt(m + 1, c - 1)];
+  const wrongs = shuffleArr([...new Set(cands)].filter(w => w !== correct)).slice(0, 3);
+  return { visual: null, prompt: `Welcher Term passt zur Wertetabelle?\nn:  ${ns.join("   ")}\nWert:  ${ns.map(f).join("   ")}`, answerType: "mc", options: shuffleArr([correct, ...wrongs]), correct, solution: `Der Wert wächst pro Schritt um ${m} → ${m} · n.\nKontrolle n = ${start}: ${m} · ${start} ${c < 0 ? "−" : "+"} ${Math.abs(c)} = ${f(start)}\nTerm: ${correct}` };
+}
+
+// 2c: arm, vollkommen oder reich?
+function sumProperDivisors(n) { let s = 0; for (let t = 1; t < n; t++) if (n % t === 0) s += t; return s; }
+function generateAbundantMC() {
+  const special = [6, 28, 12, 18, 20, 24, 30, 36, 40, 48, 60];
+  const n = Math.random() < 0.4 ? special[rnd(0, special.length - 1)] : rnd(8, 60);
+  const divs = []; for (let t = 1; t < n; t++) if (n % t === 0) divs.push(t);
+  const s = divs.reduce((a, b) => a + b, 0);
+  const correct = s < n ? "arm" : s === n ? "vollkommen" : "reich";
+  return { visual: null, prompt: `Ist ${n} arm, vollkommen oder reich?`, answerType: "mc", options: ["arm", "vollkommen", "reich"], correct, fixedOptions: true, solution: `Teiler ohne ${n}: ${divs.join(", ")}\nSumme: ${divs.join(" + ")} = ${s}\n${s} ${s < n ? "<" : s === n ? "=" : ">"} ${n} → ${correct}` };
+}
+// 2c: Zahl aus der Primfaktorzerlegung bestimmen
+function generateFromPrimeFactors() {
+  const primes = [2, 3, 5, 7, 11];
+  let parts, n;
+  do {
+    const k = rnd(2, 3);
+    const chosen = shuffleArr(primes).slice(0, k).sort((a, b) => a - b);
+    parts = chosen.map(p => [p, p <= 3 ? rnd(1, 4) : rnd(1, 2)]);
+    n = parts.reduce((acc, [p, e]) => acc * Math.pow(p, e), 1);
+  } while (n > 1500 || n < 20 || parts.every(([, e]) => e === 1));
+  const term = parts.map(([p, e]) => e === 1 ? `${p}` : `${p}^${e}`).join(" · ");
+  const long = parts.map(([p, e]) => Array(e).fill(p).join(" · ")).join(" · ");
+  return { visual: null, prompt: `Welche Zahl hat die Primfaktorzerlegung ${term}?`, answerType: "number", correct: n, solution: `${term} = ${long} = ${fmtThousands(n)}` };
+}
+// 2c: Sachaufgaben zu ggT und kgV
+function generateGgtKgvWord() {
+  const t = rnd(0, 4);
+  if (t === 0) { const [a, b] = [[12, 18], [8, 12], [10, 15], [6, 8], [20, 30], [9, 12], [15, 25]][rnd(0, 6)]; const L = lcmFn(a, b); return { visual: null, prompt: `Zwei Lampen blinken gleichzeitig. Die erste blinkt alle ${a} Sekunden, die zweite alle ${b} Sekunden. Nach wie vielen Sekunden blinken sie wieder gleichzeitig?`, answerType: "number", correct: L, solution: `Gesucht ist das kgV(${a}, ${b}).\n` + kgvSolution(a, b) }; }
+  if (t === 1) { const [a, b] = [[15, 20], [10, 15], [12, 20], [20, 30], [15, 25], [12, 18]][rnd(0, 5)]; const L = lcmFn(a, b); return { visual: null, prompt: `Bus A fährt alle ${a} Minuten, Bus B alle ${b} Minuten. Um 7.00 Uhr fahren beide gleichzeitig ab. Nach wie vielen Minuten fahren sie wieder gleichzeitig ab?`, answerType: "number", correct: L, solution: `Gesucht ist das kgV(${a}, ${b}).\n` + kgvSolution(a, b) }; }
+  if (t === 2) { const g = rnd(4, 12), p = rnd(2, 7); let q; do { q = rnd(2, 7); } while (q === p || gcdFn(p, q) !== 1); const a = g * p, b = g * q; return { visual: null, prompt: `Zwei Schnüre sind ${a} cm und ${b} cm lang. Sie sollen in gleich lange Stücke geschnitten werden, die möglichst lang sind. Wie lang wird ein Stück (in cm)?`, answerType: "number", correct: g, solution: `Gesucht ist der ggT(${a}, ${b}) = ${g}.\n${a} : ${g} = ${p} Stücke, ${b} : ${g} = ${q} Stücke` }; }
+  if (t === 3) { const g = rnd(3, 8), p = rnd(2, 5); let q; do { q = rnd(2, 6); } while (q === p || gcdFn(p, q) !== 1); const a = g * Math.min(p, q), b = g * Math.max(p, q); return { visual: null, prompt: `Ein Rechteck von ${a} cm × ${b} cm soll lückenlos mit gleich grossen Quadraten ausgelegt werden. Wie lang ist die Seite der Quadrate höchstens (in cm)?`, answerType: "number", correct: g, solution: `Gesucht ist der ggT(${a}, ${b}) = ${g}.\nDas gibt ${a / g} · ${b / g} = ${(a / g) * (b / g)} Quadrate.` }; }
+  const [a, b] = [[12, 20], [8, 12], [10, 15], [12, 18], [16, 24], [9, 15]][rnd(0, 5)]; const L = lcmFn(a, b);
+  return { visual: null, prompt: `Zwei Zahnräder greifen ineinander. Das kleine hat ${a} Zähne, das grosse ${b} Zähne. Nach wie vielen Umdrehungen des kleinen Rades stehen beide wieder in der Anfangsstellung?`, answerType: "number", correct: L / a, solution: `kgV(${a}, ${b}) = ${L} Zähne müssen vorbeiziehen.\nKleines Rad: ${L} : ${a} = ${L / a} Umdrehungen` };
+}
+
 function ex(id, title, generate, help, calc) { return { id, title, generate, help: help || "", calc: !!calc }; }
 function titleWithCalc(t, calc) { return calc ? `${t} <span class="calc-badge">(TR erlaubt)</span>` : t; }
 function chapter(id, title, exercises) { return { id, title, exercises }; }
@@ -5242,9 +5444,22 @@ const JAHR1_CHAPTERS = [
   chapter("2a", "Potenzen/Regeln und Gesetze", [
     ex("2a-berechnen", "Potenz berechnen", generatePowerCalcLimited, "a^n heisst: a wird n-mal mit sich selbst multipliziert."),
     ex("2a-gesetz", "Potenzgesetz: Multiplikation", generatePowerRule, "Bei gleicher Basis: Exponenten addieren (a^m · a^n = a^(m+n))."),
-    ex("2a-reihenfolge", "Punkt vor Strich", generateOrderOfOperations, "Punkt-Rechnungen (× und :) werden vor Strich-Rechnungen (+ und −) ausgeführt. Bei Klammern: zuerst die Klammer ausrechnen.")
+    ex("2a-reihenfolge", "Punkt vor Strich", generateOrderOfOperations, "Punkt-Rechnungen (× und :) werden vor Strich-Rechnungen (+ und −) ausgeführt. Bei Klammern: zuerst die Klammer ausrechnen."),
+    ex("2a-als-potenz", "Produkt als Potenz notieren", generateProductAsPowerMC, "Zähle, wie oft der gleiche Faktor vorkommt: Der Faktor ist die Basis, die Anzahl die Hochzahl. 2 · 2 · 2 · 2 · 2 = 2^5."),
+    ex("2a-vergleich", "Grösser, kleiner oder gleich?", generatePowerCompareMC, "Rechne beide Seiten aus. Achtung: 4^3 = 4 · 4 · 4 = 64, nicht 4 · 3 = 12."),
+    ex("2a-klammer", "Klammer richtig setzen", generateBracketPlacementMC, "Rechne jede Möglichkeit aus: Zuerst die Klammer, dann Punkt vor Strich."),
+    ex("2a-wortterm", "Rechnung aus Worten", generateWordTerm, "Schreibe zuerst den Term auf (Summe = +, Differenz = −, Produkt = ·, Quotient = :). Was zuerst gerechnet werden muss, kommt in Klammern."),
+    ex("2a-rechengesetze", "Rechengesetze erkennen", generateLawRecognizeMC, "K: Zahlen werden vertauscht. A: Klammern werden verschoben. D: Eine Zahl wird auf jeden Summanden in der Klammer verteilt."),
+    ex("2a-vorteilhaft", "Vorteilhaft rechnen", generateClever, "Suche Zahlen, die zusammen «schöne» Ergebnisse geben (25 · 4 = 100), zerlege Zahlen (7 · 98 = 7 · 100 − 7 · 2) oder klammere aus (9 · 14 − 9 · 4 = 9 · 10)."),
+    ex("2a-stellenwert", "Stellenwert", generatePlaceValue, "Zähle von rechts: Einer, Zehner, Hunderter, Tausender, Zehntausender, Hunderttausender, Millionen …"),
+    ex("2a-grosse-zahlen", "Grosse Zahlen und Zehnerpotenzen", generateBigNumberPower, "1 Mio. = 10^6, 1 Mia. = 10^9, 1 Bio. = 10^12. Bei der Schreibweise mit einer Ziffer vor dem Punkt: Zähle, um wie viele Stellen der Dezimalpunkt nach links wandert.")
   ]),
-  chapter("2b", "Variablen", [ex("2b-1", "Term auswerten", generateVariables, "Setze den gegebenen Wert für die Variable ein und rechne aus.")]),
+  chapter("2b", "Variablen", [
+    ex("2b-1", "Term auswerten", generateVariables, "Setze den gegebenen Wert für die Variable ein und rechne aus."),
+    ex("2b-zwei", "Einsetzen mit zwei Variablen", generateTwoVarEval, "Ersetze jede Variable durch ihre Zahl. Dann gilt wie immer: Klammer vor Punkt vor Strich."),
+    ex("2b-sachterm", "Term zum Sachverhalt", generateSituationTermMC, "Überlege, was einmal dazukommt (Grundpreis) und was mit der Variable multipliziert wird (pro Stück, pro km, pro Stunde). Teste den Term mit einer Zahl."),
+    ex("2b-tabelle", "Term zur Wertetabelle", generateTableTermMC, "Um wie viel wächst der Wert pro Schritt? Diese Zahl steht vor dem n. Kontrolliere dann mit dem ersten Wert der Tabelle.")
+  ]),
   chapter("2c", "Teiler, Vielfache und Primzahlen", [
     ex("2c-prim", "Ist es eine Primzahl?", generateIsPrimeBalanced, "Eine Primzahl ist nur durch 1 und sich selbst teilbar. Prüfe die Teilbarkeit durch 2, 3, 5, 7 ..."),
     ex("2c-teiler", "Teiler zählen", generateDivisorCount, "Prüfe nur die Zahlen von 1 bis zur Wurzel der Zahl. Jeder gefundene Teiler hat einen Partner (Zahl ÷ Teiler) – zähle beide mit."),
@@ -5252,7 +5467,10 @@ const JAHR1_CHAPTERS = [
     ex("2c-primfaktor", "Primfaktorzerlegung", generatePrimeFactorization, "Teile die Zahl so lange durch die kleinste passende Primzahl (2, 3, 5, 7, ...), bis 1 übrig bleibt. Die verwendeten Primzahlen sind die Primfaktoren."),
     ex("2c-kette", "Rechenketten", generateCalcChain, "Rechne die Kette Schritt für Schritt von links nach rechts durch, immer mit dem bisherigen Zwischenergebnis weiter."),
     ex("2c-teilbar", "Teilbarkeitsregeln", generateDivisibilityRuleTruth, "Prüfe die Teilbarkeit direkt durch Division, oder nutze die bekannten Regeln (z.B. durch 4 teilbar, wenn die letzten zwei Ziffern durch 4 teilbar sind)."),
-    ex("2c-ggt", "ggT bestimmen", generateGgt, "Liste die Teiler beider Zahlen auf und suche den grössten gemeinsamen.")
+    ex("2c-ggt", "ggT bestimmen", generateGgt, "Liste die Teiler beider Zahlen auf und suche den grössten gemeinsamen."),
+    ex("2c-pfz-zahl", "Zahl aus Primfaktoren", generateFromPrimeFactors, "Schreibe die Potenzen als Produkte aus und multipliziere alle Faktoren."),
+    ex("2c-armreich", "Arm, vollkommen oder reich?", generateAbundantMC, "Addiere alle Teiler ausser der Zahl selbst. Summe kleiner → arm, gleich → vollkommen, grösser → reich."),
+    ex("2c-sachaufgabe", "ggT und kgV im Alltag", generateGgtKgvWord, "«Wann wieder gleichzeitig?» → kgV. «Möglichst grosse gleiche Stücke/Quadrate» → ggT.")
   ]),
   chapter("3a", "Daten darstellen", [
     ex("3a-mean", "Mittelwert berechnen", generateMean, "Addiere alle Zahlen und teile die Summe durch die Anzahl der Zahlen.", true),

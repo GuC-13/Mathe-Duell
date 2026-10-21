@@ -458,7 +458,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-16.2</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-21.1</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -7735,20 +7735,23 @@ function klassenRoomLooksAbandoned(room) {
   if (typeof room.hostSeen === "number") return Date.now() - room.hostSeen > KLASSEN_RESUME_MAX_HOST_IDLE_MS;
   return typeof room.createdAt === "number" && Date.now() - room.createdAt > KLASSEN_RESUME_MAX_ROOM_AGE_MS;
 }
-let klassenHostGoneIv = null, klassenLastHostSeen = 0;
+// klassenLastHostSeen = letzter hostSeen-Wert (Uhr der Lehrperson), klassenHostSeenLocalAt = eigene
+// Uhrzeit, als dieser Wert zuletzt neu war. Nur Letzteres mit Date.now() vergleichen - sonst gilt die
+// Lehrperson auf Geräten mit falsch gestellter Uhr (z.B. Handy) sofort als "weg".
+let klassenHostGoneIv = null, klassenLastHostSeen = 0, klassenHostSeenLocalAt = 0;
 function klassenStartHostGoneWatch() {
   klassenStopHostGoneWatch();
   klassenHostGoneIv = setInterval(klassenRenderHostGone, 5000);
 }
 function klassenStopHostGoneWatch() {
   clearInterval(klassenHostGoneIv); klassenHostGoneIv = null;
-  klassenLastHostSeen = 0;
+  klassenLastHostSeen = 0; klassenHostSeenLocalAt = 0;
   const bar = document.getElementById("klassenHostGoneBar");
   if (bar) bar.classList.add("hidden");
 }
 function klassenRenderHostGone() {
   // Nur Räume mit Host-Herzschlag prüfen (ältere App-Versionen der Lehrperson schreiben keinen)
-  const gone = klassenLastHostSeen > 0 && Date.now() - klassenLastHostSeen > KLASSEN_HOST_GONE_MS;
+  const gone = klassenHostSeenLocalAt > 0 && Date.now() - klassenHostSeenLocalAt > KLASSEN_HOST_GONE_MS;
   document.getElementById("klassenHostGoneBar").classList.toggle("hidden", !gone);
 }
 let klassenSelfUnsub = null, klassenLastPingSeenMs = 0, klassenSeenSelfOnce = false;
@@ -8539,7 +8542,9 @@ let klassenStudentCurrentTimerSec = 30, klassenPracticePoolIds = null;
 let klassenPracticeCorrect = 0, klassenPracticeWrong = 0;
 let klassenLastRoomKey = null;
 function klassenStudentHandleRoomUpdate(room) {
-  if (typeof room.hostSeen === "number") { klassenLastHostSeen = room.hostSeen; klassenRenderHostGone(); }
+  if (typeof room.hostSeen === "number" && room.hostSeen !== klassenLastHostSeen) {
+    klassenLastHostSeen = room.hostSeen; klassenHostSeenLocalAt = Date.now(); klassenRenderHostGone();
+  }
   // Der Host-Herzschlag ändert nur hostSeen - deswegen nicht alles neu zeichnen.
   const { hostSeen, ...rest } = room;
   const key = JSON.stringify(rest);

@@ -1,4 +1,4 @@
-const CACHE_NAME = "mathe-duell-cache-v56";
+const CACHE_NAME = "mathe-duell-cache-v57";
 const FILES_TO_CACHE = ["./", "./index.html"];
 
 self.addEventListener("install", (event) => {

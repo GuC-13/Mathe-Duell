@@ -401,6 +401,7 @@
   .solo-feedback { margin-top: 10px; padding: 14px 16px; border-radius: 14px; background: var(--right-bg); border: 2px solid var(--success); text-align: left; }
   .solo-feedback-title { font-weight: 800; font-size: 1.1rem; margin-bottom: 4px; }
   .solo-feedback-answer { font-size: 1.15rem; margin-bottom: 8px; }
+  .solo-feedback-given { font-size: 1rem; color: var(--danger); margin-bottom: 2px; }
   .solo-feedback-steps { font-size: 1rem; line-height: 1.65; }
   .sol-label { font-weight: 700; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
   .style-linear .pair-sep { font-style: italic; color: var(--text); white-space: nowrap; }
@@ -458,7 +459,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-22.2</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-26.1</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -771,8 +772,9 @@
       <label class="field-label">PIN</label>
       <input type="text" id="klassenJoinPinInput" placeholder="z.B. 4821" maxlength="6" inputmode="numeric" style="font-size:1.3rem; text-align:center; letter-spacing:0.1em;">
       <div style="height:12px;"></div>
-      <label class="field-label">Dein Name</label>
-      <input type="text" id="klassenJoinNameInput" placeholder="Name" maxlength="16">
+      <label class="field-label">Dein Spielname</label>
+      <input type="text" id="klassenJoinNameInput" placeholder="z.B. Vorname oder Kürzel" maxlength="16">
+      <p style="color:var(--muted); font-size:0.8rem; margin:6px 0 0;">Kein Nachname nötig. Namen und Antworten werden nach dem Spiel gelöscht.</p>
     </div>
     <p id="klassenJoinError" class="hidden" style="color:var(--danger); font-size:0.9rem;"></p>
     <button class="btn btn-big btn-vk" id="klassenJoinBtn">Beitreten</button>
@@ -6912,6 +6914,13 @@ function renderBuffer(side) {
   const el = document.getElementById(side === "solo" ? "solo_input" : `duell_${side}_input`);
   if (el) el.textContent = inputBuffers[side] || " ";
 }
+// Erlaubte Abweichung: höchstens 0.01, aber nie mehr als eine halbe Einheit der letzten
+// Stelle der Lösung - sonst galt z.B. 0 als richtig für 0.006 kg oder 0.62 für 0.625.
+function answerTolerance(correct) {
+  const decimals = (String(Math.round(Number(correct) * 1e9) / 1e9).split(".")[1] || "").length;
+  return Math.min(0.01, 0.5 * Math.pow(10, -decimals)) + 1e-9;
+}
+function numbersMatch(given, correct) { return Math.abs(given - correct) <= answerTolerance(correct); }
 function checkAnswer(task, bufferStr) {
   if (!task || bufferStr === "" || bufferStr == null) return false;
   if (task.answerType === "pair") {
@@ -6923,7 +6932,7 @@ function checkAnswer(task, bufferStr) {
     // gleich 0) - nicht nur beim einen zufällig gekürzten Nenner, der als "correct"
     // hinterlegt ist. 0/0 bleibt zu Recht ungültig.
     if (task.pairStyle === "fraction" && task.correct[0] === 0) return a === 0 && b !== 0;
-    return Math.abs(a - task.correct[0]) < 0.01 && Math.abs(b - task.correct[1]) < 0.01;
+    return numbersMatch(a, task.correct[0]) && numbersMatch(b, task.correct[1]);
   }
   if (task.answerType === "text") return String(bufferStr).trim().toLowerCase() === String(task.correct).trim().toLowerCase();
   if (task.answerType === "factors") {
@@ -6974,7 +6983,7 @@ function checkAnswer(task, bufferStr) {
     return Math.hypot(px - task.target.x, py - task.target.y) <= task.tolerance;
   }
   const val = parseFloat(bufferStr);
-  return !isNaN(val) && Math.abs(val - task.correct) < 0.01;
+  return !isNaN(val) && numbersMatch(val, task.correct);
 }
 function flash(elId, cls) { const el = document.getElementById(elId); if (!el) return; el.classList.remove("wrong-flash", "correct-flash"); void el.offsetWidth; el.classList.add(cls); }
 const CONFETTI_COLORS = ["var(--coral)", "var(--gold)", "var(--success)", "var(--accent)", "#7c3aed"];
@@ -7072,19 +7081,18 @@ function startSoloSession() {
   soloTimeRemaining = soloDuration > 0 ? soloDuration : 0;
   updateSoloTimerDisplay();
   clearInterval(soloInterval);
+  // Zeit aus dem Startzeitpunkt rechnen, nicht mitzählen - der Browser drosselt Intervalle bei
+  // gesperrtem Bildschirm bzw. im Hintergrund, sonst ginge die Uhr nach (siehe STOLPERSTEINE.md).
   soloInterval = setInterval(() => {
-    if (soloDuration > 0) {
-      soloTimeRemaining--;
-      updateSoloTimerDisplay();
-      if (soloTimeRemaining <= 0) finishSolo();
-    } else {
-      soloTimeRemaining++;
-      updateSoloTimerDisplay();
-    }
+    const elapsed = secondsSince(soloStartedAt);
+    soloTimeRemaining = soloDuration > 0 ? soloDuration - elapsed : elapsed;
+    updateSoloTimerDisplay();
+    if (soloDuration > 0 && soloTimeRemaining <= 0) finishSolo();
   }, 1000);
   nextSoloTask();
   showView("soloPlay");
 }
+function secondsSince(startMs) { return Math.floor((Date.now() - startMs) / 1000); }
 function updateSoloTimerDisplay() { document.getElementById("solo_timerDisplay").textContent = formatTime(Math.max(0, soloTimeRemaining)); }
 document.getElementById("soloStopBtn").addEventListener("click", () => {
   if (campaignPlayActive) { openConfirm("Level wirklich verlassen? Dein Fortschritt in diesem Level geht verloren.", () => abortKampagneLevel(), "Verlassen"); return; }
@@ -7146,7 +7154,7 @@ function submitSolo() {
   const oneShot = task.answerType === "boolean" || task.answerType === "mc";
   if (oneShot || soloTries >= 2) {
     recordExerciseProgress(task, false);
-    soloShowSolution(oneShot ? "❌ Leider falsch." : "❌ Leider wieder falsch.");
+    soloShowSolution(oneShot ? "❌ Leider falsch." : "❌ Leider wieder falsch.", inputBuffers.solo);
     return;
   }
   inputBuffers.solo = ""; activePart.solo = "a"; renderBuffer("solo"); renderPairBuffer("solo");
@@ -7181,14 +7189,17 @@ function drawTaskSolutionOnSvg(svg, task) {
     add("circle", { cx: task.target.x, cy: task.target.y, r: 3, fill: "#16a34a" });
   }
 }
-function soloShowSolution(title) {
+function soloShowSolution(title, given) {
   const task = soloCurrent;
   soloAwaitNext = true;
   setWidgetMode("solo", "none");
   document.getElementById("solo_hint").classList.add("hidden");
   document.getElementById("solo_showAnswerBtn").classList.add("hidden");
   document.getElementById("solo_feedbackTitle").textContent = title;
-  document.getElementById("solo_feedbackAnswer").innerHTML = `Richtige Lösung: <strong>${correctAnswerLabelHtml(task)}</strong>`;
+  // Eigene (falsche) Antwort mit anzeigen - bei Multiple Choice sind die Optionen danach ausgeblendet
+  const givenHtml = given && task.answerType !== "hotspot"
+    ? `<div class="solo-feedback-given">Deine Antwort: ${formatMyAnswerForDisplayHtml(task, given)}</div>` : "";
+  document.getElementById("solo_feedbackAnswer").innerHTML = `${givenHtml}Richtige Lösung: <strong>${correctAnswerLabelHtml(task)}</strong>`;
   document.getElementById("solo_feedbackSteps").innerHTML = taskSolutionHtml(task, soloExercise);
   drawTaskSolutionOnSvg(document.querySelector("#solo_visual svg"), task);
   document.getElementById("solo_feedback").classList.remove("hidden");
@@ -7315,14 +7326,11 @@ function nextPruefungTask() {
     timerDisp.classList.remove("hidden");
     timerDisp.textContent = String(pruefungTimeRemaining);
     pruefungInterval = setInterval(() => {
-      pruefungTimeRemaining--;
+      pruefungTimeRemaining = pruefungTimerSec - secondsSince(pruefungQuestionStartedAt);
       timerDisp.textContent = String(Math.max(0, pruefungTimeRemaining));
-      if (pruefungTimeRemaining <= 0) {
-        clearInterval(pruefungInterval);
-        recordPruefungAnswer(false, "");
-        advancePruefung();
-      }
-    }, 1000);
+      // Zeit abgelaufen: bereits eingetippte Antwort trotzdem werten (statt sie zu verwerfen)
+      if (pruefungTimeRemaining <= 0) submitPruefung();
+    }, 250);
   } else {
     timerDisp.classList.add("hidden");
   }
@@ -7903,15 +7911,12 @@ function startDuell() {
   document.getElementById("duell_timer").textContent = formatTime(duellTimeRemaining);
   showView("duellPlay");
   clearInterval(duellInterval);
+  const duellStartedAt = Date.now();
   duellInterval = setInterval(() => {
-    if (duellSettings.timeLimitOn) {
-      duellTimeRemaining--;
-      document.getElementById("duell_timer").textContent = formatTime(duellTimeRemaining);
-      if (duellTimeRemaining <= 0) { finishDuell(); return; }
-    } else {
-      duellTimeRemaining++;
-      document.getElementById("duell_timer").textContent = formatTime(duellTimeRemaining);
-    }
+    const elapsed = secondsSince(duellStartedAt);
+    duellTimeRemaining = duellSettings.timeLimitOn ? duellSettings.duration - elapsed : elapsed;
+    document.getElementById("duell_timer").textContent = formatTime(Math.max(0, duellTimeRemaining));
+    if (duellSettings.timeLimitOn && duellTimeRemaining <= 0) finishDuell();
   }, 1000);
 }
 function revealDuellSide(side) {
@@ -8036,11 +8041,12 @@ function clearStallGuard() {
 }
 function startStallGuard(badgeId, task, sides, afterSkip, seconds) {
   clearStallGuard();
-  let remaining = seconds || STALL_GUARD_DEFAULT_SECONDS;
+  const total = seconds || STALL_GUARD_DEFAULT_SECONDS, startedAt = Date.now();
+  let remaining = total;
   const badge = document.getElementById(badgeId);
   if (badge) { badge.classList.remove("hidden"); badge.textContent = `⏱ ${remaining}s`; }
   stallGuardIv = setInterval(() => {
-    remaining--;
+    remaining = total - secondsSince(startedAt);
     if (remaining <= 0) {
       clearStallGuard();
       startStallTimeoutCountdown(sides, task, afterSkip);
@@ -8253,8 +8259,9 @@ function startVierkampf() {
   timerEl.textContent = formatTime(vkTimeRemaining);
   clearInterval(vkInterval);
   if (vkTimeLimitOn) {
+    const vkStartedAt = Date.now();
     vkInterval = setInterval(() => {
-      vkTimeRemaining--;
+      vkTimeRemaining = vkDuration - secondsSince(vkStartedAt);
       timerEl.textContent = formatTime(Math.max(0, vkTimeRemaining));
       if (vkTimeRemaining <= 0) { finishVierkampf(); return; }
     }, 1000);
@@ -8544,7 +8551,23 @@ function klassenStopHostHeartbeat() { clearInterval(klassenHostHeartbeatIv); kla
 // Raum für die SuS ordentlich beenden (fire-and-forget, die Lehrperson wartet nicht darauf)
 function klassenHostEndRoom() {
   if (!klassenIsHost || !klassenRoomPin || !firebaseDb) return;
-  firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "finished" }).catch(() => {});
+  const pin = klassenRoomPin, asked = Math.max(klassenCurrentHostIndex + 1, klassenSettings.numQuestions || 0);
+  firebaseDb.collection("rooms").doc(pin).update({ phase: "finished" }).catch(() => {});
+  // Datenschutz: Namen, Antworten und Punkte nach dem Spiel nicht in Firebase liegen lassen.
+  // Kurz warten, damit die SuS-Geräte die Schlussrangliste noch laden können.
+  setTimeout(() => klassenDeleteRoomData(pin, asked), KLASSEN_DELETE_DELAY_MS);
+}
+const KLASSEN_DELETE_DELAY_MS = 5000;
+async function klassenDeleteRoomData(pin, questionCount) {
+  const roomRef = firebaseDb.collection("rooms").doc(pin);
+  const deleteAll = async (colRef) => { const snap = await colRef.get(); await Promise.all(snap.docs.map(d => d.ref.delete())); };
+  // Spieler zuerst (enthalten die Namen); jeder Schritt einzeln, damit ein Fehler den Rest nicht verhindert
+  try { await deleteAll(roomRef.collection("players")); } catch (e) { console.error("Klassenmodus: Spieler konnten nicht gelöscht werden.", e); }
+  for (let i = 0; i < Math.min(questionCount, 200); i++) {
+    const qRef = roomRef.collection("questions").doc(String(i));
+    try { await deleteAll(qRef.collection("answers")); await qRef.delete(); } catch (e) { console.error("Klassenmodus: Antworten konnten nicht gelöscht werden.", e); break; }
+  }
+  try { await roomRef.delete(); } catch (e) { console.error("Klassenmodus: Raum konnte nicht gelöscht werden.", e); }
 }
 function klassenRoomLooksAbandoned(room) {
   if (!room || room.phase === "finished") return true;
@@ -8799,7 +8822,8 @@ function klassenAttachStudentListeners(roomRef, pin) {
   }, err => console.error("Klassenmodus: Raum-Update fehlgeschlagen.", err));
   klassenSelfUnsub = roomRef.collection("players").doc(klassenPlayerId).onSnapshot(snap => {
     if (!snap.exists) {
-      if (klassenSeenSelfOnce) klassenHandleRemoved();
+      // Nach Spielende löscht die Lehrperson alle Daten - das ist kein Rauswurf
+      if (klassenSeenSelfOnce && klassenLastSeenPhase !== "finished") klassenHandleRemoved();
       return;
     }
     klassenSeenSelfOnce = true;
@@ -9369,7 +9393,7 @@ document.getElementById("klassenRankHomeBtn").addEventListener("click", () => {
 function klassenAbortGame() {
   openConfirm("Klassenduell wirklich abbrechen?", async () => {
     klassenStopListening();
-    try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "finished" }); } catch (e) {}
+    klassenHostEndRoom();
     showView("home");
   }, "Beenden");
 }
@@ -9625,6 +9649,7 @@ async function klassenRenderStudentRanking(isFinal, room) {
   // nach dem Phasenwechsel an. Nur einmal starten - jedes Raum-Update landet hier.
   if (klassenRankUnsub) return;
   klassenRankUnsub = firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").onSnapshot(snap => {
+    if (snap.empty) return; // Daten nach Spielende gelöscht -> letzte Rangliste stehen lassen
     const players = [];
     snap.forEach(d => players.push({ id: d.id, ...d.data() }));
     players.sort((a, b) => (b.score || 0) - (a.score || 0));

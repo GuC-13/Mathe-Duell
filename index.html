@@ -459,7 +459,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-26.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-26.2</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -2924,7 +2924,10 @@ function generateCubeShapeProperty(qTypeArg) {
   const shp = pickCubeShape();
   const qType = qTypeArg == null ? rnd(0, 3) : qTypeArg;
   if (qType === 0) {
-    const options = CUBE_SHAPE_NAMES.slice().sort(() => Math.random() - 0.5);
+    // Es gibt nur 4 Auswahlknöpfe: richtige Form + 3 andere (vorher 5 Namen, der 5. war unsichtbar
+    // - in jeder 5. Aufgabe fehlte so die richtige Antwort)
+    const others = CUBE_SHAPE_NAMES.filter(n => n !== shp.name).sort(() => Math.random() - 0.5).slice(0, 3);
+    const options = [shp.name, ...others].sort(() => Math.random() - 0.5);
     return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Welche Form hat die markierte Fläche im Würfel?`, answerType: "mc", options, correct: shp.name };
   }
   if (qType === 1) return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Wie viele Ecken hat die markierte Fläche im Würfel?`, answerType: "number", correct: shp.sides };
@@ -3265,7 +3268,7 @@ function generateScientificNotation() {
   const expPool = [-5, -4, -3, -2, 2, 3, 4, 5, 6];
   const exp = expPool[rnd(0, expPool.length - 1)];
   const plain = sciToPlainString(mantissaStr, exp);
-  return { visual: null, prompt: `Schreibe ${plain} in wissenschaftlicher Schreibweise (z.B. 4.5 ×10^ 4).`, answerType: "pair", pairStyle: "scientific", correct: [mantissa, exp] };
+  return { visual: null, prompt: `Schreibe ${plain} in wissenschaftlicher Schreibweise (Form a × 10ⁿ, z.B. 4.5 × 10⁴).`, answerType: "pair", pairStyle: "scientific", correct: [mantissa, exp] };
 }
 function generateNegativeExponent() {
   const base = rnd(2, 9), exp = rnd(2, 4);
@@ -7102,6 +7105,15 @@ document.getElementById("soloStopBtn").addEventListener("click", () => {
 function updateSoloScoreDisplay() {
   document.getElementById("solo_score").textContent = `Richtig: ${soloScore} · Falsch: ${soloWrong}`;
 }
+// Neue Aufgabe, die nicht genau gleich ist wie die vorherige - bei Übungen mit wenigen
+// Varianten (z.B. Würfel-Formen) kam sonst jede 4.-5. Aufgabe doppelt hintereinander.
+function taskKey(t) { return t ? `${t.prompt}|${t.visual || ""}|${JSON.stringify(t.correct)}` : ""; }
+function generateDifferent(exercise, prev) {
+  const prevKey = taskKey(prev);
+  let t = exercise.generate();
+  for (let i = 0; i < 10 && prevKey && taskKey(t) === prevKey; i++) t = exercise.generate();
+  return t;
+}
 function nextSoloTask() {
   soloTries = 0;
   soloAwaitNext = false;
@@ -7112,7 +7124,7 @@ function nextSoloTask() {
     if (!soloReplayQueue.length) { finishSolo(); return; }
     soloCurrent = soloReplayQueue.shift();
   } else {
-    soloCurrent = soloExercise.generate();
+    soloCurrent = generateDifferent(soloExercise, soloCurrent);
   }
   inputBuffers.solo = "";
   activePart.solo = "a";
@@ -7309,7 +7321,7 @@ function startPruefungSession() {
 function nextPruefungTask() {
   clearInterval(pruefungInterval);
   pruefungQuestionStartedAt = Date.now();
-  pruefungCurrent = pruefungExercise.generate();
+  pruefungCurrent = generateDifferent(pruefungExercise, pruefungCurrent);
   inputBuffers.pruefung = "";
   activePart.pruefung = "a";
   document.getElementById("duell_pruefung_visual").innerHTML = pruefungCurrent.visual || "";
@@ -7703,7 +7715,7 @@ function kampagneTimeForTask(exercise, task) {
   return seconds;
 }
 function nextCampaignTask() {
-  soloCurrent = soloExercise.generate();
+  soloCurrent = generateDifferent(soloExercise, soloCurrent);
   inputBuffers.solo = "";
   activePart.solo = "a";
   document.getElementById("solo_visual").innerHTML = soloCurrent.visual || "";
@@ -8110,11 +8122,11 @@ function handleVkBuzz(idx) {
 }
 function nextRound(side) {
   if (duellSettings.sameTask) {
-    const nt = currentExercise.generate();
+    const nt = generateDifferent(currentExercise, duellTasks.top);
     duellTasks.top = nt; duellTasks.bottom = nt;
     inputBuffers.top = ""; inputBuffers.bottom = "";
   } else {
-    duellTasks[side] = currentExercise.generate();
+    duellTasks[side] = generateDifferent(currentExercise, duellTasks[side]);
     inputBuffers[side] = "";
   }
 }
@@ -8268,7 +8280,7 @@ function startVierkampf() {
   }
 }
 function vkNextTask() {
-  vkTask = currentExercise.generate();
+  vkTask = generateDifferent(currentExercise, vkTask);
   for (let i = 0; i < 4; i++) inputBuffers[`vk${i}`] = "";
 }
 function checkVkFinish() {
@@ -8569,6 +8581,8 @@ async function klassenDeleteRoomData(pin, questionCount) {
   }
   try { await roomRef.delete(); } catch (e) { console.error("Klassenmodus: Raum konnte nicht gelöscht werden.", e); }
 }
+// Punkte schreibt jedes SuS-Gerät selbst - nur echte Zahlen anzeigen (kein HTML aus Firebase)
+function klassenScoreOf(p) { const n = Number(p && p.score); return isFinite(n) ? Math.round(n) : 0; }
 function klassenRoomLooksAbandoned(room) {
   if (!room || room.phase === "finished") return true;
   if (typeof room.hostSeen === "number") return Date.now() - room.hostSeen > KLASSEN_RESUME_MAX_HOST_IDLE_MS;
@@ -8753,7 +8767,7 @@ document.getElementById("klassenCreateRoomBtn").addEventListener("click", async 
     klassenAllPlayers = [];
     snap.forEach(d => klassenAllPlayers.push({ id: d.id, name: d.data().name, lastSeen: d.data().lastSeen, active: d.data().active }));
     document.getElementById("klassenJoinCount").textContent = String(klassenAllPlayers.length);
-    document.getElementById("klassenPlayerList").innerHTML = klassenAllPlayers.map(p => `<button class="choice-btn active" data-player-id="${p.id}">${escapeHtml(p.name)}</button>`).join("");
+    document.getElementById("klassenPlayerList").innerHTML = klassenAllPlayers.map(p => `<button class="choice-btn active" data-player-id="${escapeHtml(p.id)}">${escapeHtml(p.name)}</button>`).join("");
     klassenRenderOfflineBanner();
   }, err => console.error("Klassenmodus: Spielerliste konnte nicht geladen werden.", err));
   klassenStartOfflineWatch();
@@ -9333,7 +9347,7 @@ async function klassenHostShowRanking(isFinal, revealToStudents) {
   klassenRankUnsub = firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").onSnapshot(snap => {
     const players = [];
     snap.forEach(d => players.push({ id: d.id, ...d.data() }));
-    players.sort((a, b) => (b.score || 0) - (a.score || 0));
+    players.sort((a, b) => klassenScoreOf(b) - klassenScoreOf(a));
     if (firstSnap) { firstSnap = false; klassenRenderHostRanking(players, isFinal); }
     else if (!document.getElementById("klassenHostRankView").classList.contains("hidden")) klassenRenderHostRankingLists(players);
   }, err => console.error("Klassenmodus: Rangliste konnte nicht geladen werden.", err));
@@ -9376,9 +9390,9 @@ function klassenRenderHostRankingLists(players) {
   const medals = ["🥇", "🥈", "🥉"];
   const top3 = players.slice(0, 3);
   document.getElementById("klassenPodium").innerHTML = top3.length
-    ? top3.map((p, i) => `<div class="krank-podium-row"><span>${medals[i]} ${escapeHtml(p.name)}</span><span>${p.score || 0} Punkte</span></div>`).join("")
+    ? top3.map((p, i) => `<div class="krank-podium-row"><span>${medals[i]} ${escapeHtml(p.name)}</span><span>${klassenScoreOf(p)} Punkte</span></div>`).join("")
     : "<p style='color:var(--muted); font-size:0.85rem;'>Noch keine Punkte.</p>";
-  document.getElementById("klassenFullList").innerHTML = players.map((p, i) => `<div class="chapter-row" data-player-id="${p.id}" style="cursor:pointer;"><span>${i + 1}. ${escapeHtml(p.name)}</span><span>${p.score || 0} Punkte 📍</span></div>`).join("");
+  document.getElementById("klassenFullList").innerHTML = players.map((p, i) => `<div class="chapter-row" data-player-id="${escapeHtml(p.id)}" style="cursor:pointer;"><span>${i + 1}. ${escapeHtml(p.name)}</span><span>${klassenScoreOf(p)} Punkte 📍</span></div>`).join("");
 }
 document.getElementById("klassenShowFullListBtn").addEventListener("click", () => {
   const hidden = document.getElementById("klassenFullList").classList.toggle("hidden");
@@ -9652,7 +9666,7 @@ async function klassenRenderStudentRanking(isFinal, room) {
     if (snap.empty) return; // Daten nach Spielende gelöscht -> letzte Rangliste stehen lassen
     const players = [];
     snap.forEach(d => players.push({ id: d.id, ...d.data() }));
-    players.sort((a, b) => (b.score || 0) - (a.score || 0));
+    players.sort((a, b) => klassenScoreOf(b) - klassenScoreOf(a));
     klassenRenderStudentRankingLists(players);
   }, err => console.error("Klassenmodus: Rangliste konnte nicht geladen werden.", err));
 }
@@ -9660,11 +9674,11 @@ function klassenRenderStudentRankingLists(players) {
   const myIndex = players.findIndex(p => p.id === klassenPlayerId);
   const me = players[myIndex];
   document.getElementById("klassenPlayerRankPlace").textContent = myIndex >= 0 ? `Platz ${myIndex + 1} von ${players.length}` : "–";
-  document.getElementById("klassenPlayerRankScore").textContent = me ? `${me.score || 0} Punkte` : "";
+  document.getElementById("klassenPlayerRankScore").textContent = me ? `${klassenScoreOf(me)} Punkte` : "";
   const top5 = players.slice(0, 5);
   document.getElementById("klassenPlayerRankTop5").innerHTML = top5.map((p, i) => {
     const isMe = p.id === klassenPlayerId;
-    return `<div class="chapter-row"${isMe ? ' style="font-weight:800;"' : ""}><span>${i + 1}. ${escapeHtml(p.name)}${isMe ? " (du)" : ""}</span><span>${p.score || 0} Punkte</span></div>`;
+    return `<div class="chapter-row"${isMe ? ' style="font-weight:800;"' : ""}><span>${i + 1}. ${escapeHtml(p.name)}${isMe ? " (du)" : ""}</span><span>${klassenScoreOf(p)} Punkte</span></div>`;
   }).join("");
 }
 

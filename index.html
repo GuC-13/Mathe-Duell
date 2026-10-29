@@ -509,7 +509,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-10-29.2</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-10-29.3</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -2033,7 +2033,7 @@
     <input type="text" id="klassenPlayerEditInput" maxlength="30" style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid var(--border); margin-bottom:10px;">
     <button class="btn btn-secondary" id="klassenPlayerPingBtn" style="width:100%; margin-bottom:16px;">📍 Auf diesem iPad anzeigen</button>
     <div class="modal-actions" style="justify-content:space-between;">
-      <button class="btn btn-secondary" id="klassenPlayerRemoveBtn" style="color:var(--danger);">Entfernen</button>
+      <button class="btn btn-danger" id="klassenPlayerRemoveBtn">Entfernen</button>
       <div style="display:flex; gap:8px;">
         <button class="btn btn-secondary" id="klassenPlayerEditCancelBtn">Abbrechen</button>
         <button class="btn btn-duell" id="klassenPlayerEditSaveBtn">Speichern</button>
@@ -7474,13 +7474,13 @@ function finishPruefung() {
   document.getElementById("pruefungResultCorrectN").textContent = String(correctN);
   document.getElementById("pruefungResultWrongN").textContent = String(wrongN);
   document.getElementById("pruefungResultList").innerHTML = pruefungAnswers.map((a, i) => `
-    <div class="setup-card" style="display:flex; gap:10px; align-items:flex-start; padding:12px 14px; ${a.correct ? "background:#f0fdf4; border-color:#dcfce7;" : "background:#fef2f2; border-color:#fecaca;"}">
+    <div class="setup-card" style="display:flex; gap:10px; align-items:flex-start; padding:12px 14px; ${a.correct ? "background:var(--right-bg); border-color:var(--success);" : "background:var(--wrong-bg); border-color:var(--danger);"}">
       <span style="font-size:1.3rem;">${a.correct ? "✅" : "❌"}</span>
       <div style="flex:1;">
         <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px;">${i + 1}. ${fractionizePromptHtml(a.prompt)} <span style="font-weight:400; color:var(--muted); font-size:0.8rem;">⏱ ${a.timeSec.toFixed(1)}s</span></div>
         <div style="font-size:0.85rem; color:var(--muted);">
-          Deine Antwort: <span style="font-weight:700; ${a.correct ? "color:var(--success);" : "color:var(--danger); text-decoration:line-through;"}">${a.myAnswer}</span>
-          ${a.correct ? "" : `&nbsp;·&nbsp; Richtig: <span style="font-weight:700; color:var(--success);">${a.correctAnswer}</span>`}
+          Deine Antwort: <span style="font-weight:700; ${a.correct ? "color:var(--success-text);" : "color:var(--danger-text); text-decoration:line-through;"}">${a.myAnswer}</span>
+          ${a.correct ? "" : `&nbsp;·&nbsp; Richtig: <span style="font-weight:700; color:var(--success-text);">${a.correctAnswer}</span>`}
         </div>
       </div>
     </div>`).join("");
@@ -8220,7 +8220,34 @@ function nextRound(side) {
     inputBuffers[side] = "";
   }
 }
+// Leere oder halbe Eingabe (z.B. nur "-" oder nur ein Bruch-Kästchen) - ein versehentliches ✓
+// galt sonst als falsch: im Duell Punkt für den Gegner, in der Kampagne Level verloren,
+// im Klassenduell war die Frage vertan.
+function answerIncomplete(task, buf) {
+  if (!task || task.answerType === "mc" || task.answerType === "boolean") return false;
+  const blank = v => /^-?\.?$/.test(String(v == null ? "" : v).trim());
+  if (task.answerType === "pair") { const parts = String(buf || "").split(","); return parts.length < 2 || parts.some(blank); }
+  return blank(buf);
+}
+function nudgeIncomplete(side, task) {
+  if (task.answerType === "pair") {
+    const parts = String(inputBuffers[side] || "").split(",");
+    activePart[side] = /^-?\.?$/.test((parts[0] || "").trim()) ? "a" : "b";
+    renderPairBuffer(side);
+  }
+  const prefix = side === "solo" ? "solo" : `duell_${side}`;
+  const el = document.getElementById(task.answerType === "pair" ? `${prefix}_pairBoxes` : task.answerType === "hotspot" ? `${prefix}_visual` : task.answerType === "text" || task.answerType === "factors" ? `${prefix}_textInput` : `${prefix}_input`);
+  celebrateWrong(el);
+  srAnnounce("Bitte zuerst eine Antwort eingeben.");
+}
 function submitAnswer(side) {
+  const task = currentTaskFor(side);
+  if (answerIncomplete(task, inputBuffers[side])) {
+    // Prüfung: bewusst ohne Antwort weiter muss möglich bleiben (kein Überspringen-Knopf)
+    if (side === "pruefung" && pruefungRunning) { const idx = pruefungIndex; openConfirm("Ohne Antwort weiter? Die Aufgabe zählt dann als falsch.", () => { if (pruefungIndex === idx) submitPruefung(); }, "Ohne Antwort weiter"); return; }
+    nudgeIncomplete(side, task);
+    return;
+  }
   if (side === "solo") { submitSolo(); return; }
   if (side === "pruefung") { submitPruefung(); return; }
   if (side === "klassen") { klassenSubmitAnswer(); return; }
@@ -8228,7 +8255,6 @@ function submitAnswer(side) {
   if (!duellRunning) return;
   if (duellSettings.buzzMode && duellBuzzWinner !== side) return;
   clearStallGuard();
-  const task = duellTasks[side];
   const ok = checkAnswer(task, inputBuffers[side]);
   const inputElId = task.answerType === "mc" ? `duell_${side}_mcWrap` : task.answerType === "hotspot" ? `duell_${side}_visual` : `duell_${side}_input`;
   if (ok) {
@@ -8835,7 +8861,7 @@ document.getElementById("klassenCreateRoomBtn").addEventListener("click", async 
       const doc = await firebaseDb.collection("rooms").doc(pin).get();
       exists = doc.exists;
       attempts++;
-    } while (exists && attempts < 5);
+    } while (exists && attempts < 20);
     klassenRoomPin = pin;
     await firebaseDb.collection("rooms").doc(pin).set({
       createdAt: Date.now(), phase: "lobby", topic: currentExercise.title, exerciseId: currentExercise.id,
@@ -8965,6 +8991,7 @@ document.getElementById("klassenJoinBtn").addEventListener("click", async () => 
   const errEl = document.getElementById("klassenJoinError");
   errEl.classList.add("hidden");
   if (!pin || !name) { errEl.textContent = "Bitte PIN und Namen eingeben."; errEl.classList.remove("hidden"); return; }
+  if (!/^\d{4}$/.test(pin)) { errEl.textContent = "Die PIN besteht aus 4 Ziffern."; errEl.classList.remove("hidden"); return; }
   joinBtn.disabled = true;
   try {
     const ok = await ensureFirebase();
@@ -9107,18 +9134,36 @@ async function klassenStudentLeave() {
 let klassenLeavePromise = null;
 
 /* ---- Klassenmodus: Host-seitiger Spielablauf ---- */
-document.getElementById("klassenStartBtn").addEventListener("click", async () => {
+// Gegen Doppeltipp: solange eine Frage gestartet wird, keine zweite (sonst wurde je nach
+// Netz eine Frage übersprungen)
+let klassenHostBusy = false;
+document.getElementById("klassenStartBtn").addEventListener("click", () => {
+  if (klassenHostBusy) return;
+  if (klassenAllPlayers.length === 0) {
+    openConfirm("Noch niemand ist beigetreten. Trotzdem starten?", () => klassenStartGame(), "Trotzdem starten");
+    return;
+  }
+  klassenStartGame();
+});
+async function klassenStartGame() {
+  if (klassenHostBusy) return;
   try {
     klassenPendingTask = null;
     klassenSetNextMultiplier(1);
-    await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "playing" });
+    klassenHostBusy = true;
+    try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "playing" }); } finally { klassenHostBusy = false; }
     await klassenHostNextQuestion();
   } catch (e) {
     console.error("Klassenmodus: Spiel konnte nicht gestartet werden.", e);
     openConfirm("Spiel konnte nicht gestartet werden.", null, "OK");
   }
-});
+}
 async function klassenHostNextQuestion(multiplier) {
+  if (klassenHostBusy) return;
+  klassenHostBusy = true;
+  try { await klassenHostNextQuestionInner(multiplier); } finally { klassenHostBusy = false; }
+}
+async function klassenHostNextQuestionInner(multiplier) {
   const roomRef = firebaseDb.collection("rooms").doc(klassenRoomPin);
   const roomSnap = await roomRef.get();
   const room = roomSnap.data();
@@ -9172,6 +9217,7 @@ document.querySelectorAll(".klassen-mult-btn").forEach(btn => btn.addEventListen
   klassenSetNextMultiplier(klassenNextMultiplier === m ? 1 : m);
 }));
 async function klassenHostAdvance() {
+  if (klassenHostBusy) return;
   const m = klassenNextMultiplier;
   if (m === 1) { klassenHostNextQuestion(1); return; }
   klassenSetNextMultiplier(1);
@@ -9246,7 +9292,7 @@ function klassenHostRenderPlay(index, task, startedAt, timerSec, numQuestions) {
   document.getElementById("klassenHostDoubleBadge").classList.toggle("hidden", klassenTaskMultiplier(task) === 1);
   document.getElementById("klassenHostDoubleBadge").textContent = klassenMultiplierLabel(klassenTaskMultiplier(task));
   document.getElementById("klassenHostVisual").innerHTML = task.visual || "";
-  document.getElementById("klassenHostPrompt").textContent = task.prompt;
+  document.getElementById("klassenHostPrompt").innerHTML = fractionizePromptHtml(task.prompt);
   document.getElementById("klassenHostAnsweredCount").textContent = "0";
   document.getElementById("klassenHostCorrectCount").textContent = "0";
   document.getElementById("klassenHostWrongCount").textContent = "0";
@@ -9342,13 +9388,17 @@ document.getElementById("klassenPlayerEditSaveBtn").addEventListener("click", as
   } catch (e) { console.error("Klassenmodus: Name konnte nicht geändert werden.", e); }
   document.getElementById("klassenPlayerEditOverlay").classList.add("hidden");
 });
-document.getElementById("klassenPlayerRemoveBtn").addEventListener("click", async () => {
+document.getElementById("klassenPlayerRemoveBtn").addEventListener("click", () => {
   const id = klassenEditingPlayerId;
+  const name = document.getElementById("klassenPlayerEditInput").value.trim();
   document.getElementById("klassenPlayerEditOverlay").classList.add("hidden");
   if (!id) return;
-  try {
-    await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").doc(id).delete();
-  } catch (e) { console.error("Klassenmodus: Spieler konnte nicht entfernt werden.", e); }
+  // Rückfrage: Entfernen löscht auch die Punkte und lässt sich nicht rückgängig machen
+  openConfirm(`${name || "Diese Person"} wirklich entfernen? Die Punkte gehen dabei verloren.`, async () => {
+    try {
+      await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").doc(id).delete();
+    } catch (e) { console.error("Klassenmodus: Spieler konnte nicht entfernt werden.", e); }
+  }, "Entfernen");
 });
 async function klassenPingPlayer(id) {
   if (!id || !klassenRoomPin) return;
@@ -9418,8 +9468,8 @@ async function klassenSetPracticePhase(poolIds) {
   showView("klassenHostPractice");
 }
 document.getElementById("klassenPracticeBtnRank").addEventListener("click", klassenStartPractice);
-document.getElementById("klassenEndPracticeBtn").addEventListener("click", async () => {
-  try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "playing" }); } catch (e) { console.error("Klassenmodus: Übung konnte nicht beendet werden.", e); }
+document.getElementById("klassenEndPracticeBtn").addEventListener("click", () => {
+  // klassenHostShowRanking setzt die Phase selbst (ranking/playing/finished)
   klassenHostShowRanking(klassenLastRankIsFinal, klassenLastRevealToStudents);
 });
 async function klassenHostShowRanking(isFinal, revealToStudents) {
@@ -9507,7 +9557,7 @@ document.getElementById("klassenPlayerRankHomeBtn").addEventListener("click", ()
 
 /* ---- Klassenmodus: Schüler-seitiger Spielablauf ---- */
 let klassenLastSeenPhase = null, klassenMode = "quiz", klassenExerciseId = null, klassenAnswerRevealed = false, klassenLastAnswerCorrect = null;
-let klassenStudentCurrentTimerSec = 30, klassenPracticePoolIds = null;
+let klassenStudentCurrentTimerSec = 30, klassenPracticePoolIds = null, klassenStudentQStartedAt = 0, klassenRoomTopic = "";
 let klassenPracticeCorrect = 0, klassenPracticeWrong = 0;
 let klassenLastRoomKey = null;
 function klassenStudentHandleRoomUpdate(room) {
@@ -9532,6 +9582,11 @@ function klassenStudentHandleRoomUpdate(room) {
     return;
   }
   klassenExerciseId = room.exerciseId;
+  klassenRoomTopic = room.topic || "";
+  // Übungsmodus gilt nur in der Phase "practice" - egal über welchen Weg die Lehrperson die Übung
+  // beendet (direkt zum Zwischenstand, Doppelte-Punkte-Ankündigung, Abbruch). Sonst blieben die
+  // Antworten danach ungewertet.
+  if (room.phase !== "practice") klassenMode = "quiz";
   klassenPracticePoolIds = room.practicePoolIds || null;
   if (room.phase === "doubleAnnounce") klassenSetMultiplierOverlay(room.announceMultiplier || 2);
   document.getElementById("klassenDoubleOverlay").classList.toggle("hidden", room.phase !== "doubleAnnounce");
@@ -9556,6 +9611,8 @@ function klassenStudentHandleRoomUpdate(room) {
         klassenLastAnswerCorrect = already.correct;
         klassenLockAnswerUI(klassenHasAnsweredCurrent);
       }
+      // Lösung schon aufgedeckt (Neuladen/Beitritt nach dem Auflösen): nicht mehr antworten lassen
+      if (room.answerRevealed) { klassenAnswerRevealed = true; klassenRevealAnswerToStudent(); }
     } else if (wasPractice) {
       klassenShowWaitingForNext();
     } else if (room.answerRevealed && !klassenAnswerRevealed) {
@@ -9673,6 +9730,7 @@ function klassenRenderStudentQuestion(room) {
   renderBuffer("klassen");
   renderPairBuffer("klassen");
   const startedAt = room.questionStartedAt;
+  klassenStudentQStartedAt = startedAt;
   klassenStudentCurrentTimerSec = room.timerSec;
   const tick = () => {
     const remaining = Math.max(0, klassenStudentCurrentTimerSec - (klassenHostNow() - startedAt) / 1000);
@@ -9708,21 +9766,26 @@ async function klassenSubmitAnswer() {
   const task = klassenStudentTask;
   const ok = checkAnswer(task, inputBuffers.klassen);
   klassenLastAnswerCorrect = ok;
-  const roomSnap = await firebaseDb.collection("rooms").doc(klassenRoomPin).get();
-  const room = roomSnap.data();
-  const elapsedSec = (klassenHostNow() - room.questionStartedAt) / 1000;
-  let points = ok ? Math.max(0, Math.round(1000 * (1 - Math.min(1, elapsedSec / room.timerSec)))) : 0;
+  // Frage-Nummer, Startzeit und Zeitlimit der Frage nehmen, die dieses Gerät angezeigt hat - nicht
+  // den Raum neu laden: bei langsamem WLAN war die Lehrperson schon weiter, und die Antwort landete
+  // (samt Punkten) bei der nächsten Frage. Ausserdem sperrt die Eingabe so sofort.
+  const qIndex = klassenLastSeenQIndex;
+  const elapsedSec = (klassenHostNow() - klassenStudentQStartedAt) / 1000;
+  let points = ok ? Math.max(0, Math.round(1000 * (1 - Math.min(1, elapsedSec / klassenStudentCurrentTimerSec)))) : 0;
   points *= klassenTaskMultiplier(task);
   klassenLockAnswerUI(true);
   klassenRecordMyAnswer({ answered: true, prompt: task.prompt, myAnswer: formatMyAnswerForDisplayHtml(task, inputBuffers.klassen), myAnswerText: formatMyAnswerForDisplay(task, inputBuffers.klassen), correctAnswer: formatCorrectAnswerHtml(task), correctAnswerText: formatCorrectAnswer(task), correct: ok, points });
   try {
-    await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("questions").doc(String(room.currentQuestionIndex)).collection("answers").doc(klassenPlayerId).set({
+    await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("questions").doc(String(qIndex)).collection("answers").doc(klassenPlayerId).set({
       name: klassenPlayerName, correct: ok, points, submittedAt: Date.now()
     });
     await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").doc(klassenPlayerId).update({
       score: firebase.firestore.FieldValue.increment(points)
     });
-  } catch (e) { console.error("Klassenmodus: Antwort konnte nicht gesendet werden.", e); }
+  } catch (e) {
+    console.error("Klassenmodus: Antwort konnte nicht gesendet werden.", e);
+    klassenSetAnsweredNote("⚠️ Antwort konnte nicht gesendet werden – prüfe das WLAN. Warte auf die nächste Aufgabe …");
+  }
 }
 async function klassenRenderStudentRanking(isFinal, room) {
   clearInterval(klassenCountdownIv);
@@ -9763,7 +9826,9 @@ async function klassenRenderStudentRanking(isFinal, room) {
 function klassenRenderStudentRankingLists(players) {
   const myIndex = players.findIndex(p => p.id === klassenPlayerId);
   const me = players[myIndex];
-  document.getElementById("klassenPlayerRankPlace").textContent = myIndex >= 0 ? `Platz ${myIndex + 1} von ${players.length}` : "–";
+  // Gleiche Punktzahl = gleicher Platz (vorher entschied die zufällige Reihenfolge)
+  const myPlace = me ? 1 + players.filter(p => klassenScoreOf(p) > klassenScoreOf(me)).length : 0;
+  document.getElementById("klassenPlayerRankPlace").textContent = myIndex >= 0 ? `Platz ${myPlace} von ${players.length}` : "–";
   document.getElementById("klassenPlayerRankScore").textContent = me ? `${klassenScoreOf(me)} Punkte` : "";
   const top5 = players.slice(0, 5);
   document.getElementById("klassenPlayerRankTop5").innerHTML = top5.map((p, i) => {
@@ -9776,18 +9841,18 @@ document.getElementById("klassenMyAnswersBtn").addEventListener("click", () => {
   const correctN = klassenMyAnswers.filter(a => a.correct).length;
   const wrongN = klassenMyAnswers.length - correctN;
   const totalPoints = klassenMyAnswers.reduce((sum, a) => sum + a.points, 0);
-  document.getElementById("klassenMyAnswersSubtitle").textContent = `${currentExercise ? currentExercise.title : ""} · ${klassenMyAnswers.length} Aufgaben`;
+  document.getElementById("klassenMyAnswersSubtitle").textContent = `${klassenRoomTopic ? klassenRoomTopic + " · " : ""}${klassenMyAnswers.length} Aufgaben`;
   document.getElementById("klassenMyAnswersCorrectN").textContent = String(correctN);
   document.getElementById("klassenMyAnswersWrongN").textContent = String(wrongN);
   document.getElementById("klassenMyAnswersPoints").textContent = String(totalPoints);
   document.getElementById("klassenMyAnswersList").innerHTML = klassenMyAnswers.map((a, i) => `
-    <div class="setup-card" style="display:flex; gap:10px; align-items:flex-start; padding:12px 14px; ${a.correct ? "background:#f0fdf4; border-color:#dcfce7;" : "background:#fef2f2; border-color:#fecaca;"}">
+    <div class="setup-card" style="display:flex; gap:10px; align-items:flex-start; padding:12px 14px; ${a.correct ? "background:var(--right-bg); border-color:var(--success);" : "background:var(--wrong-bg); border-color:var(--danger);"}">
       <span style="font-size:1.3rem;">${a.correct ? "✅" : "❌"}</span>
       <div style="flex:1;">
         <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px;">${i + 1}. ${fractionizePromptHtml(a.prompt)}</div>
         <div style="font-size:0.85rem; color:var(--muted);">
-          Deine Antwort: <span style="font-weight:700; ${a.correct ? "color:var(--success);" : "color:var(--danger); text-decoration:line-through;"}">${a.myAnswer}</span>
-          ${a.correct ? "" : `&nbsp;·&nbsp; Richtig: <span style="font-weight:700; color:var(--success);">${a.correctAnswer}</span>`}
+          Deine Antwort: <span style="font-weight:700; ${a.correct ? "color:var(--success-text);" : "color:var(--danger-text); text-decoration:line-through;"}">${a.myAnswer}</span>
+          ${a.correct ? "" : `&nbsp;·&nbsp; Richtig: <span style="font-weight:700; color:var(--success-text);">${a.correctAnswer}</span>`}
         </div>
       </div>
     </div>`).join("");

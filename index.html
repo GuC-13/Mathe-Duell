@@ -248,6 +248,15 @@
   .mt-shape { width: 230px; height: 230px; max-width: 70vw; max-height: 70vw; margin: 0 auto 10px; display: block; }
   .duell-half .mt-shape { width: 90px; height: 90px; margin: 0 auto 6px; }
   .vk-quad .mt-shape { width: 56px; height: 56px; margin: 0 auto 4px; }
+  @media (max-height: 700px) {
+    .duell-half .mt-shape { width: 64px; height: 64px; }
+    .vk-quad .mt-shape { width: 44px; height: 44px; }
+    .duell-half .pair-box { min-height: 36px; padding: 2px 10px; font-size: 1.2rem; }
+    .duell-half .pair-boxes.style-fraction { gap: 3px; }
+    .duell-half .pair-wrap { margin-bottom: 4px; }
+    .duell-half .var-row { margin-bottom: 4px; }
+    .duell-half .var-row button { padding: 6px 0; }
+  }
   .mt-mini-shape { width: 46px; height: 46px; display: block; }
   .duell-half .mt-mini-shape { width: 26px; height: 26px; }
   .vk-quad .mt-mini-shape { width: 16px; height: 16px; }
@@ -271,16 +280,19 @@
   /* Tastenfeld wie ein Taschenrechner: 4 Reihen statt 5, ✓ zwei Reihen hoch unten rechts (Daumenzone),
      ⌫ oben rechts - weit weg vom ✓, damit man nicht versehentlich löscht statt abschickt. */
   .keypad { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
-  .keypad button { padding: 0; min-height: 56px; font-size: 1.3rem; font-weight: 700; border: 1px solid var(--key-border); border-bottom-width: 3px; border-radius: 16px; background: var(--key); color: var(--text); }
+  .keypad button { padding: 0; height: var(--key-h, 56px); font-size: 1.3rem; font-weight: 700; border: 1px solid var(--key-border); border-bottom-width: 3px; border-radius: 16px; background: var(--key); color: var(--text); }
   .keypad button.back-key { grid-column: 4; grid-row: 1; }
-  .keypad button.ok-key { grid-column: 4; grid-row: 2 / span 3; background: var(--success-strong); border-color: #14532d; color: white; font-size: 1.8rem; }
+  .keypad button.ok-key { height: auto; grid-column: 4; grid-row: 2 / span 3; background: var(--success-strong); border-color: #14532d; color: white; font-size: 1.8rem; }
   @media (max-height: 760px) {
     .solo-card { padding: 16px; }
     .back-row { margin-bottom: 8px; }
     .task-prompt { font-size: 1.15rem; margin-bottom: 10px; }
     .answer-display { min-height: 48px; padding: 6px 10px; margin-bottom: 10px; font-size: 1.6rem; }
     .keypad { gap: 6px; }
-    .keypad button { min-height: 48px; }
+    /* Bilder auf niedrigen Bildschirmen begrenzen, damit das Tastenfeld Platz hat */
+    .solo-card:not(:has(> #solo_hotspotWrap:not(.hidden))) #solo_visual svg,
+    #pruefungPlayView:has(#duell_pruefung_keypadWrap:not(.hidden)) #duell_pruefung_visual svg,
+    #klassenPlayView:has(#duell_klassen_keypadWrap:not(.hidden)) #duell_klassen_visual svg { max-height: 22vh; }
   }
   .wrong-flash { animation: wrongFlash 0.35s; }
   @keyframes wrongFlash { 0%,100% { background: var(--bg); } 40% { background: #fecaca; } }
@@ -350,7 +362,7 @@
   /* Tastenhöhe richtet sich nach der Bildschirmhöhe: auf dem Tablet 48-56 px, auf kleinen Handys
      kleiner - dafür bleibt der ✓ sichtbar, statt unter den Rand zu rutschen. */
   .duell-half .keypad { gap: clamp(4px, 1vh, 8px); margin-bottom: 4px; }
-  .duell-half .keypad button { min-height: 0; height: clamp(30px, calc((50vh - 196px) / 4), 56px); height: clamp(30px, calc((50dvh - 196px) / 4), 56px); font-size: 1.1rem; border-radius: 12px; }
+  .duell-half .keypad button { height: var(--key-h, 44px); font-size: 1.1rem; border-radius: 12px; }
   .duell-half .keypad button.ok-key { height: auto; font-size: 1.4rem; }
   .duell-divider { height: 56px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; gap: 20px; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.2rem; }
   .stall-timer { color: #fbbf24; font-size: 1rem; }
@@ -384,7 +396,7 @@
   /* Tablet: Tasten 48-56 px hoch mit 8 px Abstand (Material 48 dp / 8 dp); auf kleinen Handys kleiner,
      aber der ✓ bleibt sichtbar */
   .vk-quad .keypad { gap: clamp(4px, 0.8vh, 8px); margin-bottom: 4px; }
-  .vk-quad .keypad button { min-height: 0; height: clamp(28px, calc((50vh - 180px) / 4), 56px); height: clamp(28px, calc((50dvh - 180px) / 4), 56px); font-size: 1rem; border-radius: 8px; }
+  .vk-quad .keypad button { height: var(--key-h, 40px); font-size: 1rem; border-radius: 8px; }
   .vk-quad .keypad button.ok-key { height: auto; font-size: 1.3rem; }
   .vk-quad .pair-box { min-width: 46px; min-height: 36px; font-size: 1rem; padding: 4px 8px; }
   .vk-quad .pair-sep { font-size: 1rem; }
@@ -392,7 +404,7 @@
   .vk-quad .var-row { gap: 4px; margin-bottom: 4px; }
   .vk-quad .var-row button { padding: 6px 0; font-size: 0.85rem; }
   .vk-quad .duell-bool-wrap { gap: 6px; margin-bottom: 4px; }
-  .vk-quad .duell-bool-wrap button { padding: 8px 0; font-size: 0.8rem; }
+  .vk-quad .duell-bool-wrap button { padding: 8px 0; min-height: 44px; font-size: 0.85rem; }
   .vk-quad .duell-text-wrap { gap: 4px; margin-bottom: 4px; }
   .vk-quad .duell-text-wrap input { min-width: 0; }
   .vk-quad .duell-text-wrap button { padding: 0 10px; }
@@ -497,7 +509,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-10-29.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-10-29.2</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -2208,7 +2220,9 @@ document.querySelectorAll("[data-back-tochapter]").forEach(b => b.addEventListen
 document.getElementById("lp21LinkBtn").addEventListener("click", () => showView("lp21"));
 document.getElementById("categoryView").querySelector("[data-back-home]");
 document.querySelectorAll("[data-back-category]").forEach(b => b.addEventListener("click", () => { if (navCategory) openCategory(navCategory.id); else showView("category"); }));
-document.querySelectorAll("[data-back-chapter]").forEach(b => b.addEventListener("click", () => { if (navChapter && navCategory && navCategory.chapters.includes(navChapter)) openChapter(navChapter.id); else showView("chapter"); }));
+// Ohne aktuelles Kapitel (z.B. nach "Gemischte Aufgaben" über die ganze Kategorie) zurück zur
+// Kategorie - sonst stand eine veraltete Kapitelliste da, und Antippen führte zu einem Fehler.
+document.querySelectorAll("[data-back-chapter]").forEach(b => b.addEventListener("click", () => { if (navChapter && navCategory && navCategory.chapters.includes(navChapter)) openChapter(navChapter.id); else if (navCategory) openCategory(navCategory.id); else showView("home"); }));
 
 /* ================= Einstellungen: Darstellung & Lernstand ================= */
 const THEME_KEY = "md_theme";
@@ -7059,6 +7073,7 @@ function celebrateWrong(el) {
   el.classList.add("shake-x");
 }
 function setWidgetMode(prefix, answerType, pairStyle) {
+  scheduleFitKeypads();
   const kp = document.getElementById(`${prefix}_keypadWrap`), bw = document.getElementById(`${prefix}_boolWrap`), tw = document.getElementById(`${prefix}_textWrap`);
   const pw = document.getElementById(`${prefix}_pairWrap`), vr = document.getElementById(`${prefix}_varRow`), mw = document.getElementById(`${prefix}_mcWrap`);
   const hw = document.getElementById(`${prefix}_hotspotWrap`);
@@ -7082,6 +7097,35 @@ function setWidgetMode(prefix, answerType, pairStyle) {
   if (answerType === "term") { disp.classList.remove("hidden"); kp.classList.remove("hidden"); vr.classList.remove("hidden"); return; }
   disp.classList.remove("hidden"); kp.classList.remove("hidden");
 }
+/* Tastenhöhe an den freien Platz anpassen: Bild, Bruch-Kästchen oder Variablen-Tasten brauchen
+   unterschiedlich viel Höhe. Ziel: der ✓ bleibt sichtbar. In Duell/Vierkampf schrumpfen die Tasten
+   dafür bis 28 px (zwei Spielfelder auf einem Handy), sonst nie unter 44 px (Apple HIG). */
+let fitKeypadsRaf = 0;
+function scheduleFitKeypads() { cancelAnimationFrame(fitKeypadsRaf); fitKeypadsRaf = requestAnimationFrame(fitKeypads); }
+function fitKeypads() {
+  document.querySelectorAll(".keypad").forEach(kp => {
+    if (!kp.offsetParent) return;
+    const gap = parseFloat(getComputedStyle(kp).rowGap) || 0;
+    const box = kp.closest(".duell-half, .vk-quad");
+    let avail, min, max;
+    if (box) {
+      const cs = getComputedStyle(box), inner = box.firstElementChild;
+      avail = box.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - (inner.offsetHeight - kp.offsetHeight) - 2;
+      min = 28; max = 56;
+    } else {
+      // Seite (Solo, Prüfung, Klassenduell): Platz bis zum unteren Bildschirmrand
+      const card = kp.closest(".solo-card") || kp.parentElement;
+      const below = card.getBoundingClientRect().bottom - kp.getBoundingClientRect().bottom;
+      avail = window.innerHeight - (kp.getBoundingClientRect().top + window.scrollY) - Math.max(16, Math.min(below, 40));
+      min = 44; max = 64;
+    }
+    const keyH = Math.max(min, Math.min(max, Math.floor((avail - 3 * gap) / 4)));
+    kp.style.setProperty("--key-h", keyH + "px");
+  });
+}
+window.addEventListener("resize", scheduleFitKeypads);
+window.addEventListener("orientationchange", scheduleFitKeypads);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleFitKeypads);
 function renderMcOptions(prefix, task) {
   if (!task || task.answerType !== "mc") return;
   for (let i = 0; i < 4; i++) {

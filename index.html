@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Mathe-Duell</title>
@@ -15,13 +15,16 @@
 </style>
 <style>
   :root {
-    --bg: #eef6fb; --card: #ffffff; --border: #e2e8f0; --text: #0f172a; --muted: #64748b;
+    --bg: #eef6fb; --card: #ffffff; --border: #e2e8f0; --text: #0f172a; --muted: #56657a;
     --accent: #2563eb; --accent-dark: #1d4ed8; --danger: #dc2626; --success: #16a34a;
     --coral: #ff7a59; --gold: #f2ac00;
     --surface: #ffffff; --key: #e2e8f0; --soft: #eff6ff; --mixed-bg: #fffbeb; --secondary: #64748b;
     --help-bg: #fef3c7; --help-fg: #92400e; --skip-bg: #e0e7ff; --skip-fg: #3730a3;
     --var-bg: #ede9fe; --var-fg: #5b21b6; --wrong-bg: #fee2e2; --right-bg: #f0fdf4;
     --violet-fg: #7c3aed; --klassen-active-bg: #eaf2ff; --klassen-wait-bg: #e5e9ef;
+    /* Text-/Rahmenfarben mit genug Kontrast (WCAG: Text 4.5:1, Bedienelemente 3:1) */
+    --success-text: #15803d; --success-strong: #15803d; --danger-text: #b91c1c; --accent-text: #1d4ed8;
+    --key-border: #8193a8; --field-border: #64748b;
     color-scheme: light;
   }
   /* Dunkelmodus: per Einstellung (data-theme="dark") oder automatisch nach System (data-theme="auto") */
@@ -31,6 +34,8 @@
     --help-bg: #713f12; --help-fg: #fde68a; --skip-bg: #312e81; --skip-fg: #c7d2fe;
     --var-bg: #4c1d95; --var-fg: #ede9fe; --wrong-bg: #4c1d1d; --right-bg: #12301f;
     --violet-fg: #c4b5fd; --klassen-active-bg: #172554; --klassen-wait-bg: #1e293b;
+    --success-text: #4ade80; --danger-text: #f87171; --accent-text: #60a5fa;
+    --key-border: #64748b; --field-border: #94a3b8;
     color-scheme: dark;
   }
   @media (prefers-color-scheme: dark) {
@@ -39,12 +44,17 @@
       --accent: #3b82f6; --surface: #1e293b; --key: #334155; --soft: #1e3a5f; --mixed-bg: #3a2e0c; --secondary: #475569;
       --help-bg: #713f12; --help-fg: #fde68a; --skip-bg: #312e81; --skip-fg: #c7d2fe;
       --var-bg: #4c1d95; --var-fg: #ede9fe; --wrong-bg: #4c1d1d; --right-bg: #12301f;
-      --violet-fg: #c4b5fd; --klassen-active-bg: #172554; --klassen-wait-bg: #1e293b;
+    --violet-fg: #c4b5fd; --klassen-active-bg: #172554; --klassen-wait-bg: #1e293b;
+      --success-text: #4ade80; --danger-text: #f87171; --accent-text: #60a5fa;
+      --key-border: #64748b; --field-border: #94a3b8;
       color-scheme: dark;
     }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   button, .duell-half, .vk-quad { touch-action: manipulation; }
+  /* Zoomen ist erlaubt (Sehbehinderung, WCAG 1.4.4) - nur in Duell/Vierkampf nicht, sonst
+     verschiebt ein Mitspieler mit zwei Fingern das ganze Spielfeld. Scrollen bleibt möglich. */
+  #duellPlayView, #vkPlayView, #duellPlayView .duell-half, #vkPlayView .vk-quad { touch-action: pan-y; }
   .hidden { display: none !important; }
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   /* Während Duell/Vierkampf/Klassenduell darf die ganze Seite nicht verschiebbar sein -
@@ -74,13 +84,16 @@
   .btn-secondary { background: var(--secondary); }
   .btn-danger { background: var(--danger); }
   .btn-outline { background: var(--surface); color: var(--accent); border: 2px solid var(--accent); }
+  .sticky-start { position: sticky; bottom: 12px; z-index: 20; box-shadow: 0 6px 18px rgba(15,23,42,0.25); }
+  .vk-phone-hint { display: none; }
+  @media (max-width: 600px) { .vk-phone-hint { display: block; } }
   .btn-big { width: 100%; padding: 22px; font-size: 1.3rem; border-radius: 16px; margin-bottom: 12px; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; }
   .back-row { margin-bottom: 14px; }
 
   /* Home: 4 Kategorie-Boxen */
-  .lp21-link { display: block; margin: 28px auto 0; background: none; border: none; color: var(--muted); font-size: 0.72rem; text-decoration: underline; cursor: pointer; padding: 6px; }
-  .klassen-practice-link { background: none; border: none; color: var(--muted); font-size: 0.85rem; text-decoration: underline; cursor: pointer; padding: 8px; }
+  .lp21-link { display: block; margin: 20px auto 0; background: none; border: none; color: var(--muted); font-size: 0.85rem; text-decoration: underline; cursor: pointer; padding: 6px 14px; min-height: 44px; }
+  .klassen-practice-link { background: none; border: none; color: var(--muted); font-size: 0.85rem; text-decoration: underline; cursor: pointer; padding: 8px; min-height: 44px; }
   .lp21-intro { color: var(--muted); font-size: 0.9rem; margin-bottom: 8px; }
   .lp21-source { color: var(--muted); font-size: 0.72rem; margin-bottom: 20px; font-style: italic; }
   .lp21-block { margin-bottom: 26px; }
@@ -95,7 +108,7 @@
   .lp21-desc { font-size: 0.8rem; color: var(--muted); font-style: italic; margin: 4px 0 6px; }
   .lp21-list { margin: 0; padding-left: 18px; font-size: 0.85rem; line-height: 1.55; }
   .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .cat-tile { border: none; border-radius: 16px; padding: 30px 12px; cursor: pointer; color: white; font-weight: 800; font-size: 1.1rem; text-align: center; }
+  .cat-tile { border: none; border-radius: 16px; padding: 30px 12px; cursor: pointer; color: white; font-weight: 800; font-size: 1.2rem; text-align: center; }
   .cat-basiswissen { background: linear-gradient(135deg, #16a34a, #14532d); }
   .cat-jahr1 { background: linear-gradient(135deg, #2563eb, #1e3a8a); }
   .cat-jahr2 { background: linear-gradient(135deg, #7c3aed, #4c1d95); }
@@ -115,7 +128,7 @@
   .chapter-row:last-child { border-bottom: none; }
   .chapter-row.locked { color: var(--muted); cursor: default; }
   .chapter-row.mixed { background: var(--mixed-bg); font-weight: 700; }
-  .chapter-id { font-weight: 800; min-width: 28px; color: var(--accent); }
+  .chapter-id { font-weight: 800; min-width: 28px; color: var(--accent-text); }
   .chapter-row.locked .chapter-id { color: var(--muted); }
   .chapter-title { flex: 1; }
   .chapter-status { font-size: 0.85rem; }
@@ -129,7 +142,7 @@
   .mode-choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; }
   .btn-solo { background: linear-gradient(135deg, #16a34a, #14532d); }
   .btn-duell { background: linear-gradient(135deg, #c026d3, #701a75); }
-  .btn-vk { background: linear-gradient(135deg, #f59e0b, #b45309); color: white; grid-column: 1 / -1; }
+  .btn-vk { background: linear-gradient(135deg, #b45309, #92400e); color: white; grid-column: 1 / -1; }
   .btn-kampagne { background: linear-gradient(135deg, #0ea5e9, #075985); }
   .btn-pruefung { background: linear-gradient(135deg, #7c3aed, #4c1d95); color: white; }
   .klassen-mult-btn { flex: 1; border: 2px solid var(--violet-fg); color: var(--violet-fg); background: var(--surface); }
@@ -211,7 +224,7 @@
   .setup-accordion[open] > summary { border-bottom: 1px solid var(--border); }
   .setup-accordion-body { padding: 16px; }
   .field-label { font-size: 0.85rem; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; }
-  input[type="text"], input[type="number"] { border: 1px solid var(--border); border-radius: 12px; padding: 10px; font-size: 1rem; width: 100%; background: var(--surface); color: var(--text); }
+  input[type="text"], input[type="number"] { border: 1px solid var(--key-border); border-radius: 12px; padding: 10px; min-height: 44px; font-size: 1rem; width: 100%; background: var(--surface); color: var(--text); }
   .choice-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
   .choice-btn { flex: 1; min-width: 100px; border: 2px solid var(--border); background: var(--surface); color: var(--text); border-radius: 16px; padding: 10px; font-weight: 700; cursor: pointer; }
   .choice-btn.active { border-color: var(--accent); background: var(--soft); color: var(--accent); }
@@ -229,8 +242,8 @@
   /* Solo play */
   .solo-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 16px; }
   .solo-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; row-gap: 6px; }
-  .solo-score { font-weight: 700; color: var(--success); }
-  .help-btn { border: none; background: var(--help-bg); color: var(--help-fg); border-radius: 20px; padding: 6px 14px; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
+  .solo-score { font-weight: 700; color: var(--success-text); }
+  .help-btn { border: none; background: var(--help-bg); color: var(--help-fg); border-radius: 22px; padding: 6px 16px; min-height: 44px; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
   .help-btn.skip-btn { background: var(--skip-bg); color: var(--skip-fg); }
   .mt-shape { width: 230px; height: 230px; max-width: 70vw; max-height: 70vw; margin: 0 auto 10px; display: block; }
   .duell-half .mt-shape { width: 90px; height: 90px; margin: 0 auto 6px; }
@@ -251,10 +264,24 @@
   .duell-inner:has(> [id$="_hotspotWrap"]:not(.hidden)) .duell-prompt { font-size: 0.7rem; margin-bottom: 4px; }
   .vk-inner:has(> [id$="_hotspotWrap"]:not(.hidden)) .mt-shape { width: 105px; height: 105px; margin: 0 auto 4px; }
   .vk-inner:has(> [id$="_hotspotWrap"]:not(.hidden)) .vk-prompt { font-size: 0.62rem; margin-bottom: 3px; min-height: 0; }
-  .answer-display { font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; background: var(--bg); border-radius: 10px; padding: 12px; min-height: 54px; margin-bottom: 14px; }
-  .keypad-row { display: flex; gap: 8px; margin-bottom: 8px; }
-  .keypad-row button { flex: 1; padding: 16px 0; font-size: 1.3rem; font-weight: 700; border: none; border-radius: 16px; background: var(--key); color: var(--text); }
-  .keypad-row button.ok-key { background: var(--success); color: white; }
+  .answer-display { font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; background: var(--bg); border: 2px solid var(--field-border); border-radius: 12px; padding: 10px; min-height: 58px; margin-bottom: 14px; }
+  /* Leeres Antwortfeld: Platzhalter statt leerer Fläche (Wiedererkennen statt Erinnern) */
+  .answer-display:empty::before, .duell-input:empty::before, .vk-input:empty::before { content: "Deine Antwort"; color: var(--muted); font-weight: 600; font-size: 1rem; }
+  .duell-input:empty::before, .vk-input:empty::before { content: "Antwort"; font-size: 0.85rem; }
+  /* Tastenfeld wie ein Taschenrechner: 4 Reihen statt 5, ✓ zwei Reihen hoch unten rechts (Daumenzone),
+     ⌫ oben rechts - weit weg vom ✓, damit man nicht versehentlich löscht statt abschickt. */
+  .keypad { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
+  .keypad button { padding: 0; min-height: 56px; font-size: 1.3rem; font-weight: 700; border: 1px solid var(--key-border); border-bottom-width: 3px; border-radius: 16px; background: var(--key); color: var(--text); }
+  .keypad button.back-key { grid-column: 4; grid-row: 1; }
+  .keypad button.ok-key { grid-column: 4; grid-row: 2 / span 3; background: var(--success-strong); border-color: #14532d; color: white; font-size: 1.8rem; }
+  @media (max-height: 760px) {
+    .solo-card { padding: 16px; }
+    .back-row { margin-bottom: 8px; }
+    .task-prompt { font-size: 1.15rem; margin-bottom: 10px; }
+    .answer-display { min-height: 48px; padding: 6px 10px; margin-bottom: 10px; font-size: 1.6rem; }
+    .keypad { gap: 6px; }
+    .keypad button { min-height: 48px; }
+  }
   .wrong-flash { animation: wrongFlash 0.35s; }
   @keyframes wrongFlash { 0%,100% { background: var(--bg); } 40% { background: #fecaca; } }
   .correct-flash { animation: correctFlash 0.35s; }
@@ -278,15 +305,15 @@
   .bool-btn.false-btn { background: #475569; }
   .text-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
   .text-wrap input { flex: 1; }
-  .text-wrap button { background: var(--success); color: white; border: none; border-radius: 12px; padding: 0 20px; font-weight: 700; }
+  .text-wrap button { background: var(--success-strong); color: white; border: none; border-radius: 12px; padding: 0 20px; font-weight: 700; }
   .hotspot-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 8px; }
   .hotspot-wrap svg { touch-action: none; }
   .hotspot-hint { font-size: 0.85rem; color: var(--text-muted, #64748b); text-align: center; }
-  .hotspot-confirm-btn { background: var(--success); color: white; border: none; border-radius: 12px; padding: 10px 24px; font-weight: 700; font-size: 0.95rem; }
+  .hotspot-confirm-btn { background: var(--success-strong); color: white; border: none; border-radius: 12px; padding: 10px 24px; min-height: 44px; font-weight: 700; font-size: 0.95rem; }
 
   /* Fachbegriffe: Multiple-Choice-Auswahl */
-  .mc-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; padding: 6px; border-radius: 12px; }
-  .mc-btn { border: 2px solid var(--border); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 8px; font-weight: 700; font-size: 0.92rem; cursor: pointer; line-height: 1.25; }
+  .mc-wrap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 8px; padding: 6px; border-radius: 12px; }
+  .mc-btn { border: 2px solid var(--key-border); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 8px; min-height: 48px; font-weight: 700; font-size: 0.92rem; cursor: pointer; line-height: 1.25; overflow-wrap: break-word; hyphens: auto; }
   .mc-btn:active { transform: scale(0.97); }
 
   /* Bruch-/Koordinaten-Kästchen und Variablen-Tastatur */
@@ -312,31 +339,35 @@
   .duell-bottom { background: #bfdbfe; }
   .duell-inner { width: 100%; max-width: 480px; text-align: center; }
   .duell-name { font-weight: 800; font-size: 1.1rem; margin-bottom: 4px; }
-  .duell-score { font-weight: 700; color: var(--success); margin-bottom: 8px; }
+  .duell-score { font-weight: 800; color: #14532d; margin-bottom: 8px; }
   .duell-prompt { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; }
-  .duell-input { font-size: 1.5rem; font-weight: 800; background: white; border-radius: 10px; padding: 10px; min-height: 48px; margin-bottom: 8px; border: 1px solid var(--border); }
-  .duell-half .duell-name { font-size: 0.95rem; margin-bottom: 2px; }
-  .duell-half .duell-score { margin-bottom: 4px; }
+  .duell-input { font-size: 1.5rem; font-weight: 800; background: white; border-radius: 10px; padding: 10px; min-height: 48px; margin-bottom: 8px; border: 2px solid #64748b; }
+  /* Name und Punkte auf einer Zeile - spart Höhe fürs Tastenfeld */
+  .duell-half .duell-name, .duell-half .duell-score { display: inline-block; margin: 0 6px 4px; }
+  .duell-half .duell-name { font-size: 0.95rem; }
   .duell-half .duell-prompt { font-size: 1rem; margin-bottom: 4px; }
   .duell-half .duell-input { font-size: 1.2rem; padding: 6px; min-height: 34px; margin-bottom: 4px; }
-  .duell-half .keypad-row { margin-bottom: 5px; }
-  .duell-half .keypad-row button { padding: 9px 0; font-size: 1.05rem; }
+  /* Tastenhöhe richtet sich nach der Bildschirmhöhe: auf dem Tablet 48-56 px, auf kleinen Handys
+     kleiner - dafür bleibt der ✓ sichtbar, statt unter den Rand zu rutschen. */
+  .duell-half .keypad { gap: clamp(4px, 1vh, 8px); margin-bottom: 4px; }
+  .duell-half .keypad button { min-height: 0; height: clamp(30px, calc((50vh - 196px) / 4), 56px); height: clamp(30px, calc((50dvh - 196px) / 4), 56px); font-size: 1.1rem; border-radius: 12px; }
+  .duell-half .keypad button.ok-key { height: auto; font-size: 1.4rem; }
   .duell-divider { height: 56px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; gap: 20px; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.2rem; }
   .stall-timer { color: #fbbf24; font-size: 1rem; }
   .buzz-wrap { text-align: center; margin: 16px 0; }
-  .buzz-btn { width: 110px; height: 110px; border-radius: 50%; font-size: 1.05rem; font-weight: 700; line-height: 1.3; border: none; background: linear-gradient(145deg,#f59e0b,#d97706); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+  .buzz-btn { width: 110px; height: 110px; border-radius: 50%; font-size: 1.05rem; font-weight: 700; line-height: 1.3; border: none; background: linear-gradient(145deg,#b45309,#92400e); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
   .buzz-btn:disabled { opacity: 0.35; }
   .buzz-status { margin-top: 10px; font-weight: 600; color: var(--muted); }
-  .duell-divider button { background: #ef4444; color: white; border: none; border-radius: 12px; padding: 8px 14px; font-weight: 700; }
-  #duellPlayView { display: flex; flex-direction: column; height: 100vh; }
+  .duell-divider button { background: #dc2626; color: white; border: none; border-radius: 12px; padding: 8px 14px; min-height: 44px; font-weight: 700; }
+  #duellPlayView { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
   .duell-bool-wrap { display: flex; gap: 10px; margin-bottom: 8px; }
   .duell-bool-wrap button { flex: 1; padding: 18px 0; font-size: 1.05rem; font-weight: 800; border: none; border-radius: 16px; color: white; }
   .duell-text-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
   .duell-text-wrap input { flex: 1; }
-  .duell-text-wrap button { background: var(--success); color: white; border: none; border-radius: 12px; padding: 0 16px; font-weight: 700; }
+  .duell-text-wrap button { background: var(--success-strong); color: white; border: none; border-radius: 12px; padding: 0 16px; font-weight: 700; }
 
   /* Vierkampf (Pilot): 2x2-Raster, obere Reihe 180° gedreht */
-  #vkPlayView { display: flex; flex-direction: column; height: 100vh; padding: 0; margin: 0; max-width: none; }
+  #vkPlayView { display: flex; flex-direction: column; height: 100vh; height: 100dvh; padding: 0; margin: 0; max-width: none; }
   .vk-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 3px; background: #0f172a; overflow: hidden; }
   .vk-quad { display: flex; align-items: center; justify-content: center; padding: 6px; overflow-y: auto; overflow-x: hidden; }
   .vk-quad.vk-flip { transform: rotate(180deg); }
@@ -344,13 +375,17 @@
   .vk-quad.vk-p1 { background: #fecaca; }
   .vk-quad.vk-p2 { background: #bbf7d0; }
   .vk-quad.vk-p3 { background: #fef08a; }
-  .vk-inner { width: 100%; max-width: 260px; text-align: center; }
-  .vk-name { font-weight: 800; font-size: 0.95rem; margin-bottom: 2px; }
-  .vk-score { font-weight: 700; color: var(--success); font-size: 0.85rem; margin-bottom: 6px; }
+  .vk-inner { width: 100%; max-width: 340px; text-align: center; }
+  .vk-name, .vk-score { display: inline-block; margin: 0 4px 4px; }
+  .vk-name { font-weight: 800; font-size: 0.95rem; }
+  .vk-score { font-weight: 800; color: #14532d; font-size: 0.9rem; }
   .vk-prompt { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; min-height: 2.4em; }
-  .vk-input { font-size: 1.2rem; font-weight: 800; background: white; border-radius: 8px; padding: 6px; min-height: 34px; margin-bottom: 6px; border: 1px solid var(--border); }
-  .vk-quad .keypad-row { display: flex; gap: 4px; margin-bottom: 4px; }
-  .vk-quad .keypad-row button { flex: 1; padding: 8px 0; font-size: 0.95rem; font-weight: 700; border: none; border-radius: 6px; background: #e2e8f0; color: var(--text); }
+  .vk-input { font-size: 1.2rem; font-weight: 800; background: white; border-radius: 8px; padding: 4px 6px; min-height: 34px; margin-bottom: 6px; border: 2px solid #64748b; }
+  /* Tablet: Tasten 48-56 px hoch mit 8 px Abstand (Material 48 dp / 8 dp); auf kleinen Handys kleiner,
+     aber der ✓ bleibt sichtbar */
+  .vk-quad .keypad { gap: clamp(4px, 0.8vh, 8px); margin-bottom: 4px; }
+  .vk-quad .keypad button { min-height: 0; height: clamp(28px, calc((50vh - 180px) / 4), 56px); height: clamp(28px, calc((50dvh - 180px) / 4), 56px); font-size: 1rem; border-radius: 8px; }
+  .vk-quad .keypad button.ok-key { height: auto; font-size: 1.3rem; }
   .vk-quad .pair-box { min-width: 46px; min-height: 36px; font-size: 1rem; padding: 4px 8px; }
   .vk-quad .pair-sep { font-size: 1rem; }
   .vk-quad .style-fraction .pair-sep { width: 46px; height: 2px; }
@@ -362,9 +397,9 @@
   .vk-quad .duell-text-wrap input { min-width: 0; }
   .vk-quad .duell-text-wrap button { padding: 0 10px; }
   .vk-quad .mc-wrap { gap: 4px; margin-bottom: 4px; }
-  .vk-quad .mc-btn { padding: 6px 4px; font-size: 0.68rem; border-width: 1px; }
-  .vk-divider { height: 44px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; gap: 20px; font-weight: 700; font-size: 1rem; }
-  .vk-divider button { background: #ef4444; color: white; border: none; border-radius: 12px; padding: 6px 12px; font-weight: 700; }
+  .vk-quad .mc-btn { padding: 6px 4px; min-height: 40px; font-size: 0.8rem; border-width: 1px; }
+  .vk-divider { height: 52px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; gap: 20px; font-weight: 700; font-size: 1rem; }
+  .vk-divider button { background: #dc2626; color: white; border: none; border-radius: 12px; padding: 6px 12px; min-height: 44px; font-weight: 700; }
   .vk-name-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .vk-names-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
   .vk-names-row .vk-name-inputs { flex: 1; min-width: 220px; margin-bottom: 0; }
@@ -389,19 +424,21 @@
   .modal-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
 
   /* ---- v2026-10-14.4: Startseite, Rückmeldung, Fehlerliste, Lernstand, Barrierefreiheit ---- */
-  .round-icon-btn { position: absolute; top: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 50%; width: 40px; height: 40px; font-size: 1.1rem; cursor: pointer; color: var(--text); }
+  .round-icon-btn { position: absolute; top: 14px; background: var(--card); border: 1px solid var(--key-border); border-radius: 50%; width: 44px; height: 44px; font-size: 1.1rem; cursor: pointer; color: var(--text); }
   .home-mode-label { font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin: 22px 2px 8px; }
   .home-mode-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .home-mode-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 14px; padding: 12px 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
   .home-mode-btn:active { transform: scale(0.97); }
   .hm-ico { font-size: 1.5rem; }
-  .solo-tools { display: flex; gap: 6px; align-items: center; }
+  .solo-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .solo-hint { margin: 8px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--soft); color: var(--text); font-weight: 700; font-size: 0.95rem; }
   .solo-hint-wrong { background: var(--wrong-bg); }
   .solo-feedback { margin-top: 10px; padding: 14px 16px; border-radius: 14px; background: var(--right-bg); border: 2px solid var(--success); text-align: left; }
   .solo-feedback-title { font-weight: 800; font-size: 1.1rem; margin-bottom: 4px; }
   .solo-feedback-answer { font-size: 1.15rem; margin-bottom: 8px; }
-  .solo-feedback-given { font-size: 1rem; color: var(--danger); margin-bottom: 2px; }
+  .solo-feedback.is-wrong { background: var(--wrong-bg); border-color: var(--danger); }
+  .solo-feedback.is-neutral { background: var(--soft); border-color: var(--accent); }
+  .solo-feedback-given { font-size: 1rem; color: var(--danger-text); margin-bottom: 2px; }
   .solo-feedback-steps { font-size: 1rem; line-height: 1.65; }
   .sol-label { font-weight: 700; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
   .style-linear .pair-sep { font-style: italic; color: var(--text); white-space: nowrap; }
@@ -433,7 +470,8 @@
   }
   /* Duell/Vierkampf: farbige Spielfelder behalten immer die hellen Farben (gut lesbar auf Pastell) */
   .duell-half, .vk-quad {
-    --text: #0f172a; --muted: #64748b; --card: #ffffff; --surface: #ffffff; --border: #e2e8f0; --bg: #eef6fb;
+    --text: #0f172a; --muted: #56657a; --card: #ffffff; --surface: #ffffff; --border: #e2e8f0; --bg: #eef6fb;
+    --key-border: #8193a8; --field-border: #64748b;
     --key: #e2e8f0; --soft: #eff6ff; --var-bg: #ede9fe; --var-fg: #5b21b6; color: var(--text);
   }
 </style>
@@ -459,7 +497,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.68rem; color:var(--muted); opacity:0.6;">v2026-10-26.2</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-10-29.1</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -688,7 +726,7 @@
     <div style="text-align:center; font-weight:800; font-size:1.3rem;" id="klassen_countdown"></div>
     <div id="duell_klassen_visual"></div>
     <div class="task-prompt" id="duell_klassen_prompt"></div>
-    <div class="answer-display" id="duell_klassen_input">&nbsp;</div>
+    <div class="answer-display" id="duell_klassen_input"></div>
     <div id="duell_klassen_pairWrap" class="pair-wrap hidden">
       <div class="pair-boxes style-coord" id="duell_klassen_pairBoxes">
         <button class="pair-box" data-side="klassen" data-part="a" id="duell_klassen_pairA">?</button>
@@ -825,7 +863,7 @@
     </div>
     <button class="btn btn-big btn-pruefung" id="goPruefungSetupBtn" style="width:100%; margin-top:12px;">📝 Prüfungsmodus</button>
     <div style="text-align:right; margin-top:28px;">
-      <button id="goKlassenHostSetupBtn" style="background:none; border:none; color:var(--muted); font-size:0.78rem; text-decoration:underline; cursor:pointer; padding:6px;">🏫 Klassenduell (für Lehrpersonen)</button>
+      <button id="goKlassenHostSetupBtn" style="background:none; border:none; color:var(--muted); font-size:0.85rem; text-decoration:underline; cursor:pointer; padding:6px 10px; min-height:44px;">🏫 Klassenduell (für Lehrpersonen)</button>
     </div>
   </div>
 
@@ -858,12 +896,12 @@
         <div class="solo-tools">
           <button class="help-btn" id="solo_helpBtn">❓ Hilfe</button>
           <button class="help-btn hidden" id="solo_showAnswerBtn">👁️ Lösung zeigen</button>
-          <button class="help-btn skip-btn" id="solo_skipBtn" aria-label="Aufgabe überspringen">⏭️</button>
+          <button class="help-btn skip-btn" id="solo_skipBtn" aria-label="Aufgabe überspringen">⏭️ Überspringen</button>
         </div>
       </div>
       <div id="solo_visual"></div>
       <div class="task-prompt" id="solo_prompt"></div>
-      <div class="answer-display" id="solo_input">&nbsp;</div>
+      <div class="answer-display" id="solo_input"></div>
       <div id="solo_pairWrap" class="pair-wrap hidden">
         <div class="pair-boxes style-coord" id="solo_pairBoxes">
           <button class="pair-box" data-side="solo" data-part="a" id="solo_pairA">?</button>
@@ -970,7 +1008,7 @@
       </div>
       <div id="duell_pruefung_visual"></div>
       <div class="task-prompt" id="duell_pruefung_prompt"></div>
-      <div class="answer-display" id="duell_pruefung_input">&nbsp;</div>
+      <div class="answer-display" id="duell_pruefung_input"></div>
       <div id="duell_pruefung_pairWrap" class="pair-wrap hidden">
         <div class="pair-boxes style-coord" id="duell_pruefung_pairBoxes">
           <button class="pair-box" data-side="pruefung" data-part="a" id="duell_pruefung_pairA">?</button>
@@ -1132,7 +1170,7 @@
       </div>
     </details>
 
-    <button class="btn btn-big btn-duell" id="startDuellBtn">Duell starten</button>
+    <button class="btn btn-big btn-duell sticky-start" id="startDuellBtn">Duell starten</button>
   </div>
 
   <!-- DUELL PLAY -->
@@ -1147,7 +1185,7 @@
           <button class="buzz-btn" data-side="top">🔔<br>Buzzer</button>
           <div class="buzz-status"></div>
         </div>
-        <div class="duell-input" id="duell_top_input">&nbsp;</div>
+        <div class="duell-input" id="duell_top_input"></div>
         <div id="duell_top_pairWrap" class="pair-wrap hidden">
           <div class="pair-boxes style-coord" id="duell_top_pairBoxes">
             <button class="pair-box" data-side="top" data-part="a" id="duell_top_pairA">?</button>
@@ -1197,7 +1235,7 @@
           <button class="buzz-btn" data-side="bottom">🔔<br>Buzzer</button>
           <div class="buzz-status"></div>
         </div>
-        <div class="duell-input" id="duell_bottom_input">&nbsp;</div>
+        <div class="duell-input" id="duell_bottom_input"></div>
         <div id="duell_bottom_pairWrap" class="pair-wrap hidden">
           <div class="pair-boxes style-coord" id="duell_bottom_pairBoxes">
             <button class="pair-box" data-side="bottom" data-part="a" id="duell_bottom_pairA">?</button>
@@ -1253,6 +1291,7 @@
     <div class="row back-row"><button class="btn btn-secondary" data-back-mode>← Zurück</button></div>
     <h1 id="vk_exercise_title">🏁 Vierkampf einrichten</h1>
     <h2 class="sub">4 Spieler, gleiche Aufgabe – wer zuerst richtig antwortet, bekommt den Punkt.</h2>
+    <p class="vk-phone-hint" role="note" style="background:var(--help-bg); color:var(--help-fg); border-radius:12px; padding:10px 14px; font-weight:700; font-size:0.9rem;">📱 Der Vierkampf ist für Tablets gedacht. Auf dem Handy werden die Tasten sehr klein – am besten ein Tablet nehmen.</p>
     <div class="setup-card">
       <label class="field-label">Spielernamen</label>
       <div class="vk-names-row">
@@ -1341,7 +1380,7 @@
       </div>
     </details>
 
-    <button class="btn btn-big btn-vk" id="startVkBtn">Vierkampf starten</button>
+    <button class="btn btn-big btn-vk sticky-start" id="startVkBtn">Vierkampf starten</button>
   </div>
 
   <!-- VIERKAMPF PLAY -->
@@ -1357,7 +1396,7 @@
             <button class="buzz-btn" data-side="vk2">🔔<br>Buzzer</button>
             <div class="buzz-status"></div>
           </div>
-          <div class="vk-input" id="duell_vk2_input"> </div>
+          <div class="vk-input" id="duell_vk2_input"></div>
           <div id="duell_vk2_pairWrap" class="pair-wrap hidden">
             <div class="pair-boxes style-coord" id="duell_vk2_pairBoxes">
               <button class="pair-box" data-side="vk2" data-part="a" id="duell_vk2_pairA">?</button>
@@ -1402,7 +1441,7 @@
             <button class="buzz-btn" data-side="vk3">🔔<br>Buzzer</button>
             <div class="buzz-status"></div>
           </div>
-          <div class="vk-input" id="duell_vk3_input"> </div>
+          <div class="vk-input" id="duell_vk3_input"></div>
           <div id="duell_vk3_pairWrap" class="pair-wrap hidden">
             <div class="pair-boxes style-coord" id="duell_vk3_pairBoxes">
               <button class="pair-box" data-side="vk3" data-part="a" id="duell_vk3_pairA">?</button>
@@ -1447,7 +1486,7 @@
             <button class="buzz-btn" data-side="vk0">🔔<br>Buzzer</button>
             <div class="buzz-status"></div>
           </div>
-          <div class="vk-input" id="duell_vk0_input"> </div>
+          <div class="vk-input" id="duell_vk0_input"></div>
           <div id="duell_vk0_pairWrap" class="pair-wrap hidden">
             <div class="pair-boxes style-coord" id="duell_vk0_pairBoxes">
               <button class="pair-box" data-side="vk0" data-part="a" id="duell_vk0_pairA">?</button>
@@ -1492,7 +1531,7 @@
             <button class="buzz-btn" data-side="vk1">🔔<br>Buzzer</button>
             <div class="buzz-status"></div>
           </div>
-          <div class="vk-input" id="duell_vk1_input"> </div>
+          <div class="vk-input" id="duell_vk1_input"></div>
           <div id="duell_vk1_pairWrap" class="pair-wrap hidden">
             <div class="pair-boxes style-coord" id="duell_vk1_pairBoxes">
               <button class="pair-box" data-side="vk1" data-part="a" id="duell_vk1_pairA">?</button>
@@ -6600,12 +6639,11 @@ let inputBuffers = { solo: "", pruefung: "", top: "", bottom: "", vk0: "", vk1: 
 let activePart = { solo: "a", pruefung: "a", top: "a", bottom: "a", vk0: "a", vk1: "a", vk2: "a", vk3: "a" };
 function keypadHTML(side) {
   const k = (key, label, cls, aria) => `<button data-side="${side}" data-key="${key}" class="${cls || ""}"${aria ? ` aria-label="${aria}"` : ""}>${label}</button>`;
-  return `
-    <div class="keypad-row">${k("1","1")}${k("2","2")}${k("3","3")}</div>
-    <div class="keypad-row">${k("4","4")}${k("5","5")}${k("6","6")}</div>
-    <div class="keypad-row">${k("7","7")}${k("8","8")}${k("9","9")}</div>
-    <div class="keypad-row">${k("-","±","", "Vorzeichen wechseln")}${k("0","0")}${k(".",".","", "Komma")}</div>
-    <div class="keypad-row">${k("back","⌫","", "Löschen")}${k("ok","✓","ok-key", "Antwort prüfen")}</div>`;
+  // Raster 4 × 4: ⌫ oben rechts, ✓ über drei Reihen rechts unten (Position per CSS)
+  return `${k("1","1")}${k("2","2")}${k("3","3")}${k("back","⌫","back-key", "Löschen")}`
+    + `${k("4","4")}${k("5","5")}${k("6","6")}${k("ok","✓","ok-key", "Antwort prüfen")}`
+    + `${k("7","7")}${k("8","8")}${k("9","9")}`
+    + `${k("-","±","", "Vorzeichen wechseln")}${k("0","0")}${k(".",".","", "Komma")}`;
 }
 document.querySelectorAll(".keypad").forEach(el => { el.innerHTML = keypadHTML(el.dataset.side); });
 function currentTaskFor(side) { if (side === "solo") return soloCurrent; if (side === "pruefung") return pruefungCurrent; if (side === "klassen") return klassenStudentTask; if (side.startsWith("vk")) return vkTask; return duellTasks[side]; }
@@ -6915,7 +6953,7 @@ function handleKey(side, key) {
 }
 function renderBuffer(side) {
   const el = document.getElementById(side === "solo" ? "solo_input" : `duell_${side}_input`);
-  if (el) el.textContent = inputBuffers[side] || " ";
+  if (el) el.textContent = typoMinus(inputBuffers[side] || "");
 }
 // Erlaubte Abweichung: höchstens 0.01, aber nie mehr als eine halbe Einheit der letzten
 // Stelle der Lösung - sonst galt z.B. 0 als richtig für 0.006 kg oder 0.62 für 0.625.
@@ -7048,7 +7086,7 @@ function renderMcOptions(prefix, task) {
   if (!task || task.answerType !== "mc") return;
   for (let i = 0; i < 4; i++) {
     const btn = document.getElementById(`${prefix}_mcWrap`).children[i];
-    btn.textContent = superscriptExponents(task.options[i] || "");
+    btn.textContent = typoMinus(superscriptExponents(task.options[i] || ""));
   }
 }
 
@@ -7214,7 +7252,11 @@ function soloShowSolution(title, given) {
   document.getElementById("solo_feedbackAnswer").innerHTML = `${givenHtml}Richtige Lösung: <strong>${correctAnswerLabelHtml(task)}</strong>`;
   document.getElementById("solo_feedbackSteps").innerHTML = taskSolutionHtml(task, soloExercise);
   drawTaskSolutionOnSvg(document.querySelector("#solo_visual svg"), task);
-  document.getElementById("solo_feedback").classList.remove("hidden");
+  // Farbe passend zur Aussage: rot nach falscher Antwort, neutral bei "Lösung zeigen" (vorher immer grün)
+  const fb = document.getElementById("solo_feedback");
+  fb.classList.toggle("is-wrong", given !== undefined);
+  fb.classList.toggle("is-neutral", given === undefined);
+  fb.classList.remove("hidden");
   srAnnounce(`${title} Richtige Lösung: ${formatCorrectAnswer(task)}`);
   const nextBtn = document.getElementById("solo_nextBtn");
   nextBtn.focus({ preventScroll: true });
@@ -8017,8 +8059,12 @@ function fractionizePromptHtml(text) {
   const withTermFractions = esc.replace(/(√\d+|\d+\^\d+)\/(√\d+|\d+\^\d+)/g, (m, n, d) => stackedFractionHtml(n, d));
   const withXFractions = withTermFractions.replace(/(-?\d+)x\/(\d+)/g, (m, n, d) => stackedFractionHtml(`${n}x`, d));
   const withFractions = withXFractions.replace(/(\d+)\/(\d+)/g, (m, n, d) => stackedFractionHtml(n, d));
-  return superscriptExponents(withFractions);
+  return typoMinusHtml(superscriptExponents(withFractions));
 }
+// Vorzeichen-Minus vor Zahlen/Variablen einheitlich als "−" (U+2212) anzeigen - die Aufgaben
+// mischen sonst "x = -1" und "5 − 3". Nur Anzeige: Eingaben und Prüfung bleiben unverändert.
+function typoMinus(text) { return String(text).replace(/(^|[\s(\[|=≈:;,])-(?=[\d.(]|[a-zA-Z](?![a-zA-Z]))/g, "$1−"); }
+function typoMinusHtml(html) { return String(html).split(/(<[^>]*>)/).map(part => part.startsWith("<") ? part : typoMinus(part)).join(""); }
 function formatCorrectAnswerHtml(task) {
   if (!task) return "";
   if (task.answerType === "pair" && task.pairStyle === "fraction") return task.correct[0] === 0 ? "0" : stackedFractionHtml(task.correct[0], task.correct[1]);

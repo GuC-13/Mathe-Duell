@@ -93,6 +93,8 @@
 
   /* Home: 4 Kategorie-Boxen */
   .lp21-link { display: block; margin: 20px auto 0; background: none; border: none; color: var(--muted); font-size: 0.85rem; text-decoration: underline; cursor: pointer; padding: 6px 14px; min-height: 44px; }
+  .topic-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; box-sizing: border-box; padding: 6px 12px; border-radius: 999px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-align: left; }
+  .topic-chip-base { border-color: var(--accent); cursor: default; }
   .klassen-practice-link { background: none; border: none; color: var(--muted); font-size: 0.85rem; text-decoration: underline; cursor: pointer; padding: 8px; min-height: 44px; }
   .lp21-intro { color: var(--muted); font-size: 0.9rem; margin-bottom: 8px; }
   .lp21-source { color: var(--muted); font-size: 0.72rem; margin-bottom: 20px; font-style: italic; }
@@ -509,7 +511,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-10-29.3</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-02.1</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -595,6 +597,15 @@
     <div class="row back-row"><button class="btn btn-secondary" data-back-mode>← Zurück</button></div>
     <h1>🏫 Klassenduell einrichten</h1>
     <div class="ex-desc-card" id="klassen_exercise_title"></div>
+    <div class="setup-card" id="klassenTopicsCard">
+      <label class="field-label">Themen in diesem Klassenduell</label>
+      <div id="klassenTopicChips" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+      <button class="btn btn-secondary" id="klassenAddTopicBtn" style="display:block; width:100%; margin-top:12px;">➕ Weitere Themen hinzufügen</button>
+      <div id="klassenTopicSearch" class="hidden" style="margin-top:12px;">
+        <input type="search" id="klassenTopicSearchInput" placeholder="Suchbegriff, z.B. Runden, Prozent, Bruch …" aria-label="Weitere Themen suchen" style="width:100%; box-sizing:border-box; font-size:1.05rem; padding:10px 12px; border-radius:10px; border:1px solid var(--border); margin-bottom:10px;">
+        <div id="klassenTopicSearchResults" class="chapter-list" style="max-height:45vh; overflow-y:auto;"></div>
+      </div>
+    </div>
     <div class="setup-card">
       <label class="field-label">Anzahl Aufgaben: <span id="klassenNumqLabel">10</span></label>
       <input type="range" id="klassenNumqSlider" class="range-slider" min="5" max="20" step="1" value="10">
@@ -4711,6 +4722,10 @@ const EXERCISE_INFO = {
   "bw-mul": { d: "Multipliziere zwei Zahlen.", g: "Das kleine Einmaleins und einfache Multiplikationen sicher anwenden." },
   "bw-div": { d: "Dividiere zwei Zahlen ohne Rest.", g: "Division als Umkehrung der Multiplikation verstehen." },
   "bw-runden-1": { d: "Runde eine Zahl auf Zehner, Hunderter oder Tausender.", g: "Rundungsregeln korrekt anwenden." },
+  "bw-runden-dez0": { d: "Runde eine Dezimalzahl (Kommazahl) auf eine ganze Zahl.", g: "Dezimalzahlen korrekt auf Ganze runden." },
+  "bw-runden-dez1": { d: "Runde eine Dezimalzahl (Kommazahl) auf 1 Nachkommastelle (Zehntel).", g: "Dezimalzahlen korrekt auf Zehntel runden." },
+  "bw-runden-dez2": { d: "Runde eine Dezimalzahl (Kommazahl) auf 2 Nachkommastellen (Hundertstel).", g: "Dezimalzahlen korrekt auf Hundertstel runden." },
+  "bw-runden-dez3": { d: "Runde eine Dezimalzahl (Kommazahl) auf 3 Nachkommastellen (Tausendstel).", g: "Dezimalzahlen korrekt auf Tausendstel runden." },
   "bw-winkel-1": { d: "Berechne den Ergänzungswinkel zu 90° oder 180°.", g: "Komplementär- und Supplementärwinkel verstehen." },
   "bw-winkel-2": { d: "Berechne den fehlenden Winkel in einem Dreieck, wenn zwei Winkel bekannt sind.", g: "Winkelsumme im Dreieck (180°) anwenden." },
   "bw-winkel-3": { d: "Berechne den fehlenden Winkel in einem Viereck, wenn drei Winkel bekannt sind.", g: "Winkelsumme im Viereck (360°) anwenden." },
@@ -4795,6 +4810,8 @@ const EXERCISE_INFO = {
   "m2-1c-root-rule": { d: "Entscheide, ob eine Gleichung mit Wurzeln oder Quadraten stimmt.", g: "Wissen, dass die Regeln für Wurzeln und Potenzen bei · und : gelten, bei + und − aber nicht." },
   "m2-2a-1": { d: "Berechne die Hypotenuse in einem rechtwinkligen Dreieck.", g: "Satz des Pythagoras anwenden." },
   "m2-2b-1": { d: "Berechne eine Kathete in einem rechtwinkligen Dreieck.", g: "Satz des Pythagoras umstellen und anwenden." },
+  "m2-2b-mix": { d: "Berechne die fehlende Seite im rechtwinkligen Dreieck – mal die Hypotenuse, mal eine Kathete – und runde auf 1 oder 2 Nachkommastellen.", g: "Erkennen, ob die Hypotenuse oder eine Kathete gesucht ist, und den Satz des Pythagoras entsprechend anwenden." },
+  "m2-2a-runden": { d: "Runde ein Taschenrechner-Ergebnis aus dem Satz des Pythagoras auf 1 oder 2 Nachkommastellen.", g: "Ergebnisse mit Wurzeln sinnvoll und korrekt runden." },
   "m2-2c-1": { d: "Löse eine Anwendungsaufgabe zum Satz des Pythagoras (Leiter-Problem).", g: "Satz des Pythagoras auf Alltagssituationen anwenden." },
   "m2-2d-1": { d: "Berechne die Diagonale eines Rechtecks.", g: "Satz des Pythagoras auf Rechtecke anwenden." },
   "m2-3a-1": { d: "Entscheide, ob zwei Grössen direkt proportional zueinander sind.", g: "Direkte Proportionalität erkennen." },
@@ -5632,6 +5649,110 @@ function generatePointDistance() {
   const dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1), d2 = dx * dx + dy * dy, d = round1(Math.sqrt(d2));
   return { visual: null, prompt: `Wie weit sind die Punkte A(${x1}|${y1}) und B(${x2}|${y2}) voneinander entfernt? (1 Einheit = 1 cm, auf 1 Dezimale runden)`, answerType: "number", correct: d, solution: `Waagrechter Abstand: ${dx}, senkrechter Abstand: ${dy}\nAB² = ${dx}² + ${dy}² = ${d2}\nAB = √${d2} ≈ ${d} cm` };
 }
+/* ---- Runden von Dezimalzahlen (Basiswissen "Runden" und Pythagoras) ----
+   Gerechnet wird mit ganzzahlig skalierten Werten, damit keine Gleitkomma-Fehler
+   (z.B. 2.675 → 2.67) das Runden verfälschen. correctText zeigt die Lösung mit der
+   verlangten Genauigkeit an (z.B. "5.0" statt "5"). */
+const ROUND_PLACE_TEXT = ["auf eine ganze Zahl", "auf 1 Nachkommastelle (Zehntel)", "auf 2 Nachkommastellen (Hundertstel)", "auf 3 Nachkommastellen (Tausendstel)"];
+const ROUND_PLACE_NAME = ["Einerstelle", "Zehntelstelle", "Hundertstelstelle", "Tausendstelstelle"];
+function roundingDecisionText(decide, correctText, place) {
+  const zeroNote = place > 0 && /0$/.test(correctText) ? `\nDie Null am Schluss bleibt stehen: Sie zeigt, dass auf ${place === 1 ? "Zehntel" : place === 2 ? "Hundertstel" : "Tausendstel"} genau gerundet wurde.` : "";
+  return `${decide >= 5 ? "5 oder mehr → aufrunden" : "weniger als 5 → abrunden"}: ${correctText}${zeroNote}`;
+}
+function generateDecimalRounding(place) {
+  const D = Math.min(4, place + rnd(1, 2)); // so viele Nachkommastellen hat die Zahl
+  const intPart = rnd(0, 1) ? rnd(0, 99) : rnd(100, 9999);
+  const digits = Array.from({ length: D }, () => rnd(0, 9));
+  if (digits[D - 1] === 0) digits[D - 1] = rnd(1, 9);
+  // Jede 4. Aufgabe: Übertrag über mehrere Stellen (z.B. 3.97 → 4.0)
+  if (Math.random() < 0.25) { for (let i = 0; i < place; i++) digits[i] = 9; digits[place] = rnd(5, 9); }
+  const scale = Math.pow(10, D), N = intPart * scale + Number(digits.join(""));
+  const shown = (N / scale).toFixed(D);
+  const decide = digits[place];
+  const roundedScaled = Math.floor(N / Math.pow(10, D - place)) + (decide >= 5 ? 1 : 0);
+  const correct = roundedScaled / Math.pow(10, place);
+  const correctText = correct.toFixed(place);
+  const kept = shown.slice(0, shown.length - (D - place) - (place === 0 ? 1 : 0));
+  return {
+    visual: null, prompt: `Runde ${shown} ${ROUND_PLACE_TEXT[place]}.`, answerType: "number", correct, correctText,
+    solution: `Rundungsstelle ist die ${ROUND_PLACE_NAME[place]}: ${kept}|${shown.slice(kept.length + (place === 0 ? 1 : 0))}\nEntscheidend ist die Ziffer rechts davon: ${decide}\n${roundingDecisionText(decide, correctText, place)}`
+  };
+}
+// Pythagoras: Taschenrechner-Ergebnis sinnvoll runden (1 oder 2 Nachkommastellen)
+function generatePythagorasRounding() {
+  let a, b, sq;
+  do { a = rnd(2, 20); b = rnd(2, 20); sq = a * a + b * b; } while (Number.isInteger(Math.sqrt(sq)));
+  const legCase = Math.random() < 0.4;
+  let expr, side, what;
+  if (legCase) {
+    let c, k;
+    do { k = rnd(2, 18); c = k + rnd(1, 10); sq = c * c - k * k; } while (Number.isInteger(Math.sqrt(sq)));
+    expr = `b = √(${c}² − ${k}²) = √${sq}`; side = "b"; what = "die Kathete";
+  } else { expr = `c = √(${a}² + ${b}²) = √${sq}`; side = "c"; what = "die Hypotenuse"; }
+  const place = rnd(1, 2), val = Math.sqrt(sq);
+  const shown = (Math.floor(val * 1e6) / 1e6).toFixed(6);
+  const scaled = Math.floor(val * 1e6), D = 6;
+  const decide = Number(shown.split(".")[1][place]);
+  const correct = (Math.floor(scaled / Math.pow(10, D - place)) + (decide >= 5 ? 1 : 0)) / Math.pow(10, place);
+  const correctText = correct.toFixed(place);
+  return {
+    visual: null,
+    prompt: `Für ${what} zeigt der Taschenrechner (in cm):\n${expr} = ${shown}…\nRunde ${side} ${ROUND_PLACE_TEXT[place]}.`,
+    answerType: "number", correct, correctText,
+    solution: `${side} ≈ ${shown}… cm\nRundungsstelle ist die ${ROUND_PLACE_NAME[place]}, entscheidend ist die Ziffer rechts davon: ${decide}\n${roundingDecisionText(decide, correctText, place)} cm`
+  };
+}
+// Skizze: rechtwinkliges Dreieck (rechter Winkel bei C), Seiten a, b, c beschriftet,
+// gesuchte Seite rot mit "?". Proportional zu den echten Kathetenlängen.
+function pythTriangleSvg(legA, legB, labels, missing) {
+  // Links Platz für die Beschriftung von a lassen, rechts für die Hypotenuse
+  const s = Math.min(150 / legA, 115 / legB);
+  const h = Math.max(45, legA * s), w = Math.max(45, legB * s);
+  const ox = 62, oy = 92 + h / 2;
+  const C = { x: ox, y: oy }, A = { x: ox + w, y: oy }, B = { x: ox, y: oy - h };
+  const sideStyle = key => key === missing ? `stroke="#dc2626" stroke-width="4"` : `stroke="#1e293b" stroke-width="3"`;
+  const txt = (x, y, t, key, anchor) => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="15" font-weight="700" text-anchor="${anchor || "middle"}" fill="${key === missing ? "#dc2626" : "#1e293b"}">${escapeHtml(t)}</text>`;
+  const len = Math.hypot(w, h), nx = h / len, ny = w / len; // Normale der Hypotenuse nach aussen
+  const r = 12;
+  return `<svg viewBox="0 0 200 200" class="mt-shape">`
+    + `<line x1="${C.x}" y1="${C.y}" x2="${B.x}" y2="${B.y}" ${sideStyle("a")}/>`
+    + `<line x1="${C.x}" y1="${C.y}" x2="${A.x}" y2="${A.y}" ${sideStyle("b")}/>`
+    + `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" ${sideStyle("c")}/>`
+    + `<polyline points="${C.x + r},${C.y} ${C.x + r},${C.y - r} ${C.x},${C.y - r}" fill="none" stroke="#1e293b" stroke-width="1.5"/>`
+    + `<circle cx="${C.x + r / 2}" cy="${C.y - r / 2}" r="1.6" fill="#1e293b"/>`
+    + txt(C.x - 8, C.y + 16, "C", null, "end") + txt(A.x + 6, A.y + 16, "A", null, "start") + txt(B.x - 8, B.y + 4, "B", null, "end")
+    + txt(C.x - 8, (C.y + B.y) / 2 + 5, labels.a, "a", "end")
+    + txt((C.x + A.x) / 2, C.y + 20, labels.b, "b")
+    + txt((A.x + B.x) / 2 + nx * 14, (A.y + B.y) / 2 - ny * 14 + 5, labels.c, "c", "start")
+    + `</svg>`;
+}
+// M2 2b: Fehlende Seite berechnen - Hypotenuse ODER Kathete gemischt, auf 1 oder 2 Nachkommastellen
+function generatePythagorasMissingSide() {
+  const place = rnd(1, 2), unit = pickOne(["cm", "cm", "m", "mm"]);
+  const fmt = v => v.toFixed(place);
+  const roundTo = v => Math.round(v * Math.pow(10, place) + 1e-9) / Math.pow(10, place);
+  const roundTxt = place === 1 ? "auf 1 Nachkommastelle runden" : "auf 2 Nachkommastellen runden";
+  if (Math.random() < 0.5) {
+    const a = rnd(3, 20), b = rnd(3, 20), sq = a * a + b * b, c = roundTo(Math.sqrt(sq));
+    return {
+      visual: pythTriangleSvg(a, b, { a: `${a} ${unit}`, b: `${b} ${unit}`, c: "c = ?" }, "c"),
+      prompt: `Im rechtwinkligen Dreieck ABC (rechter Winkel bei C) ist a = ${a} ${unit} und b = ${b} ${unit}. Berechne die fehlende Seite c (in ${unit}, ${roundTxt}).`,
+      answerType: "number", correct: c, correctText: fmt(c),
+      solution: `Gesucht ist die Hypotenuse (gegenüber dem rechten Winkel) → addieren:\nc² = a² + b² = ${a}² + ${b}² = ${a * a} + ${b * b} = ${sq}\nc = √${sq} ≈ ${fmt(c)} ${unit}`
+    };
+  }
+  const k = rnd(3, 18), hyp = k + rnd(1, 12), sq = hyp * hyp - k * k, x = roundTo(Math.sqrt(sq));
+  const askA = Math.random() < 0.5; // gesucht a (bekannt b) oder gesucht b (bekannt a)
+  const legA = askA ? Math.sqrt(sq) : k, legB = askA ? k : Math.sqrt(sq);
+  const ask = askA ? "a" : "b", known = askA ? "b" : "a";
+  const labels = { c: `${hyp} ${unit}` }; labels[known] = `${k} ${unit}`; labels[ask] = `${ask} = ?`;
+  return {
+    visual: pythTriangleSvg(legA, legB, labels, ask),
+    prompt: `Im rechtwinkligen Dreieck ABC (rechter Winkel bei C) ist ${known} = ${k} ${unit} und c = ${hyp} ${unit}. Berechne die fehlende Seite ${ask} (in ${unit}, ${roundTxt}).`,
+    answerType: "number", correct: x, correctText: fmt(x),
+    solution: `Gesucht ist eine Kathete, c ist die Hypotenuse → subtrahieren:\n${ask}² = c² − ${known}² = ${hyp}² − ${k}² = ${hyp * hyp} − ${k * k} = ${sq}\n${ask} = √${sq} ≈ ${fmt(x)} ${unit}`
+  };
+}
 // M2 2c: Pythagoras in Alltagssituationen
 function generatePythagorasEveryday() {
   const t = rnd(0, 2);
@@ -5983,7 +6104,11 @@ const BASISWISSEN_CHAPTERS = [
     ex("bw-div", "Division", generateDiv, "Überlege: wie oft passt der Divisor in die Zahl?")
   ]),
   chapter("bw-runden", "Runden", [
-    ex("bw-runden-1", "Zahlen runden", generateRounding, "Schau auf die Ziffer rechts von der Rundungsstelle: ab 5 wird aufgerundet, sonst abgerundet.")
+    ex("bw-runden-1", "Zahlen runden", generateRounding, "Schau auf die Ziffer rechts von der Rundungsstelle: ab 5 wird aufgerundet, sonst abgerundet."),
+    ex("bw-runden-dez0", "Dezimalzahlen auf Ganze runden", () => generateDecimalRounding(0), "Schau auf die erste Ziffer nach dem Komma (Zehntel): ab 5 wird aufgerundet, sonst abgerundet. Alle Nachkommastellen fallen weg."),
+    ex("bw-runden-dez1", "Auf 1 Nachkommastelle runden", () => generateDecimalRounding(1), "Die 1. Nachkommastelle (Zehntel) bleibt stehen. Schau auf die 2. Nachkommastelle: ab 5 aufrunden, sonst abrunden. Eine Null am Schluss bleibt stehen (z.B. 3.97 → 4.0)."),
+    ex("bw-runden-dez2", "Auf 2 Nachkommastellen runden", () => generateDecimalRounding(2), "Die ersten zwei Nachkommastellen (Hundertstel) bleiben stehen. Schau auf die 3. Nachkommastelle: ab 5 aufrunden, sonst abrunden."),
+    ex("bw-runden-dez3", "Auf 3 Nachkommastellen runden", () => generateDecimalRounding(3), "Die ersten drei Nachkommastellen (Tausendstel) bleiben stehen. Schau auf die 4. Nachkommastelle: ab 5 aufrunden, sonst abrunden.")
   ]),
   chapter("bw-winkel", "Winkel bestimmen", [
     ex("bw-winkel-1", "Ergänzungswinkel", generateAngle, "Ergänzungswinkel zu 90° (Komplementärwinkel) bzw. zu 180° (Supplementärwinkel): ziehe den gegebenen Winkel von 90° bzw. 180° ab."),
@@ -6193,10 +6318,12 @@ const JAHR2_CHAPTERS = [
     ex("m2-2a-thales", "Winkelberechnung am Thaleskreis", generateThalesAngle, "Der Winkel am Punkt auf dem Kreis ist immer 90°. Ziehe den bekannten Winkel und 90° von 180° ab.", true),
     ex("m2-2a-thales-tf", "Aussagen zu Thaleskreis-Winkeln beurteilen", generateThalesStatementTruth, "Der Satz des Thales: Liegt ein Dreieckspunkt auf einem Halbkreis über dem Durchmesser, ist der Winkel an diesem Punkt immer 90°."),
     ex("m2-2a-spezial", "Diagonale im Quadrat, Höhe im gleichseitigen Dreieck", generatePythagorasSpecial, "Suche das rechtwinklige Dreieck: Beim Quadrat sind beide Katheten gleich der Seite, beim gleichseitigen Dreieck ist eine Kathete die halbe Seite und die Hypotenuse die ganze Seite.", true),
-    ex("m2-2a-distanz", "Distanz zweier Punkte", generatePointDistance, "Bestimme den waagrechten und den senkrechten Abstand der Punkte (Differenz der x- bzw. y-Werte). Das sind die Katheten, die Distanz ist die Hypotenuse.", true)
+    ex("m2-2a-distanz", "Distanz zweier Punkte", generatePointDistance, "Bestimme den waagrechten und den senkrechten Abstand der Punkte (Differenz der x- bzw. y-Werte). Das sind die Katheten, die Distanz ist die Hypotenuse.", true),
+    ex("m2-2a-runden", "Pythagoras-Ergebnisse runden", generatePythagorasRounding, "Die Stelle, auf die gerundet wird, bleibt stehen. Schau auf die Ziffer rechts davon: ab 5 aufrunden, sonst abrunden. Eine Null am Schluss bleibt stehen (z.B. 7.996 → 8.00).")
   ]),
   chapter("2b", "Der Satz von Pythagoras unter der Lupe", [
     ex("m2-2b-1", "Kathete berechnen", generatePythagorasLeg, "Satz des Pythagoras umgestellt: b = √(c² − a²).", true),
+    ex("m2-2b-mix", "Fehlende Seite berechnen (Hypotenuse oder Kathete)", generatePythagorasMissingSide, "Zuerst klären: Ist die gesuchte Seite die Hypotenuse (gegenüber dem rechten Winkel, hier c)? Dann c = √(a² + b²). Ist sie eine Kathete? Dann z.B. a = √(c² − b²). Am Schluss auf die verlangte Anzahl Nachkommastellen runden.", true),
     ex("m2-2b-check", "Rechtwinkligkeit prüfen", generateRightTriangleTruth, "Prüfe, ob die längste Seite im Quadrat gleich der Summe der Quadrate der beiden anderen Seiten ist (a² + b² = c²).", true)
   ]),
   chapter("2c", "Pythagoras praktisch", [
@@ -6611,15 +6738,19 @@ function selectExercise(exercise) {
 
 /* ================= Übungs-Suche ================= */
 const SEARCH_INDEX = CATEGORIES.flatMap(cat => cat.chapters.flatMap(ch => ch.exercises.map(ex => ({ ex, ch, cat }))));
+// Treffer: Übungstitel, Beschreibung/Lernziel oder Kapiteltitel enthalten den Suchbegriff
+function searchExercises(q) {
+  return SEARCH_INDEX.filter(item => {
+    if (item.ex.title.toLowerCase().includes(q) || item.ch.title.toLowerCase().includes(q)) return true;
+    const info = EXERCISE_INFO[item.ex.id];
+    return !!(info && ((info.d || "").toLowerCase().includes(q) || (info.g || "").toLowerCase().includes(q)));
+  });
+}
 function exSearchRun(query) {
   const q = query.trim().toLowerCase();
   const resultsEl = document.getElementById("exSearchResults");
   if (!q) { resultsEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:16px;">Suchbegriff eingeben, z.B. "Prozent".</p>'; return; }
-  const matches = SEARCH_INDEX.filter(item => {
-    if (item.ex.title.toLowerCase().includes(q)) return true;
-    const info = EXERCISE_INFO[item.ex.id];
-    return !!(info && ((info.d || "").toLowerCase().includes(q) || (info.g || "").toLowerCase().includes(q)));
-  });
+  const matches = searchExercises(q);
   if (!matches.length) { resultsEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:16px;">Keine Übungen gefunden.</p>'; return; }
   resultsEl.innerHTML = matches.map((m, i) => `
     <div class="chapter-row" data-idx="${i}" tabindex="0" role="button">
@@ -8083,6 +8214,7 @@ function formatCorrectAnswer(task) {
   }
   if (task.answerType === "boolean") return task.correct ? "Wahr" : "Falsch";
   if (task.answerType === "hotspot") return "(siehe Markierung im Bild)";
+  if (task.correctText) return task.correctText;
   return String(task.correct);
 }
 function stackedFractionHtml(num, den) {
@@ -8791,16 +8923,114 @@ document.getElementById("goKlassenBtn").addEventListener("click", async () => {
   const ok = await klassenCheckReady();
   joinBtn.disabled = !ok;
 });
+/* ---- Klassenduell: weitere Themen dazunehmen. Das gewählte Thema bleibt das Hauptthema;
+   per Suche können beliebige weitere Übungen (oder ganze Kapitel) aus allen Kategorien
+   dazugemischt werden. Daraus entsteht beim "Raum erstellen" eine gemischte Übung - alles
+   Weitere (Vorschau, "Anderes Thema", Übungsmodus) läuft wie bei gemischten Aufgaben. ---- */
+let klassenBaseExercise = null, klassenExtraExercises = [];
+function klassenPoolOf(ex) { return ex.isMixed ? ex.mixedPool : [ex]; }
+function klassenBuildExercise() {
+  const base = klassenBaseExercise;
+  if (!klassenExtraExercises.length) return base;
+  const pool = [], seen = new Set();
+  [...klassenPoolOf(base), ...klassenExtraExercises].forEach(e => { if (!seen.has(e.id)) { seen.add(e.id); pool.push(e); } });
+  const n = klassenExtraExercises.length;
+  const title = n <= 2 ? `${base.title} + ${klassenExtraExercises.map(e => e.title).join(" + ")}` : `${base.title} + ${n} weitere Themen`;
+  return {
+    id: "klassen-custom-mixed", title, isMixed: true, mixedPool: pool, klassenBase: base, klassenExtras: klassenExtraExercises.slice(),
+    generate: () => { const sub = pool[rnd(0, pool.length - 1)]; const t = sub.generate(); t.sourceHelp = sub.help; t.sourceExerciseId = sub.id; return t; },
+    help: "Diese Übung mischt mehrere Themen. Der Hilfe-Button zeigt jeweils den Lösungsweg zur aktuellen Aufgabe.",
+    calc: pool.some(e => e.calc)
+  };
+}
+function klassenRenderTopics() {
+  const ex = klassenBuildExercise();
+  document.getElementById("klassen_exercise_title").innerHTML = titleWithCalc(escapeHtml(ex.title), ex.calc);
+  const baseChip = `<span class="topic-chip topic-chip-base">${escapeHtml(klassenBaseExercise.title)}</span>`;
+  const extraChips = klassenExtraExercises.map((e, i) => `<button class="topic-chip" data-remove-extra="${i}" aria-label="${escapeHtml(e.title)} entfernen">${escapeHtml(e.title)} <span aria-hidden="true">✕</span></button>`).join("");
+  const chipsEl = document.getElementById("klassenTopicChips");
+  chipsEl.innerHTML = baseChip + extraChips + (klassenExtraExercises.length ? `<p style="flex-basis:100%; margin:4px 0 0; font-size:0.85rem; color:var(--muted);">${ex.mixedPool.length} Aufgabentypen werden zufällig gemischt.</p>` : "");
+  refreshSqrtOpts(ex);
+  const input = document.getElementById("klassenTopicSearchInput");
+  if (!document.getElementById("klassenTopicSearch").classList.contains("hidden")) klassenTopicSearchRun(input.value);
+}
+document.getElementById("klassenTopicChips").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-remove-extra]");
+  if (!btn) return;
+  klassenExtraExercises.splice(Number(btn.dataset.removeExtra), 1);
+  klassenRenderTopics();
+});
+document.getElementById("klassenAddTopicBtn").addEventListener("click", () => {
+  const wrap = document.getElementById("klassenTopicSearch");
+  const open = wrap.classList.contains("hidden");
+  wrap.classList.toggle("hidden", !open);
+  document.getElementById("klassenAddTopicBtn").textContent = open ? "Suche schliessen" : "➕ Weitere Themen hinzufügen";
+  if (open) {
+    const input = document.getElementById("klassenTopicSearchInput");
+    input.value = "";
+    klassenTopicSearchRun("");
+    input.focus();
+  }
+});
+document.getElementById("klassenTopicSearchInput").addEventListener("input", (e) => klassenTopicSearchRun(e.target.value));
+let klassenTopicSearchItems = [];
+function klassenTopicSearchRun(query) {
+  const q = query.trim().toLowerCase();
+  const resultsEl = document.getElementById("klassenTopicSearchResults");
+  if (!q) { klassenTopicSearchItems = []; resultsEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:12px;">Suchbegriff eingeben, z.B. "Runden".</p>'; return; }
+  const inPool = new Set(klassenPoolOf(klassenBuildExercise()).map(e => e.id));
+  // Ganze Kapitel, deren Titel passt, zuerst - danach die einzelnen Übungen
+  const chapters = CATEGORIES.flatMap(cat => cat.chapters.filter(ch => ch.exercises.length > 1 && ch.title.toLowerCase().includes(q)).map(ch => ({ kind: "chapter", ch, cat, exercises: ch.exercises })));
+  const singles = searchExercises(q).map(m => ({ kind: "ex", ...m, exercises: [m.ex] }));
+  klassenTopicSearchItems = [...chapters, ...singles];
+  if (!klassenTopicSearchItems.length) { resultsEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:12px;">Keine Übungen gefunden.</p>'; return; }
+  resultsEl.innerHTML = klassenTopicSearchItems.map((it, i) => {
+    const done = it.exercises.every(e => inPool.has(e.id));
+    const title = it.kind === "chapter" ? `Ganzes Kapitel: ${escapeHtml(it.ch.title)} (${it.exercises.length} Aufgabentypen)` : titleWithCalc(escapeHtml(it.ex.title), it.ex.calc);
+    const sub = it.kind === "chapter" ? escapeHtml(it.cat.title) : `${escapeHtml(it.cat.title)} · ${escapeHtml(it.ch.title)}`;
+    return `<div class="chapter-row" data-kt-idx="${i}" tabindex="0" role="button"${done ? ' aria-disabled="true" style="opacity:0.55;"' : ""}>
+      <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+        <span class="chapter-title">${title}</span>
+        <span style="font-size:0.75rem; color:var(--muted);">${sub}</span>
+      </div>
+      <span class="chapter-status">${done ? "✓ dabei" : "➕"}</span>
+    </div>`;
+  }).join("");
+}
+function klassenTopicSearchPick(row) {
+  const it = klassenTopicSearchItems[Number(row.dataset.ktIdx)];
+  if (!it) return;
+  const inPool = new Set(klassenPoolOf(klassenBuildExercise()).map(e => e.id));
+  const add = it.exercises.filter(e => !inPool.has(e.id));
+  if (!add.length) return;
+  klassenExtraExercises.push(...add);
+  klassenRenderTopics();
+}
+document.getElementById("klassenTopicSearchResults").addEventListener("click", (e) => {
+  const row = e.target.closest("[data-kt-idx]");
+  if (row) klassenTopicSearchPick(row);
+});
+document.getElementById("klassenTopicSearchResults").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const row = e.target.closest("[data-kt-idx]");
+  if (row) { e.preventDefault(); klassenTopicSearchPick(row); }
+});
 document.getElementById("goKlassenHostSetupBtn").addEventListener("click", () => {
-  document.getElementById("klassen_exercise_title").innerHTML = titleWithCalc(escapeHtml(currentExercise.title), currentExercise.calc);
-  refreshSqrtOpts();
+  // Nach einem Klassenduell mit Zusatzthemen ist currentExercise die gemischte Übung -
+  // dann wieder vom ursprünglichen Hauptthema (inkl. Zusatzthemen) ausgehen.
+  const base = currentExercise.klassenBase || currentExercise;
+  if (!klassenBaseExercise || klassenBaseExercise.id !== base.id) klassenExtraExercises = currentExercise.klassenExtras ? currentExercise.klassenExtras.slice() : [];
+  klassenBaseExercise = base;
+  document.getElementById("klassenTopicSearch").classList.add("hidden");
+  document.getElementById("klassenAddTopicBtn").textContent = "➕ Weitere Themen hinzufügen";
+  klassenRenderTopics();
   showView("klassenHostSetup");
 });
 // Wurzel-Varianten (Moduswahl und Klassenduell-Einrichtung, gleiche Einstellung):
 // Mehrfachauswahl, mindestens eine bleibt aktiv. Nur sichtbar, wenn die Übung bzw. der Mix
 // "Quadratwurzel berechnen" enthält.
-function refreshSqrtOpts() {
-  const ex = currentExercise;
+function refreshSqrtOpts(exOverride) {
+  const ex = exOverride || currentExercise;
   const hasSqrt = !!ex && (ex.id === "m2-1c-root" || (ex.mixedPool || []).some(e => e.id === "m2-1c-root"));
   document.querySelectorAll(".sqrt-opts").forEach(el => el.classList.toggle("hidden", !hasSqrt));
   document.querySelectorAll(".choice-btn[data-sqrt-variant]").forEach(b => b.classList.toggle("active", sqrtRootVariants.includes(b.dataset.sqrtVariant)));
@@ -8810,7 +9040,7 @@ document.querySelectorAll('.choice-btn[data-sqrt-variant]').forEach(btn => btn.a
   const on = sqrtRootVariants.includes(v);
   if (on && sqrtRootVariants.length === 1) return;
   sqrtRootVariants = on ? sqrtRootVariants.filter(x => x !== v) : [...sqrtRootVariants, v];
-  refreshSqrtOpts();
+  refreshSqrtOpts(document.getElementById("klassenHostSetupView").classList.contains("hidden") ? null : klassenBuildExercise());
 }));
 document.getElementById("klassenNumqSlider").addEventListener("input", (e) => {
   klassenSettings.numQuestions = Number(e.target.value);
@@ -8854,6 +9084,7 @@ document.getElementById("klassenCreateRoomBtn").addEventListener("click", async 
   const ok = await klassenCheckReady();
   if (!ok) { openConfirm("Verbindung nicht möglich. Prüfe die Internetverbindung.", null, "OK"); return; }
   klassenIsHost = true;
+  if (klassenBaseExercise) currentExercise = klassenBuildExercise();
   let pin = klassenGeneratePin(), exists = true, attempts = 0;
   try {
     do {
@@ -9460,6 +9691,7 @@ async function klassenStartPractice() {
   }
 }
 async function klassenSetPracticePhase(poolIds) {
+  if (!poolIds && currentExercise && currentExercise.isMixed) poolIds = currentExercise.mixedPool.map(e => e.id);
   try { await firebaseDb.collection("rooms").doc(klassenRoomPin).update({ phase: "practice", practicePoolIds: poolIds || null }); } catch (e) { console.error("Klassenmodus: Übung konnte nicht gestartet werden.", e); }
   const isSubset = currentExercise && currentExercise.isMixed && poolIds && poolIds.length < currentExercise.mixedPool.length;
   document.getElementById("klassenHostPracticeTopics").textContent = isSubset

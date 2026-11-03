@@ -9096,7 +9096,7 @@ document.getElementById("klassenCreateRoomBtn").addEventListener("click", async 
     klassenRoomPin = pin;
     await firebaseDb.collection("rooms").doc(pin).set({
       createdAt: Date.now(), phase: "lobby", topic: currentExercise.title, exerciseId: currentExercise.id,
-      numQuestions: klassenSettings.numQuestions, timerSec: klassenSettings.timerSec,
+      numQuestions: klassenSettings.numQuestions, timerSec: klassenSettings.timerSec, baseTimerSec: klassenSettings.timerSec,
       rankInterval: klassenSettings.rankInterval, currentQuestionIndex: -1, answerRevealed: false
     });
   } catch (e) {
@@ -9409,8 +9409,11 @@ async function klassenHostNextQuestionInner(multiplier) {
     task.doublePoints = true; // Kompatibilität mit älteren, noch gecachten SuS-Versionen
   }
   const startedAt = Date.now();
-  await roomRef.update({ currentQuestionIndex: nextIndex, currentTask: task, questionStartedAt: startedAt, phase: "playing", answerRevealed: false });
-  klassenHostRenderPlay(nextIndex, task, startedAt, room.timerSec, room.numQuestions);
+  // Jede Aufgabe startet wieder mit der eingestellten Grundzeit - eine
+  // Verlängerung (+15 Sek.) gilt nur für die Aufgabe, in der sie gedrückt wurde.
+  const timerSec = room.baseTimerSec || klassenSettings.timerSec || room.timerSec;
+  await roomRef.update({ currentQuestionIndex: nextIndex, currentTask: task, questionStartedAt: startedAt, phase: "playing", answerRevealed: false, timerSec });
+  klassenHostRenderPlay(nextIndex, task, startedAt, timerSec, room.numQuestions);
 }
 // Punkte-Faktor einer Aufgabe (1, 2 oder 3). Ältere Räume kennen nur doublePoints.
 function klassenTaskMultiplier(task) {

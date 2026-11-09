@@ -511,7 +511,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-02.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-09.1</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -8830,6 +8830,18 @@ async function klassenDeleteRoomData(pin, questionCount) {
   try { await roomRef.delete(); } catch (e) { console.error("Klassenmodus: Raum konnte nicht gelöscht werden.", e); }
 }
 // Punkte schreibt jedes SuS-Gerät selbst - nur echte Zahlen anzeigen (kein HTML aus Firebase)
+// Punkte wie bei Kahoot: richtige Antwort = 1000 × (1 − (Antwortzeit / Zeitlimit) / 2), also
+// mindestens 500 und höchstens 1000 Punkte. Zusätzlich gibt es in den ersten Sekunden die vollen
+// 1000 (Lese-/Tipp-Puffer), sonst wären 1000 Punkte praktisch unerreichbar.
+const KLASSEN_FULL_POINTS_SEC = 2;
+const KLASSEN_LATENCY_MAX_MS = 5000;
+function klassenSpeedPoints(elapsedSec, timerSec) {
+  const total = Math.max(1, Number(timerSec) || 30);
+  const grace = Math.min(KLASSEN_FULL_POINTS_SEC, total * 0.2);
+  const t = Math.max(0, (Number(elapsedSec) || 0) - grace);
+  const ratio = Math.min(1, t / Math.max(0.001, total - grace));
+  return Math.round(1000 * (1 - ratio / 2));
+}
 function klassenScoreOf(p) { const n = Number(p && p.score); return isFinite(n) ? Math.round(n) : 0; }
 function klassenRoomLooksAbandoned(room) {
   if (!room || room.phase === "finished") return true;
@@ -9962,7 +9974,11 @@ function klassenRenderStudentQuestion(room) {
   renderBuffer("klassen");
   renderPairBuffer("klassen");
   const startedAt = room.questionStartedAt;
-  klassenStudentQStartedAt = startedAt;
+  // Punkte-Uhr erst ab dem Moment, in dem die Frage auf DIESEM Gerät erscheint: die Verzögerung
+  // bis Firestore die Frage ausliefert (WLAN, Uhrabgleich) soll keine Punkte kosten. Kommt die Frage
+  // sehr spät an (Neuladen/Beitritt mitten in der Frage), zählt weiterhin der Start der Lehrperson.
+  const shownAt = klassenHostNow();
+  klassenStudentQStartedAt = (shownAt - startedAt >= 0 && shownAt - startedAt < KLASSEN_LATENCY_MAX_MS) ? shownAt : startedAt;
   klassenStudentCurrentTimerSec = room.timerSec;
   const tick = () => {
     const remaining = Math.max(0, klassenStudentCurrentTimerSec - (klassenHostNow() - startedAt) / 1000);
@@ -10003,7 +10019,7 @@ async function klassenSubmitAnswer() {
   // (samt Punkten) bei der nächsten Frage. Ausserdem sperrt die Eingabe so sofort.
   const qIndex = klassenLastSeenQIndex;
   const elapsedSec = (klassenHostNow() - klassenStudentQStartedAt) / 1000;
-  let points = ok ? Math.max(0, Math.round(1000 * (1 - Math.min(1, elapsedSec / klassenStudentCurrentTimerSec)))) : 0;
+  let points = ok ? klassenSpeedPoints(elapsedSec, klassenStudentCurrentTimerSec) : 0;
   points *= klassenTaskMultiplier(task);
   klassenLockAnswerUI(true);
   klassenRecordMyAnswer({ answered: true, prompt: task.prompt, myAnswer: formatMyAnswerForDisplayHtml(task, inputBuffers.klassen), myAnswerText: formatMyAnswerForDisplay(task, inputBuffers.klassen), correctAnswer: formatCorrectAnswerHtml(task), correctAnswerText: formatCorrectAnswer(task), correct: ok, points });

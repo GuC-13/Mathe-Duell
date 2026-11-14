@@ -511,7 +511,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-09.2</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-14.1</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -8873,7 +8873,12 @@ function klassenRenderHostGone() {
   document.getElementById("klassenHostGoneBar").classList.toggle("hidden", !gone);
 }
 let klassenSelfUnsub = null, klassenLastPingSeenMs = 0, klassenSeenSelfOnce = false;
-const KLASSEN_OFFLINE_MS = 15000;
+// Firestore-Gratiskontingent (50'000 Lese-/20'000 Schreibvorgänge pro Tag): Jeder Herzschlag ist
+// ein Schreibvorgang und ein Lesevorgang pro Gerät, das die Spielerliste mithört. Deshalb nur
+// alle 15 s (vorher 5 s) - App-Wechsel/Sperren meldet klassenWriteActive weiterhin sofort.
+// KLASSEN_OFFLINE_MS muss deutlich über zwei Herzschlägen liegen.
+const KLASSEN_HEARTBEAT_MS = 15000;
+const KLASSEN_OFFLINE_MS = 35000;
 let klassenHeartbeatIv = null;
 // Schreibt sofort "aktiv/nicht aktiv" bei Sichtbarkeitswechsel (App-Wechsel,
 // Bildschirm sperren) - der reine Herzschlag-Timer allein reicht nicht: mobile
@@ -8889,11 +8894,35 @@ function klassenStartHeartbeat() {
   klassenStopHeartbeat();
   document.addEventListener("visibilitychange", klassenWriteActive);
   klassenWriteActive();
-  klassenHeartbeatIv = setInterval(klassenWriteActive, 5000);
+  klassenHeartbeatIv = setInterval(klassenWriteActive, KLASSEN_HEARTBEAT_MS);
 }
 function klassenStopHeartbeat() {
   clearInterval(klassenHeartbeatIv); klassenHeartbeatIv = null;
   document.removeEventListener("visibilitychange", klassenWriteActive);
+}
+// Die Lehrperson schreibt die Anzahl Beigetretener ins Raum-Dokument. So müssen die SuS-Geräte
+// nicht mehr die ganze Spielerliste mithören (das kostete pro Herzschlag einen Lesevorgang
+// auf JEDEM Gerät - bei 24 SuS rund 7'500 pro Minute).
+let klassenLastWrittenPlayerCount = -1;
+function klassenHostSyncPlayerCount(count) {
+  if (!klassenIsHost || !klassenRoomPin || count === klassenLastWrittenPlayerCount) return;
+  klassenLastWrittenPlayerCount = count;
+  firebaseDb.collection("rooms").doc(klassenRoomPin).update({ playerCount: count }).catch(() => { klassenLastWrittenPlayerCount = -1; });
+}
+// SuS: Anzahl im Warteraum aus dem Raum-Dokument. Nur wenn die Lehrperson noch eine ältere
+// App-Version hat (kein playerCount), im Warteraum wie früher die Spielerliste mithören.
+function klassenStudentSyncWaitCount(room) {
+  const stop = () => { if (klassenPlayersUnsub) { klassenPlayersUnsub(); klassenPlayersUnsub = null; } };
+  if (typeof room.playerCount === "number") {
+    stop();
+    document.getElementById("klassenWaitCount").textContent = String(room.playerCount);
+  } else if (room.phase !== "lobby") {
+    stop();
+  } else if (!klassenPlayersUnsub && klassenRoomPin) {
+    klassenPlayersUnsub = firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").onSnapshot(snap => {
+      document.getElementById("klassenWaitCount").textContent = String(snap.size);
+    }, err => console.error("Klassenmodus: Warteraum-Update fehlgeschlagen.", err));
+  }
 }
 let klassenOfflineCheckIv = null;
 function klassenStartOfflineWatch() {
@@ -9109,8 +9138,9 @@ document.getElementById("klassenCreateRoomBtn").addEventListener("click", async 
     await firebaseDb.collection("rooms").doc(pin).set({
       createdAt: Date.now(), phase: "lobby", topic: currentExercise.title, exerciseId: currentExercise.id,
       numQuestions: klassenSettings.numQuestions, timerSec: klassenSettings.timerSec, baseTimerSec: klassenSettings.timerSec,
-      rankInterval: klassenSettings.rankInterval, currentQuestionIndex: -1, answerRevealed: false
+      rankInterval: klassenSettings.rankInterval, currentQuestionIndex: -1, answerRevealed: false, playerCount: 0
     });
+    klassenLastWrittenPlayerCount = 0;
   } catch (e) {
     console.error("Klassenmodus: Raum konnte nicht erstellt werden.", e);
     openConfirm("Raum konnte nicht erstellt werden. Prüfe die Internetverbindung.", null, "OK");
@@ -9126,6 +9156,7 @@ document.getElementById("klassenCreateRoomBtn").addEventListener("click", async 
     klassenAllPlayers = [];
     snap.forEach(d => klassenAllPlayers.push({ id: d.id, name: d.data().name, lastSeen: d.data().lastSeen, active: d.data().active }));
     document.getElementById("klassenJoinCount").textContent = String(klassenAllPlayers.length);
+    klassenHostSyncPlayerCount(snap.size);
     document.getElementById("klassenPlayerList").innerHTML = klassenAllPlayers.map(p => `<button class="choice-btn active" data-player-id="${escapeHtml(p.id)}">${escapeHtml(p.name)}</button>`).join("");
     klassenRenderOfflineBanner();
   }, err => console.error("Klassenmodus: Spielerliste konnte nicht geladen werden.", err));
@@ -9186,9 +9217,7 @@ function klassenAttachStudentListeners(roomRef, pin) {
   klassenLastPingSeenMs = 0;
   klassenSeenSelfOnce = false;
   klassenLastRoomKey = null;
-  klassenPlayersUnsub = roomRef.collection("players").onSnapshot(snap => {
-    document.getElementById("klassenWaitCount").textContent = String(snap.size);
-  }, err => console.error("Klassenmodus: Warteraum-Update fehlgeschlagen.", err));
+  // Anzahl Beigetretener: kommt aus dem Raum-Dokument (klassenStudentSyncWaitCount)
   klassenRoomUnsub = roomRef.onSnapshot(snap => {
     const room = snap.data();
     if (room) klassenStudentHandleRoomUpdate(room);
@@ -9582,6 +9611,7 @@ function klassenHostRenderPlay(index, task, startedAt, timerSec, numQuestions) {
   if (klassenPlayersUnsub) klassenPlayersUnsub();
   klassenPlayersUnsub = firebaseDb.collection("rooms").doc(klassenRoomPin).collection("players").onSnapshot(snap => {
     klassenCurrentTotalPlayers = snap.size;
+    klassenHostSyncPlayerCount(snap.size);
     klassenAllPlayers = [];
     snap.forEach(d => klassenAllPlayers.push({ id: d.id, name: d.data().name, lastSeen: d.data().lastSeen, active: d.data().active }));
     document.getElementById("klassenHostTotalPlayers").textContent = String(snap.size);
@@ -9815,8 +9845,9 @@ function klassenStudentHandleRoomUpdate(room) {
     if (klassenLastHostSeen > 0 || Math.abs(diff) > 60000) klassenHostClockOffset = diff;
     klassenLastHostSeen = room.hostSeen; klassenHostSeenLocalAt = Date.now(); klassenRenderHostGone();
   }
-  // Der Host-Herzschlag ändert nur hostSeen - deswegen nicht alles neu zeichnen.
-  const { hostSeen, ...rest } = room;
+  klassenStudentSyncWaitCount(room);
+  // Host-Herzschlag (hostSeen) und Beitritte (playerCount) - deswegen nicht alles neu zeichnen.
+  const { hostSeen, playerCount, ...rest } = room;
   const key = JSON.stringify(rest);
   if (key === klassenLastRoomKey) return;
   klassenLastRoomKey = key;

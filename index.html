@@ -511,7 +511,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-14.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-22.1</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -10152,6 +10152,29 @@ document.getElementById("klassenMyAnswersSaveBtn").addEventListener("click", () 
   const canvas = drawResultsCanvas("Meine Antworten", lines);
   shareCanvasAsImage(canvas, "meine-antworten.png");
 });
+
+/* ---- Direktlink aus Matheo: ?uebung=<id>[,<id>…] öffnet genau diese Übung(en) in der Modus-Auswahl.
+   Eine ID → die Übung selbst; mehrere IDs → gemischt aus genau diesen Aufgabentypen. ---- */
+(function uebungAusLink() {
+  let ids;
+  try { ids = (new URLSearchParams(location.search).get("uebung") || "").split(",").map(s => s.trim()).filter(Boolean); } catch (e) { return; }
+  if (!ids.length) return;
+  const treffer = ids.map(id => SEARCH_INDEX.find(m => m.ex.id === id)).filter(Boolean);
+  history.replaceState(null, "", location.pathname);   // Neuladen startet wieder normal
+  if (!treffer.length) return;
+  navCategory = treffer[0].cat;
+  navChapter = treffer[0].ch;
+  if (treffer.length === 1) { selectExercise(treffer[0].ex); return; }
+  if (treffer.every(m => m.ch === navChapter)) { selectExercise(makeMixedExercise(navChapter, treffer.map(m => m.ex.id))); return; }
+  const pool = treffer.map(m => m.ex);
+  navChapter = null;
+  selectExercise({
+    id: "link-mixed", title: "Gemischte Aufgaben (Auswahl)", isMixed: true, mixedPool: pool,
+    generate: () => { const sub = pool[rnd(0, pool.length - 1)]; const t = sub.generate(); t.sourceHelp = sub.help; t.sourceExerciseId = sub.id; return t; },
+    help: "Diese Übung mischt die ausgewählten Aufgabentypen. Der Hilfe-Button zeigt jeweils den Lösungsweg zur aktuellen Aufgabe.",
+    calc: pool.some(e => e.calc)
+  });
+})();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });

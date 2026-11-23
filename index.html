@@ -511,7 +511,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-23.2</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-23.3</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -1958,8 +1958,8 @@
         <div class="lp21-code">M.3.A.3 j, k <span class="lp21-zyklus">Zyklus 3</span></div>
         <p class="lp21-desc">„können zu einer Funktionsgleichung Wertepaare bestimmen und in einem Koordinatensystem einzeichnen … können zu linearen Funktionen den Funktionsgraphen zeichnen, die Steigung, den y-Achsenabschnitt und die Nullstelle bestimmen.“</p>
         <ul class="lp21-list">
-          <li><strong>Jahr 3:</strong> Geraden (Steigung und y-Achsenabschnitt am Graphen, Funktionsgleichung zum Graphen)</li>
-          <li><strong>Jahr 3:</strong> Lineare und nicht lineare Funktionen (Funktionswert, Nullstelle, Wertetabelle)</li>
+          <li><strong>Jahr 3:</strong> Geraden (Steigung und y-Achsenabschnitt am Graphen, Geradengleichung zum Graphen)</li>
+          <li><strong>Jahr 3:</strong> Lineare und nicht lineare Funktionen (y-Wert berechnen, Schnittpunkt mit der x-Achse, Wertetabelle)</li>
         </ul>
       </div>
 
@@ -2493,9 +2493,9 @@ const SHAPES = [
   { name: "Rechteck", axis: 2, rot: 2, points: "40,70 160,70 160,130 40,130" },
   { name: "gleichseitiges Dreieck", axis: 3, rot: 3, points: regPoly(3, 100, 105, 78, -90) },
   { name: "gleichschenkliges Dreieck", axis: 1, rot: 1, points: "100,40 50,160 150,160" },
-  { name: "unregelmässiges Dreieck", axis: 0, rot: 1, points: "60,40 165,85 90,170" },
-  { name: "Raute (Rhombus)", axis: 2, rot: 2, points: "100,30 140,100 100,170 60,100" },
-  { name: "Parallelogramm", axis: 0, rot: 2, points: "60,50 170,50 140,150 30,150" },
+  { name: "ungleichseitiges Dreieck", axis: 0, rot: 1, points: "60,40 165,85 90,170" },
+  { name: "Rhombus", axis: 2, rot: 2, points: "100,30 140,100 100,170 60,100" },
+  { name: "Parallelenviereck", axis: 0, rot: 2, points: "60,50 170,50 140,150 30,150" },
   { name: "regelmässiges Fünfeck", axis: 5, rot: 5, points: regPoly(5, 100, 105, 78, -90) },
   { name: "regelmässiges Sechseck", axis: 6, rot: 6, points: regPoly(6, 100, 100, 78, 0) },
   ...[
@@ -2526,10 +2526,11 @@ function coordinateGridSVG(x, y) {
 
 /* ---- Mathematik 1. Jahr: Generatoren ---- */
 function generateAxisSymmetry() { const s = SHAPES[rnd(0, SHAPES.length - 1)]; return { visual: shapeSVG(s), prompt: `Wie viele Symmetrieachsen hat diese Figur (${s.name})?`, answerType: "number", correct: s.axis }; }
-function generateRotSymmetry() { const s = SHAPES[rnd(0, SHAPES.length - 1)]; return { visual: shapeSVG(s), prompt: `Welche Drehsymmetrie-Ordnung hat diese Figur (${s.name})? (1 = keine ausser der vollen Drehung)`, answerType: "number", correct: s.rot }; }
-function generateAxisReflectionX() { const x = rndNonZero(-10, 10), y = rndNonZero(-10, 10); return { visual: null, prompt: `Spiegle P(${x}|${y}) an der x-Achse. Wie lautet die y-Koordinate des Bildpunkts P'?`, answerType: "number", correct: -y, solution: `An der x-Achse: x bleibt, y wechselt das Vorzeichen.\nP'(${x}|${-y}) → y = ${-y}` }; }
-function generateAxisReflectionY() { const x = rndNonZero(-10, 10), y = rndNonZero(-10, 10); return { visual: null, prompt: `Spiegle P(${x}|${y}) an der y-Achse. Wie lautet die x-Koordinate des Bildpunkts P'?`, answerType: "number", correct: -x, solution: `An der y-Achse: y bleibt, x wechselt das Vorzeichen.\nP'(${-x}|${y}) → x = ${-x}` }; }
-function generatePointReflection() { const x = rndNonZero(-10, 10), y = rndNonZero(-10, 10); return { visual: null, prompt: `Spiegle P(${x}|${y}) am Ursprung O. Wie lautet der Bildpunkt P'?`, answerType: "pair", pairStyle: "coordinate", correct: [-x, -y], solution: `Am Ursprung wechseln beide Koordinaten das Vorzeichen:\nP(${x}|${y}) → P'(${-x}|${-y})` }; }
+// Kleinster Drehwinkel wie im Skript M1 K1 (360° : Anzahl Deckungen), nur drehsymmetrische Figuren mit ganzzahligem Winkel
+function generateRotSymmetry() { const pool = SHAPES.filter(f => f.rot >= 2 && 360 % f.rot === 0 && f.rot <= 12); const s = pool[rnd(0, pool.length - 1)]; return { visual: shapeSVG(s), prompt: `Diese Figur (${s.name}) ist drehsymmetrisch. Wie gross ist der kleinste Drehwinkel (in °)?`, answerType: "number", correct: 360 / s.rot, solution: `Die Figur deckt sich bei einer vollen Drehung ${s.rot}-mal mit sich selbst.\nKleinster Drehwinkel: 360° : ${s.rot} = ${360 / s.rot}°` }; }
+function generateAxisReflectionX() { const x = rndNonZero(-10, 10), y = rndNonZero(-10, 10); return { visual: null, prompt: `Spiegle P${pkt(x, y)} an der x-Achse. Wie lautet die y-Koordinate des Bildpunkts P'?`, answerType: "number", correct: -y, solution: `An der x-Achse: x bleibt, y wechselt das Vorzeichen.\nP'${pkt(x, -y)} → y = ${-y}` }; }
+function generateAxisReflectionY() { const x = rndNonZero(-10, 10), y = rndNonZero(-10, 10); return { visual: null, prompt: `Spiegle P${pkt(x, y)} an der y-Achse. Wie lautet die x-Koordinate des Bildpunkts P'?`, answerType: "number", correct: -x, solution: `An der y-Achse: y bleibt, x wechselt das Vorzeichen.\nP'${pkt(-x, y)} → x = ${-x}` }; }
+function generatePointReflection() { const x = rndNonZero(-10, 10), y = rndNonZero(-10, 10); return { visual: null, prompt: `Spiegle P${pkt(x, y)} am Nullpunkt O. Wie lautet der Bildpunkt P'?`, answerType: "pair", pairStyle: "coordinate", correct: [-x, -y], solution: `Am Nullpunkt wechseln beide Koordinaten das Vorzeichen:\nP${pkt(x, y)} → P'${pkt(-x, -y)}` }; }
 function generatePowerCalc() { const base = rnd(2, 9), exp = rnd(2, 4); return { visual: null, prompt: `Berechne: ${base}^${exp} =`, answerType: "number", correct: Math.pow(base, exp) }; }
 function generatePowerRule() { const base = rnd(2, 9), e1 = rnd(2, 4), e2 = rnd(2, 4); return { visual: null, prompt: `Vereinfache: ${base}^${e1} · ${base}^${e2} = ${base}^?`, answerType: "number", correct: e1 + e2, solution: `Gleiche Basis: Exponenten addieren.\n${base}^${e1} · ${base}^${e2} = ${base}^(${e1} + ${e2}) = ${base}^${e1 + e2}` }; }
 function generateOrderOfOperations() {
@@ -2540,7 +2541,7 @@ function generateOrderOfOperations() {
     const a = useSub ? rnd(b + 1, b + 12) : rnd(2, 15);
     const inner = useSub ? a - b : a + b;
     const c = rnd(2, 9);
-    return { visual: null, prompt: `Berechne: (${a} ${useSub ? "−" : "+"} ${b}) × ${c} =`, answerType: "number", correct: inner * c, solution: `Zuerst die Klammer: ${a} ${useSub ? "−" : "+"} ${b} = ${inner}\nDann: ${inner} × ${c} = ${inner * c}` };
+    return { visual: null, prompt: `Berechne: (${a} ${useSub ? "−" : "+"} ${b}) · ${c} =`, answerType: "number", correct: inner * c, solution: `Zuerst die Klammer: ${a} ${useSub ? "−" : "+"} ${b} = ${inner}\nDann: ${inner} · ${c} = ${inner * c}` };
   }
   const b = rnd(2, 9), d = rnd(2, 9);
   const product = b * d;
@@ -2551,9 +2552,9 @@ function generateOrderOfOperations() {
   const a = !useSub ? rnd(2, 30) : mulFirst ? rnd(product + 1, product + 20) : rnd(1, product - 1);
   const correct = !useSub ? a + product : mulFirst ? a - product : product - a;
   const prompt = mulFirst
-    ? `Berechne: ${a} ${useSub ? "−" : "+"} ${b} × ${d} =`
-    : `Berechne: ${b} × ${d} ${useSub ? "−" : "+"} ${a} =`;
-  return { visual: null, prompt, answerType: "number", correct, solution: `Punkt vor Strich: zuerst ${b} × ${d} = ${product}\nDann: ${mulFirst ? `${a} ${useSub ? "−" : "+"} ${product}` : `${product} ${useSub ? "−" : "+"} ${a}`} = ${correct}` };
+    ? `Berechne: ${a} ${useSub ? "−" : "+"} ${b} · ${d} =`
+    : `Berechne: ${b} · ${d} ${useSub ? "−" : "+"} ${a} =`;
+  return { visual: null, prompt, answerType: "number", correct, solution: `Punkt vor Strich: zuerst ${b} · ${d} = ${product}\nDann: ${mulFirst ? `${a} ${useSub ? "−" : "+"} ${product}` : `${product} ${useSub ? "−" : "+"} ${a}`} = ${correct}` };
 }
 function generateVariables() { const a = rnd(2, 9), b = rnd(0, 20), x = rnd(-5, 10); const sign = b >= 0 ? "+" : "−"; return { visual: null, prompt: `Berechne den Wert des Terms ${a}x ${sign} ${Math.abs(b)} für x = ${x}.`, answerType: "number", correct: a * x + b, solution: `${a} · (${x}) ${sign} ${Math.abs(b)} = ${a * x} ${sign} ${Math.abs(b)} = ${a * x + b}` }; }
 function generateIsPrime() { const n = rnd(2, 100); return { visual: null, prompt: `Ist ${n} eine Primzahl?`, answerType: "boolean", correct: isPrime(n) ? 1 : 0 }; }
@@ -2580,7 +2581,7 @@ function generatePrimeFactorization() {
   }
   if (factors.length < 2) { factors = [2, 3]; n = 6; }
   factors.sort((a, b) => a - b);
-  return { visual: null, prompt: `Zerlege ${n} in Primfaktoren (z.B. 2×2×3).`, answerType: "factors", correct: factors };
+  return { visual: null, prompt: `Zerlege ${n} in Primfaktoren (z.B. 2 · 2 · 3).`, answerType: "factors", correct: factors };
 }
 
 /* ---- Basiswissen: Generatoren ---- */
@@ -2589,8 +2590,8 @@ function generateKopf(max) {
   if (op === 0) { const a = rnd(1, max - 1), b = rnd(1, max - a); return { visual: null, prompt: `${a} + ${b} =`, answerType: "number", correct: a + b, solution: kopfSplitSolution(a, b, true) }; }
   if (op === 1) { const a = rnd(1, max), b = rnd(1, a); return { visual: null, prompt: `${a} − ${b} =`, answerType: "number", correct: a - b, solution: kopfSplitSolution(a, b, false) }; }
   const limit = Math.min(20, Math.max(3, Math.floor(Math.sqrt(max)))); const a = rnd(2, limit), b = rnd(2, limit);
-  if (op === 2) return { visual: null, prompt: `${a} × ${b} =`, answerType: "number", correct: a * b, solution: a > 10 || b > 10 ? `Zerlegen: ${Math.max(a, b)} × ${Math.min(a, b)} = 10 × ${Math.min(a, b)} + ${Math.max(a, b) - 10} × ${Math.min(a, b)} = ${10 * Math.min(a, b)} + ${(Math.max(a, b) - 10) * Math.min(a, b)} = ${a * b}` : `${a} × ${b} = ${a * b}` };
-  return { visual: null, prompt: `${a * b} : ${b} =`, answerType: "number", correct: a, solution: `Umkehraufgabe: ? × ${b} = ${a * b}\n${a} × ${b} = ${a * b}, also ${a * b} : ${b} = ${a}` };
+  if (op === 2) return { visual: null, prompt: `${a} · ${b} =`, answerType: "number", correct: a * b, solution: a > 10 || b > 10 ? `Zerlegen: ${Math.max(a, b)} · ${Math.min(a, b)} = 10 · ${Math.min(a, b)} + ${Math.max(a, b) - 10} · ${Math.min(a, b)} = ${10 * Math.min(a, b)} + ${(Math.max(a, b) - 10) * Math.min(a, b)} = ${a * b}` : `${a} · ${b} = ${a * b}` };
+  return { visual: null, prompt: `${a * b} : ${b} =`, answerType: "number", correct: a, solution: `Umkehraufgabe: ? · ${b} = ${a * b}\n${a} · ${b} = ${a * b}, also ${a * b} : ${b} = ${a}` };
 }
 // Lösungsweg Kopfrechnen: zuerst Zehner/Hunderter, dann Einer
 function kopfSplitSolution(a, b, add) {
@@ -2599,7 +2600,7 @@ function kopfSplitSolution(a, b, add) {
   const mid = add ? a + big : a - big;
   return `${a} ${add ? "+" : "−"} ${big} = ${mid}\n${mid} ${add ? "+" : "−"} ${rest} = ${add ? mid + rest : mid - rest}`;
 }
-function generateFractionExpand() { const bn = rnd(1, 8), bd = rnd(bn + 1, 9); const f = rnd(2, 5); return { visual: null, prompt: `Erweitere ${bn}/${bd} mit ${f}.`, answerType: "pair", pairStyle: "fraction", fractionExact: true, correct: [bn * f, bd * f], solution: `Zähler: ${bn} × ${f} = ${bn * f}\nNenner: ${bd} × ${f} = ${bd * f}\n→ ${bn * f}/${bd * f}` }; }
+function generateFractionExpand() { const bn = rnd(1, 8), bd = rnd(bn + 1, 9); const f = rnd(2, 5); return { visual: null, prompt: `Erweitere ${bn}/${bd} mit ${f}.`, answerType: "pair", pairStyle: "fraction", fractionExact: true, correct: [bn * f, bd * f], solution: `Zähler: ${bn} · ${f} = ${bn * f}\nNenner: ${bd} · ${f} = ${bd * f}\n→ ${bn * f}/${bd * f}` }; }
 function generateFractionReduce() {
   let bn = rnd(1, 6), bd = rnd(2, 7); if (bn === bd) bd++;
   const g = gcdFn(bn, bd); bn = bn / g; bd = bd / g;
@@ -2607,7 +2608,7 @@ function generateFractionReduce() {
   return { visual: null, prompt: `Kürze ${bn * f}/${bd * f} vollständig.`, answerType: "pair", pairStyle: "fraction", correct: [bn, bd], solution: `ggT von ${bn * f} und ${bd * f} ist ${f}.\n${bn * f} : ${f} = ${bn}, ${bd * f} : ${f} = ${bd}\n→ ${bn}/${bd}` };
 }
 function generatePercentToDecimal() { const p = rnd(1, 99); return { visual: null, prompt: `Wandle ${p}% in eine Dezimalzahl um.`, answerType: "number", correct: Math.round((p / 100) * 1000) / 1000, solution: `${p} % = ${p}/100 = ${p} : 100 = ${Math.round((p / 100) * 1000) / 1000}\n(Komma 2 Stellen nach links)` }; }
-function generateDecimalToPercent() { const d = rnd(1, 99) / 100; return { visual: null, prompt: `Wandle ${d} in Prozent um (nur Zahl, ohne %).`, answerType: "number", correct: Math.round(d * 100 * 100) / 100, solution: `${d} × 100 = ${Math.round(d * 100 * 100) / 100}\n(Komma 2 Stellen nach rechts) → ${Math.round(d * 100 * 100) / 100} %` }; }
+function generateDecimalToPercent() { const d = rnd(1, 99) / 100; return { visual: null, prompt: `Wandle ${d} in Prozent um (nur Zahl, ohne %).`, answerType: "number", correct: Math.round(d * 100 * 100) / 100, solution: `${d} · 100 = ${Math.round(d * 100 * 100) / 100}\n(Komma 2 Stellen nach rechts) → ${Math.round(d * 100 * 100) / 100} %` }; }
 function generateFractionToDecimal() { const dens = [2, 4, 5, 8, 10, 20, 25, 50, 100]; const den = dens[rnd(0, dens.length - 1)]; const num = rnd(1, den - 1); return { visual: null, prompt: `Wandle den Bruch ${num}/${den} in eine Dezimalzahl um.`, answerType: "number", correct: Math.round((num / den) * 1000) / 1000, solution: (100 % den === 0 ? `Auf Hundertstel erweitern: ${num}/${den} = ${num * 100 / den}/100\n= ${Math.round((num / den) * 1000) / 1000}` : `${num} : ${den} = ${Math.round((num / den) * 1000) / 1000}`) }; }
 function generateDecimalToFraction() { const den = [10, 100][rnd(0, 1)]; const num = rnd(1, den - 1); const g = gcdFn(num, den); const redNum = num / g, redDen = den / g; return { visual: null, prompt: `Wandle ${num / den} in einen vollständig gekürzten Bruch um.`, answerType: "pair", pairStyle: "fraction", correct: [redNum, redDen], solution: `${num / den} = ${num}/${den}` + (g > 1 ? `\nKürzen durch ${g}: ${redNum}/${redDen}` : "") }; }
 function generateCoordinateRead() { const x = rnd(-6, 6), y = rnd(-6, 6); return { visual: coordinateGridSVG(x, y), prompt: `Welche Koordinaten hat der markierte Punkt?`, answerType: "pair", pairStyle: "coordinate", correct: [x, y] }; }
@@ -2635,7 +2636,7 @@ function generatePointPlacementHotspot() {
   const x = rnd(-6, 6), y = rnd(-6, 6);
   return {
     visual: coordinateGridSVGBlank(),
-    prompt: `Tippe auf den Punkt mit den Koordinaten (${x}|${y}).`,
+    prompt: `Tippe auf den Punkt mit den Koordinaten ${pkt(x, y)}.`,
     answerType: "hotspot",
     hotspotMode: "point",
     viewBox: "0 0 200 200",
@@ -2678,7 +2679,7 @@ function generateBinomialApplication() {
   const kind = rnd(0, 2);
   if (kind === 0) return { visual: null, prompt: `Berechne geschickt mit einer binomischen Formel: ${base + delta}² =`, answerType: "number", correct: (base + delta) * (base + delta) };
   if (kind === 1) return { visual: null, prompt: `Berechne geschickt mit einer binomischen Formel: ${base - delta}² =`, answerType: "number", correct: (base - delta) * (base - delta) };
-  return { visual: null, prompt: `Berechne geschickt mit einer binomischen Formel: ${base - delta} × ${base + delta} =`, answerType: "number", correct: (base - delta) * (base + delta) };
+  return { visual: null, prompt: `Berechne geschickt mit einer binomischen Formel: ${base - delta} · ${base + delta} =`, answerType: "number", correct: (base - delta) * (base + delta) };
 }
 function formatQuadraticTerm(coefX, constant) {
   let s = "x²";
@@ -2731,8 +2732,8 @@ function generateNegExponentRuleMC() {
   const bases = ["a", "b", "x", "y"];
   const base = bases[rnd(0, bases.length - 1)];
   const n = rnd(2, 5);
-  const correct = `1 ÷ ${base}^${n}`;
-  const wrongs = [`-1 ÷ ${base}^${n}`, `1 ÷ ${base}^-${n}`, `-${base}^${n}`];
+  const correct = `1/${base}^${n}`;
+  const wrongs = [`−1/${base}^${n}`, `1/${base}^-${n}`, `−${base}^${n}`];
   const options = [correct, ...wrongs].sort(() => Math.random() - 0.5);
   return { visual: null, prompt: `Wie schreibt man ${base}^-${n} ohne negativen Exponenten?`, answerType: "mc", options, correct };
 }
@@ -2741,7 +2742,7 @@ function generateGgt() {
   let m = rnd(1, 8), n = rnd(1, 8);
   while (gcdFn(m, n) !== 1) { m = rnd(1, 8); n = rnd(1, 8); }
   const a = g * m, b = g * n;
-  return { visual: null, prompt: `Wie lautet der grösste gemeinsame Teiler (ggT) von ${a} und ${b}?`, answerType: "number", correct: g, solution: `${a} = ${g} × ${m}\n${b} = ${g} × ${n}\n${m} und ${n} haben keinen gemeinsamen Teiler mehr → ggT = ${g}` };
+  return { visual: null, prompt: `Wie lautet der grösste gemeinsame Teiler (ggT) von ${a} und ${b}?`, answerType: "number", correct: g, solution: `${a} = ${g} · ${m}\n${b} = ${g} · ${n}\n${m} und ${n} haben keinen gemeinsamen Teiler mehr → ggT = ${g}` };
 }
 function generateKgvBW() { const a = rnd(2, 15), b = rnd(2, 15); return { visual: null, prompt: `Wie lautet das kleinste gemeinsame Vielfache (kgV) von ${a} und ${b}?`, answerType: "number", correct: lcmFn(a, b), solution: kgvSolution(a, b) }; }
 
@@ -2778,8 +2779,8 @@ function generateProportionalityType() {
 }
 function generateAdd() { const a = rnd(10, 999), b = rnd(10, 999); return { visual: null, prompt: `${a} + ${b} =`, answerType: "number", correct: a + b, solution: kopfSplitSolution(a, b, true) }; }
 function generateSub() { const a = rnd(10, 999); const b = rnd(10, a); return { visual: null, prompt: `${a} − ${b} =`, answerType: "number", correct: a - b, solution: kopfSplitSolution(a, b, false) }; }
-function generateMul() { const a = rnd(2, 20), b = rnd(2, 20); return { visual: null, prompt: `${a} × ${b} =`, answerType: "number", correct: a * b, solution: a > 10 || b > 10 ? `Zerlegen: ${Math.max(a, b)} × ${Math.min(a, b)} = 10 × ${Math.min(a, b)} + ${Math.max(a, b) - 10} × ${Math.min(a, b)} = ${10 * Math.min(a, b)} + ${(Math.max(a, b) - 10) * Math.min(a, b)} = ${a * b}` : `${a} × ${b} = ${a * b}` }; }
-function generateDiv() { const b = rnd(2, 12), r = rnd(2, 12); const a = b * r; return { visual: null, prompt: `${a} : ${b} =`, answerType: "number", correct: r, solution: `Umkehraufgabe: ? × ${b} = ${a}\n${r} × ${b} = ${a}, also ${a} : ${b} = ${r}` }; }
+function generateMul() { const a = rnd(2, 20), b = rnd(2, 20); return { visual: null, prompt: `${a} · ${b} =`, answerType: "number", correct: a * b, solution: a > 10 || b > 10 ? `Zerlegen: ${Math.max(a, b)} · ${Math.min(a, b)} = 10 · ${Math.min(a, b)} + ${Math.max(a, b) - 10} · ${Math.min(a, b)} = ${10 * Math.min(a, b)} + ${(Math.max(a, b) - 10) * Math.min(a, b)} = ${a * b}` : `${a} · ${b} = ${a * b}` }; }
+function generateDiv() { const b = rnd(2, 12), r = rnd(2, 12); const a = b * r; return { visual: null, prompt: `${a} : ${b} =`, answerType: "number", correct: r, solution: `Umkehraufgabe: ? · ${b} = ${a}\n${r} · ${b} = ${a}, also ${a} : ${b} = ${r}` }; }
 function generateRounding() {
   const targets = [10, 100, 1000]; const t = targets[rnd(0, targets.length - 1)]; const n = rnd(t, t * 10);
   const label = t === 10 ? "Zehner" : t === 100 ? "Hunderter" : "Tausender";
@@ -2827,23 +2828,23 @@ function generateRightAngleHotspot() {
 function generateMean() {
   const n = rnd(4, 6); const vals = Array.from({ length: n }, () => rnd(1, 20)); const sum = vals.reduce((a, b) => a + b, 0);
   const res = Math.round((sum / n) * 100) / 100;
-  return { visual: null, prompt: `Berechne den Mittelwert dieser Zahlen: ${vals.join(", ")}${Number.isInteger(sum / n) ? "" : " (auf 2 Nachkommastellen runden)"}`, answerType: "number", correct: res, solution: `Summe: ${vals.join(" + ")} = ${sum}\nAnzahl: ${n}\nMittelwert: ${sum} : ${n} = ${res}` };
+  return { visual: null, prompt: `Berechne das arithmetische Mittel dieser Zahlen: ${vals.join(", ")}${Number.isInteger(sum / n) ? "" : " (auf 2 Nachkommastellen runden)"}`, answerType: "number", correct: res, solution: `Summe: ${vals.join(" + ")} = ${sum}\nAnzahl: ${n}\nArithmetisches Mittel: ${sum} : ${n} = ${res}` };
 }
 function generateMedian() {
   const n = rnd(5, 8); const vals = Array.from({ length: n }, () => rnd(1, 30)); const sorted = [...vals].sort((a, b) => a - b);
   if (n % 2 === 1) return { visual: null, prompt: `Bestimme den Zentralwert (Median) dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: sorted[Math.floor(n / 2)], solution: `Sortiert: ${sorted.join(", ")}\nDie mittlere (${Math.floor(n / 2) + 1}.) Zahl ist ${sorted[Math.floor(n / 2)]}.` };
   const a = sorted[n / 2 - 1], b = sorted[n / 2];
-  return { visual: null, prompt: `Bestimme den Zentralwert (Median) dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: (a + b) / 2, solution: `Sortiert: ${sorted.join(", ")}\nGerade Anzahl: Mittelwert der beiden mittleren Zahlen (${a} + ${b}) : 2 = ${(a + b) / 2}` };
+  return { visual: null, prompt: `Bestimme den Zentralwert (Median) dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: (a + b) / 2, solution: `Sortiert: ${sorted.join(", ")}\nGerade Anzahl: Mitte zwischen den beiden mittleren Zahlen (${a} + ${b}) : 2 = ${(a + b) / 2}` };
 }
 function generateRange() { const n = 5; const vals = Array.from({ length: n }, () => rnd(1, 40)); return { visual: null, prompt: `Bestimme die Spannweite (Maximum − Minimum) dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: Math.max(...vals) - Math.min(...vals), solution: `Maximum ${Math.max(...vals)}, Minimum ${Math.min(...vals)}\n${Math.max(...vals)} − ${Math.min(...vals)} = ${Math.max(...vals) - Math.min(...vals)}` }; }
 
-function generatePercentValue() { const grund = rnd(20, 400), satz = rnd(5, 90); return { visual: null, prompt: `Wie viel sind ${satz}% von ${grund}?`, answerType: "number", correct: Math.round(grund * satz / 100 * 100) / 100, solution: `1 % von ${grund} = ${grund} : 100 = ${grund / 100}\n${satz} % = ${grund / 100} × ${satz} = ${Math.round(grund * satz / 100 * 100) / 100}` }; }
+function generatePercentValue() { const grund = rnd(20, 400), satz = rnd(5, 90); return { visual: null, prompt: `Wie viel sind ${satz}% von ${grund}?`, answerType: "number", correct: Math.round(grund * satz / 100 * 100) / 100, solution: `1 % von ${grund} = ${grund} : 100 = ${grund / 100}\n${satz} % = ${grund / 100} · ${satz} = ${Math.round(grund * satz / 100 * 100) / 100}` }; }
 function generatePercentBase() { const satz = rnd(5, 80); const grund = rnd(20, 300); const wert = Math.round(grund * satz / 100); return { visual: null, prompt: `${wert} ist ${satz}% von welcher Zahl?`, answerType: "number", correct: Math.round((wert / (satz / 100)) * 100) / 100, solution: `${satz} % ≙ ${wert}\n1 % ≙ ${wert} : ${satz} = ${Math.round(wert / satz * 10000) / 10000}\n100 % ≙ ${Math.round((wert / (satz / 100)) * 100) / 100}` }; }
-function generatePercentRate() { const grund = rnd(20, 300); const satzZiel = rnd(5, 90); const wert = Math.round(grund * satzZiel / 100); return { visual: null, prompt: `Wie viel Prozent ist ${wert} von ${grund}? (nur Zahl, ohne %)`, answerType: "number", correct: Math.round((wert / grund) * 100 * 100) / 100, solution: `${wert} : ${grund} = ${Math.round(wert / grund * 10000) / 10000}\n× 100 = ${Math.round((wert / grund) * 100 * 100) / 100} %` }; }
+function generatePercentRate() { const grund = rnd(20, 300); const satzZiel = rnd(5, 90); const wert = Math.round(grund * satzZiel / 100); return { visual: null, prompt: `Wie viel Prozent ist ${wert} von ${grund}? (nur Zahl, ohne %)`, answerType: "number", correct: Math.round((wert / grund) * 100 * 100) / 100, solution: `${wert} : ${grund} = ${Math.round(wert / grund * 10000) / 10000}\n· 100 = ${Math.round((wert / grund) * 100 * 100) / 100} %` }; }
 
-function generateRectArea() { const l = rnd(3, 20), b = rnd(3, 20); return { visual: null, prompt: `Berechne die Fläche eines Rechtecks mit Länge ${l} cm und Breite ${b} cm (in cm²).`, answerType: "number", correct: l * b, solution: `A = Länge × Breite = ${l} × ${b} = ${l * b} cm²` }; }
-function generateTriArea() { const g = rnd(4, 20), h = rnd(2, 16); return { visual: null, prompt: `Berechne die Fläche eines Dreiecks mit Grundseite ${g} cm und Höhe ${h} cm (in cm²).`, answerType: "number", correct: Math.round(g * h / 2 * 100) / 100, solution: `A = g × h : 2 = ${g} × ${h} : 2 = ${g * h} : 2 = ${Math.round(g * h / 2 * 100) / 100} cm²` }; }
-function generateBoxVolume() { const l = rnd(2, 12), b = rnd(2, 12), h = rnd(2, 12); return { visual: null, prompt: `Berechne das Volumen eines Quaders mit den Kanten ${l} cm, ${b} cm und ${h} cm (in cm³).`, answerType: "number", correct: l * b * h, solution: `V = ${l} × ${b} × ${h} = ${l * b * h} cm³` }; }
+function generateRectArea() { const l = rnd(3, 20), b = rnd(3, 20); return { visual: null, prompt: `Berechne die Fläche eines Rechtecks mit Länge ${l} cm und Breite ${b} cm (in cm²).`, answerType: "number", correct: l * b, solution: `A = Länge · Breite = ${l} · ${b} = ${l * b} cm²` }; }
+function generateTriArea() { const g = rnd(4, 20), h = rnd(2, 16); return { visual: null, prompt: `Berechne die Fläche eines Dreiecks mit Grundseite ${g} cm und Höhe ${h} cm (in cm²).`, answerType: "number", correct: Math.round(g * h / 2 * 100) / 100, solution: `A = g · h : 2 = ${g} · ${h} : 2 = ${g * h} : 2 = ${Math.round(g * h / 2 * 100) / 100} cm²` }; }
+function generateBoxVolume() { const l = rnd(2, 12), b = rnd(2, 12), h = rnd(2, 12); return { visual: null, prompt: `Berechne das Volumen eines Quaders mit den Kanten ${l} cm, ${b} cm und ${h} cm (in cm³).`, answerType: "number", correct: l * b * h, solution: `V = ${l} · ${b} · ${h} = ${l * b * h} cm³` }; }
 
 const NGON_NAMES = { 3: "drei", 4: "vier", 5: "fünf", 6: "sechs", 7: "sieben", 8: "acht", 9: "neun", 10: "zehn", 11: "elf", 12: "zwölf" };
 function nGonPrismSolid(n) { return { name: `${n}-eckiges Prisma (${NGON_NAMES[n]}eckige Grundfläche)`, faces: n + 2, edges: 3 * n, vertices: 2 * n }; }
@@ -2893,7 +2894,7 @@ function generateQuadrant() {
   return { visual: coordinateGridSVG(x, y), prompt: `In welchem Quadranten (I=1, II=2, III=3, IV=4) liegt der markierte Punkt?`, answerType: "number", correct: q };
 }
 
-function generateNegOpMul() { const a = rndNonZero(-12, 12), b = rndNonZero(-12, 12); return { visual: null, prompt: `${a} × (${b}) =`, answerType: "number", correct: a * b, solution: `${Math.abs(a)} × ${Math.abs(b)} = ${Math.abs(a * b)}\nVorzeichen: ${(a < 0) === (b < 0) ? "gleich → positiv" : "verschieden → negativ"}: ${a * b}` }; }
+function generateNegOpMul() { const a = rndNonZero(-12, 12), b = rndNonZero(-12, 12); return { visual: null, prompt: `${a} · (${b}) =`, answerType: "number", correct: a * b, solution: `${Math.abs(a)} · ${Math.abs(b)} = ${Math.abs(a * b)}\nVorzeichen: ${(a < 0) === (b < 0) ? "gleich → positiv" : "verschieden → negativ"}: ${a * b}` }; }
 function generateNegOpDiv() { const b = rndNonZero(-12, 12); const r = rndNonZero(-12, 12); const a = b * r; return { visual: null, prompt: `${a} : (${b}) =`, answerType: "number", correct: r, solution: `${Math.abs(a)} : ${Math.abs(b)} = ${Math.abs(r)}\nVorzeichen: ${(a < 0) === (b < 0) ? "gleich → positiv" : "verschieden → negativ"}: ${r}` }; }
 function generateNegOpAddSub() {
   const a = rndNonZero(-20, 20), b = rndNonZero(-20, 20);
@@ -2901,17 +2902,17 @@ function generateNegOpAddSub() {
   return { visual: null, prompt: `${a} − (${b}) =`, answerType: "number", correct: a - b, solution: `− (${b}) ist dasselbe wie ${b < 0 ? "+ " + (-b) : "− " + b}\n${a} ${b < 0 ? "+ " + (-b) : "− " + b} = ${a - b}` };
 }
 
-function generateRectPerimeter() { const l = rnd(3, 25), b = rnd(3, 25); return { visual: null, prompt: `Berechne den Umfang eines Rechtecks mit Länge ${l} cm und Breite ${b} cm.`, answerType: "number", correct: 2 * (l + b), solution: `U = 2 × (${l} + ${b}) = 2 × ${l + b} = ${2 * (l + b)} cm` }; }
-function generateRectArea7a() { const l = rnd(3, 25), b = rnd(3, 25); return { visual: null, prompt: `Berechne die Fläche eines Rechtecks mit Länge ${l} cm und Breite ${b} cm (in cm²).`, answerType: "number", correct: l * b, solution: `A = Länge × Breite = ${l} × ${b} = ${l * b} cm²` }; }
+function generateRectPerimeter() { const l = rnd(3, 25), b = rnd(3, 25); return { visual: null, prompt: `Berechne den Umfang eines Rechtecks mit Länge ${l} cm und Breite ${b} cm.`, answerType: "number", correct: 2 * (l + b), solution: `U = 2 · (${l} + ${b}) = 2 · ${l + b} = ${2 * (l + b)} cm` }; }
+function generateRectArea7a() { const l = rnd(3, 25), b = rnd(3, 25); return { visual: null, prompt: `Berechne die Fläche eines Rechtecks mit Länge ${l} cm und Breite ${b} cm (in cm²).`, answerType: "number", correct: l * b, solution: `A = Länge · Breite = ${l} · ${b} = ${l * b} cm²` }; }
 
 const QUAD_FACTS = [
   { name: "Quadrat", rightAngles: 4, parallelPairs: 2, equalSidePairs: 2, symmetryAxes: 4 },
   { name: "Rechteck", rightAngles: 4, parallelPairs: 2, equalSidePairs: 2, symmetryAxes: 2 },
-  { name: "Parallelogramm", rightAngles: 0, parallelPairs: 2, equalSidePairs: 2, symmetryAxes: 0 },
-  { name: "Raute", rightAngles: 0, parallelPairs: 2, equalSidePairs: 2, symmetryAxes: 2 },
+  { name: "Parallelenviereck", rightAngles: 0, parallelPairs: 2, equalSidePairs: 2, symmetryAxes: 0 },
+  { name: "Rhombus", rightAngles: 0, parallelPairs: 2, equalSidePairs: 2, symmetryAxes: 2 },
   { name: "Trapez", rightAngles: 0, parallelPairs: 1, equalSidePairs: 0, symmetryAxes: 0 },
-  { name: "Drachenviereck", rightAngles: 0, parallelPairs: 0, equalSidePairs: 0, symmetryAxes: 1 },
-  { name: "unregelmässiges Viereck", rightAngles: 0, parallelPairs: 0, equalSidePairs: 0, symmetryAxes: 0 }
+  { name: "Drachen", rightAngles: 0, parallelPairs: 0, equalSidePairs: 0, symmetryAxes: 1 },
+  { name: "allgemeines Viereck", rightAngles: 0, parallelPairs: 0, equalSidePairs: 0, symmetryAxes: 0 }
 ];
 const QUAD_PROPERTY_TYPES = [
   { key: "rightAngles", label: "rechte Winkel" },
@@ -3003,12 +3004,12 @@ function generateCubeShapeProperty(qTypeArg) {
   return { visual: cubeShapeSVG(shp.vertices, shp.color), prompt: `Sind alle Seiten der markierten Fläche gleich lang?`, answerType: "boolean", correct: shp.equalSides ? 1 : 0 };
 }
 
-function generateCubeVolume() { const a = rnd(2, 25); return { visual: null, prompt: `Berechne das Volumen eines Würfels mit Kantenlänge ${a} cm (in cm³).`, answerType: "number", correct: a * a * a, solution: `V = a × a × a = ${a} × ${a} × ${a} = ${a * a * a} cm³` }; }
-function generateCubeSurface() { const a = rnd(2, 25); return { visual: null, prompt: `Berechne den Oberflächeninhalt eines Würfels mit Kantenlänge ${a} cm (in cm²).`, answerType: "number", correct: 6 * a * a, solution: `Eine Fläche: ${a} × ${a} = ${a * a} cm²\n6 Flächen: 6 × ${a * a} = ${6 * a * a} cm²` }; }
+function generateCubeVolume() { const a = rnd(2, 25); return { visual: null, prompt: `Berechne das Volumen eines Würfels mit Kantenlänge ${a} cm (in cm³).`, answerType: "number", correct: a * a * a, solution: `V = a · a · a = ${a} · ${a} · ${a} = ${a * a * a} cm³` }; }
+function generateCubeSurface() { const a = rnd(2, 25); return { visual: null, prompt: `Berechne den Oberflächeninhalt eines Würfels mit Kantenlänge ${a} cm (in cm²).`, answerType: "number", correct: 6 * a * a, solution: `Eine Fläche: ${a} · ${a} = ${a * a} cm²\n6 Flächen: 6 · ${a * a} = ${6 * a * a} cm²` }; }
 function generateCubeFormulaMC() {
   const askVolume = Math.random() < 0.5;
-  const correct = askVolume ? "a × a × a" : "6 × a × a";
-  const wrongs = askVolume ? ["6 × a × a", "4 × a", "a × a"] : ["a × a × a", "4 × a × a", "12 × a"];
+  const correct = askVolume ? "a · a · a" : "6 · a · a";
+  const wrongs = askVolume ? ["6 · a · a", "4 · a", "a · a"] : ["a · a · a", "4 · a · a", "12 · a"];
   const options = [correct, ...wrongs].sort(() => Math.random() - 0.5);
   return { visual: null, prompt: `Welche Formel berechnet ${askVolume ? "das Volumen" : "den Oberflächeninhalt"} eines Würfels mit Kantenlänge a?`, answerType: "mc", options, correct };
 }
@@ -3079,11 +3080,11 @@ function generateFractionAdd() {
 }
 function generateFractionMul() {
   const A = rndProperFraction(2, 9), B = rndProperFraction(2, 9);
-  return { visual: null, prompt: `Berechne: ${A.n}/${A.d} × ${B.n}/${B.d} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(A.n * B.n, A.d * B.d), solution: `Zähler mal Zähler, Nenner mal Nenner:\n${A.n}/${A.d} × ${B.n}/${B.d} = ${A.n * B.n}/${A.d * B.d}` + (gcdFn(A.n * B.n, A.d * B.d) > 1 ? ` = ${simplifyFraction(A.n * B.n, A.d * B.d).join("/")} (gekürzt)` : "") };
+  return { visual: null, prompt: `Berechne: ${A.n}/${A.d} · ${B.n}/${B.d} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(A.n * B.n, A.d * B.d), solution: `Zähler mal Zähler, Nenner mal Nenner:\n${A.n}/${A.d} · ${B.n}/${B.d} = ${A.n * B.n}/${A.d * B.d}` + (gcdFn(A.n * B.n, A.d * B.d) > 1 ? ` = ${simplifyFraction(A.n * B.n, A.d * B.d).join("/")} (gekürzt)` : "") };
 }
 function generateFractionDiv() {
   const A = rndProperFraction(2, 9), B = rndProperFraction(2, 9);
-  return { visual: null, prompt: `Berechne: ${A.n}/${A.d} : ${B.n}/${B.d} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(A.n * B.d, A.d * B.n), solution: `Mit dem Kehrwert multiplizieren:\n${A.n}/${A.d} : ${B.n}/${B.d} = ${A.n}/${A.d} × ${B.d}/${B.n} = ${A.n * B.d}/${A.d * B.n}` + (gcdFn(A.n * B.d, A.d * B.n) > 1 ? ` = ${simplifyFraction(A.n * B.d, A.d * B.n).join("/")} (gekürzt)` : "") };
+  return { visual: null, prompt: `Berechne: ${A.n}/${A.d} : ${B.n}/${B.d} = ? (vollständig gekürzt)`, answerType: "pair", pairStyle: "fraction", correct: simplifyFraction(A.n * B.d, A.d * B.n), solution: `Mit der Kehrzahl multiplizieren:\n${A.n}/${A.d} : ${B.n}/${B.d} = ${A.n}/${A.d} · ${B.d}/${B.n} = ${A.n * B.d}/${A.d * B.n}` + (gcdFn(A.n * B.d, A.d * B.n) > 1 ? ` = ${simplifyFraction(A.n * B.d, A.d * B.n).join("/")} (gekürzt)` : "") };
 }
 
 function generateEquation2Step() {
@@ -3164,7 +3165,7 @@ function generateSquareRoot() {
   if (variant === "dec") { root = String(b / 10); sq = String(b * b / 100); }
   else if (variant === "tens") { root = String(b * 10); sq = fmtThousands(b * b * 100); }
   else { root = String(b); sq = String(b * b); }
-  return { visual: null, prompt: `Berechne: √${sq} =`, answerType: "number", correct: Number(root), solution: `${root} × ${root} = ${sq}, also √${sq} = ${root}` };
+  return { visual: null, prompt: `Berechne: √${sq} =`, answerType: "number", correct: Number(root), solution: `${root} · ${root} = ${sq}, also √${sq} = ${root}` };
 }
 // Wurzelgesetze (2. Jahr, 1c): √a·√b = √(a·b) und √a : √b = √(a : b).
 // Beide Generatoren würfeln zwischen "zusammenfassen" (√8 · √18) und "aufteilen" (√(16 · 25)).
@@ -3257,7 +3258,7 @@ function generateProportionalCheck() {
   const k = rnd(2, 6); const x1 = rnd(1, 8); let x2; do { x2 = rnd(1, 9); } while (x2 === x1);
   const isProportional = Math.random() < 0.5;
   const y1 = x1 * k, y2 = isProportional ? x2 * k : x2 * k + rnd(1, 5);
-  return { visual: null, prompt: `Wertepaare: (${x1}|${y1}) und (${x2}|${y2}). Ist y direkt proportional zu x?`, answerType: "boolean", correct: (y1 / x1 === y2 / x2) ? 1 : 0, solution: `${y1} : ${x1} = ${Math.round(y1 / x1 * 100) / 100}, ${y2} : ${x2} = ${Math.round(y2 / x2 * 100) / 100}\n${isProportional ? "Gleicher Quotient → proportional" : "Verschiedene Quotienten → nicht proportional"}` };
+  return { visual: null, prompt: `Wertepaare: ${pkt(x1, y1)} und ${pkt(x2, y2)}. Ist y direkt proportional zu x?`, answerType: "boolean", correct: (y1 / x1 === y2 / x2) ? 1 : 0, solution: `${y1} : ${x1} = ${Math.round(y1 / x1 * 100) / 100}, ${y2} : ${x2} = ${Math.round(y2 / x2 * 100) / 100}\n${isProportional ? "Gleicher Quotient → proportional" : "Verschiedene Quotienten → nicht proportional"}` };
 }
 function generateDirectProportion() {
   const menge1 = rnd(2, 8); let menge2; do { menge2 = rnd(2, 15); } while (menge2 === menge1);
@@ -3273,7 +3274,7 @@ function generateInverseProportion() {
   return { visual: null, prompt: `${a1} Arbeiter brauchen ${tage1} Tage für eine Arbeit. Wie viele Tage brauchen ${a2} Arbeiter (gleiches Tempo)?`, answerType: "number", correct: tage2, solution: `1 Arbeiter: ${a1} · ${tage1} = ${a1 * tage1} Tage\n${a2} Arbeiter: ${a1 * tage1} : ${a2} = ${tage2} Tage` };
 }
 
-function generatePrismVolume() { const g = rnd(10, 80), h = rnd(3, 20); return { visual: null, prompt: `Ein gerades Prisma hat die Grundfläche ${g} cm² und die Höhe ${h} cm. Berechne das Volumen (in cm³).`, answerType: "number", correct: g * h, solution: `V = G × h = ${g} × ${h} = ${g * h} cm³` }; }
+function generatePrismVolume() { const g = rnd(10, 80), h = rnd(3, 20); return { visual: null, prompt: `Ein gerades Prisma hat die Grundfläche ${g} cm² und die Höhe ${h} cm. Berechne das Volumen (in cm³).`, answerType: "number", correct: g * h, solution: `V = G · h = ${g} · ${h} = ${g * h} cm³` }; }
 // Grundfläche und Umfang passen zusammen: konkrete Grundfläche statt frei gewählter Zahlen.
 function generatePrismSurface() {
   const h = rnd(3, 15);
@@ -3289,51 +3290,57 @@ function generatePrismSurface() {
   }
   return { visual: null, prompt: `Die Grundfläche eines geraden Prismas ist ${desc}. Das Prisma ist ${h} cm hoch. Berechne den Oberflächeninhalt (in cm²).`, answerType: "number", correct: 2 * G + u * h, solution: `Grundfläche G = ${G} cm², Umfang u = ${u} cm\nOberfläche = 2 · G + u · h = 2 · ${G} + ${u} · ${h} = ${2 * G + u * h} cm²` };
 }
-function generatePyramidVolume() { const g = rnd(10, 80), h = rnd(3, 20); return { visual: null, prompt: `Eine Pyramide hat die Grundfläche ${g} cm² und die Höhe ${h} cm. Berechne das Volumen (in cm³, auf 1 Nachkommastelle runden).`, answerType: "number", correct: Math.round((g * h / 3) * 10) / 10, solution: `V = G × h : 3 = ${g} × ${h} : 3 = ${g * h} : 3 ≈ ${Math.round((g * h / 3) * 10) / 10} cm³` }; }
+function generatePyramidVolume() { const g = rnd(10, 80), h = rnd(3, 20); return { visual: null, prompt: `Eine Pyramide hat die Grundfläche ${g} cm² und die Höhe ${h} cm. Berechne das Volumen (in cm³, auf 1 Nachkommastelle runden).`, answerType: "number", correct: Math.round((g * h / 3) * 10) / 10, solution: `V = G · h : 3 = ${g} · ${h} : 3 = ${g * h} : 3 ≈ ${Math.round((g * h / 3) * 10) / 10} cm³` }; }
 
-function generateDiscount() { const preis = rnd(20, 300), rabatt = rnd(5, 60); return { visual: null, prompt: `Ein Artikel kostet ${preis} Fr. Bei ${rabatt}% Rabatt: Wie viel kostet er noch? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(preis * (1 - rabatt / 100) * 100) / 100, solution: `Es bleiben 100 % − ${rabatt} % = ${100 - rabatt} %.\n${preis} × ${Math.round((1 - rabatt / 100) * 100) / 100} = ${Math.round(preis * (1 - rabatt / 100) * 100) / 100} Fr.` }; }
-function generateVAT() { const preisExkl = rnd(20, 300), mwst = [2.6, 3.8, 8.1][rnd(0, 2)]; return { visual: null, prompt: `Ein Artikel kostet ${preisExkl} Fr. exkl. MWST. Der MWST-Satz beträgt ${mwst}%. Wie viel kostet er inkl. MWST? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(preisExkl * (1 + mwst / 100) * 100) / 100, solution: `100 % + ${mwst} % = ${Math.round((100 + mwst) * 10) / 10} %\n${preisExkl} × ${Math.round((1 + mwst / 100) * 1000) / 1000} = ${Math.round(preisExkl * (1 + mwst / 100) * 100) / 100} Fr.` }; }
-function generateCurrency() { const betrag = rnd(10, 500), kurs = (rnd(85, 110) / 100); return { visual: null, prompt: `Wie viel Euro erhältst du für ${betrag} CHF bei einem Kurs von 1 CHF = ${kurs} EUR? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(betrag * kurs * 100) / 100, solution: `${betrag} × ${kurs} = ${Math.round(betrag * kurs * 100) / 100} EUR` }; }
+function generateDiscount() { const preis = rnd(20, 300), rabatt = rnd(5, 60); const f = (100 - rabatt) / 100, r = round5(preis * f); return { visual: null, prompt: `Ein Artikel kostet ${preis} Fr. Bei ${rabatt}% Rabatt: Wie viel kostet er noch? (auf 5 Rappen runden)`, answerType: "number", correct: r, solution: `Es bleiben 100 % − ${rabatt} % = ${100 - rabatt} %.\n${preis} · ${f} = ${exact4(preis * f)} → ${chf(r)} Fr.` }; }
+function generateVAT() { const preisExkl = rnd(20, 300), mwst = [2.6, 3.8, 8.1][rnd(0, 2)]; const f = Math.round((1 + mwst / 100) * 1000) / 1000, r = round5(preisExkl * f); return { visual: null, prompt: `Ein Artikel kostet ${preisExkl} Fr. exkl. MWST. Der MWST-Satz beträgt ${mwst}%. Wie viel kostet er inkl. MWST? (auf 5 Rappen runden)`, answerType: "number", correct: r, solution: `100 % + ${mwst} % = ${Math.round((100 + mwst) * 10) / 10} %\n${preisExkl} · ${f} = ${exact4(preisExkl * f)} → ${chf(r)} Fr.` }; }
+// Wechselkurs wie im Skript M2 K5: «1 € kostet CHF …»; Franken auf 5 Rappen, Euro auf 2 Dezimalen
+function generateCurrency() {
+  const kurs = rnd(88, 105) / 100, k = kurs.toFixed(2);
+  if (Math.random() < 0.5) { const b = rnd(2, 80) * 5, r = round5(b * kurs); return { visual: null, prompt: `1 € kostet CHF ${k}. Wie viele Franken bezahlst du für ${b} €? (auf 5 Rappen runden)`, answerType: "number", correct: r, solution: `Euro → Franken: Betrag · Kurs\n${b} · ${k} = ${exact4(b * kurs)} → CHF ${chf(r)}` }; }
+  const c = rnd(2, 60) * 10, r = round2(c / kurs);
+  return { visual: null, prompt: `1 € kostet CHF ${k}. Wie viele Euro erhältst du für CHF ${c}? (auf 2 Dezimalen runden)`, answerType: "number", correct: r, solution: `Franken → Euro: Betrag : Kurs\n${c} : ${k} ≈ ${chf(r)} €` };
+}
 
-function generateCircleCircumference() { const r = rnd(2, 30); return { visual: null, prompt: `Berechne den Umfang eines Kreises mit Radius ${r} cm. (auf 1 Nachkommastelle runden, π ≈ 3.14159)`, answerType: "number", correct: Math.round(2 * Math.PI * r * 10) / 10, solution: `U = 2 × π × r = 2 × π × ${r} ≈ ${Math.round(2 * Math.PI * r * 10) / 10} cm` }; }
-function generateCircleArea() { const r = rnd(2, 30); return { visual: null, prompt: `Berechne die Fläche eines Kreises mit Radius ${r} cm. (auf 1 Nachkommastelle runden, π ≈ 3.14159)`, answerType: "number", correct: Math.round(Math.PI * r * r * 10) / 10, solution: `A = π × r² = π × ${r}² = π × ${r * r} ≈ ${Math.round(Math.PI * r * r * 10) / 10} cm²` }; }
+function generateCircleCircumference() { const r = rnd(2, 30); return { visual: null, prompt: `Berechne den Umfang eines Kreises mit Radius ${r} cm. (auf 1 Nachkommastelle runden, π ≈ 3.14159)`, answerType: "number", correct: Math.round(2 * Math.PI * r * 10) / 10, solution: `U = 2 · π · r = 2 · π · ${r} ≈ ${Math.round(2 * Math.PI * r * 10) / 10} cm` }; }
+function generateCircleArea() { const r = rnd(2, 30); return { visual: null, prompt: `Berechne die Fläche eines Kreises mit Radius ${r} cm. (auf 1 Nachkommastelle runden, π ≈ 3.14159)`, answerType: "number", correct: Math.round(Math.PI * r * r * 10) / 10, solution: `A = π · r² = π · ${r}² = π · ${r * r} ≈ ${Math.round(Math.PI * r * r * 10) / 10} cm²` }; }
 function generateCircleSector() { const r = rnd(3, 20), winkel = rnd(20, 340); return { visual: null, prompt: `Berechne die Fläche eines Kreissektors mit Radius ${r} cm und Mittelpunktswinkel ${winkel}°. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((winkel / 360) * Math.PI * r * r * 10) / 10 }; }
 function generateCircleFormulaMC() {
   const askUmfang = Math.random() < 0.5;
-  const correct = askUmfang ? "2 × π × r" : "π × r²";
-  const wrongs = askUmfang ? ["π × r²", "π × r", "2 × π × r²"] : ["2 × π × r", "π × r", "2 × π × r²"];
+  const correct = askUmfang ? "2 · π · r" : "π · r²";
+  const wrongs = askUmfang ? ["π · r²", "π · r", "2 · π · r²"] : ["2 · π · r", "π · r", "2 · π · r²"];
   const options = [correct, ...wrongs].sort(() => Math.random() - 0.5);
   return { visual: null, prompt: `Welche Formel berechnet ${askUmfang ? "den Umfang" : "die Fläche"} eines Kreises mit Radius r?`, answerType: "mc", options, correct };
 }
 function generateCircleSectorFormulaMC() {
-  const correct = "(α ÷ 360°) × π × r²";
-  const wrongs = ["π × r²", "2 × π × r", "(α ÷ 180°) × π × r²"];
+  const correct = "(α : 360°) · π · r²";
+  const wrongs = ["π · r²", "2 · π · r", "(α : 180°) · π · r²"];
   const options = [correct, ...wrongs].sort(() => Math.random() - 0.5);
   return { visual: null, prompt: `Welche Formel berechnet die Fläche eines Kreissektors mit Radius r und Mittelpunktswinkel α?`, answerType: "mc", options, correct };
 }
 
 function generateTreeCount() { const n = rnd(2, 5), k = rnd(2, 8); return { visual: null, prompt: `Du triffst ${n} unabhängige Entscheidungen mit je ${k} Möglichkeiten. Wie viele verschiedene Kombinationen gibt es insgesamt?`, answerType: "number", correct: Math.pow(k, n) }; }
 function generateMode() { const pool = [rnd(1,10), rnd(1,10), rnd(1,10)]; const vals = []; const modeVal = pool[0]; for (let i=0;i<3;i++) vals.push(modeVal); for (let i=0;i<3;i++) vals.push(rnd(1,10)); for (let j = vals.length - 1; j > 0; j--) { const k = rnd(0, j); [vals[j], vals[k]] = [vals[k], vals[j]]; } const counts = {}; vals.forEach(v => counts[v] = (counts[v]||0)+1); let best = vals[0]; Object.keys(counts).forEach(k => { if (counts[k] > counts[best]) best = Number(k); }); return { visual: null, prompt: `Bestimme den Modus (häufigster Wert) dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: Number(best) }; }
-function generateRelativeFrequency() { const total = rnd(20, 200); const abs = rnd(1, total); return { visual: null, prompt: `Bei ${total} Versuchen trat ein Ereignis ${abs} Mal auf. Wie gross ist die relative Häufigkeit in %? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((abs / total) * 100 * 10) / 10, solution: `${abs} : ${total} = ${Math.round(abs / total * 10000) / 10000}\n× 100 = ${Math.round((abs / total) * 100 * 10) / 10} %` }; }
+function generateRelativeFrequency() { const total = rnd(20, 200); const abs = rnd(1, total); return { visual: null, prompt: `Bei ${total} Versuchen trat ein Ereignis ${abs} Mal auf. Wie gross ist die relative Häufigkeit in %? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((abs / total) * 100 * 10) / 10, solution: `${abs} : ${total} = ${Math.round(abs / total * 10000) / 10000}\n· 100 = ${Math.round((abs / total) * 100 * 10) / 10} %` }; }
 
-function generateCylinderVolume() { const r = rnd(2, 15), h = rnd(3, 25); return { visual: null, prompt: `Berechne das Volumen eines Zylinders mit Radius ${r} cm und Höhe ${h} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.PI * r * r * h * 10) / 10, solution: `V = π × r² × h = π × ${r * r} × ${h} ≈ ${Math.round(Math.PI * r * r * h * 10) / 10} cm³` }; }
+function generateCylinderVolume() { const r = rnd(2, 15), h = rnd(3, 25); return { visual: null, prompt: `Berechne das Volumen eines Zylinders mit Radius ${r} cm und Höhe ${h} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.PI * r * r * h * 10) / 10, solution: `V = π · r² · h = π · ${r * r} · ${h} ≈ ${Math.round(Math.PI * r * r * h * 10) / 10} cm³` }; }
 function generateCylinderSurface() { const r = rnd(2, 15), h = rnd(3, 25); return { visual: null, prompt: `Berechne die Oberfläche eines Zylinders mit Radius ${r} cm und Höhe ${h} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((2 * Math.PI * r * r + 2 * Math.PI * r * h) * 10) / 10 }; }
 
 function generateSpeed() { const s = rnd(20, 400), t = rnd(1, 10); return { visual: null, prompt: `Eine Strecke von ${s} km wird in ${t} h zurückgelegt. Wie gross ist die Geschwindigkeit in km/h? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((s / t) * 10) / 10, solution: `v = s : t = ${s} km : ${t} h = ${Math.round((s / t) * 10) / 10} km/h` }; }
-function generateDistance() { const v = rnd(10, 120), t = rnd(1, 8); return { visual: null, prompt: `Ein Fahrzeug fährt mit ${v} km/h während ${t} h. Welche Strecke legt es zurück (in km)?`, answerType: "number", correct: v * t, solution: `s = v × t = ${v} km/h × ${t} h = ${v * t} km` }; }
-function generateSlope() { const hoehe = rnd(1, 30), strecke = rnd(20, 200); return { visual: null, prompt: `Eine Strasse steigt auf ${strecke} m horizontaler Strecke um ${hoehe} m an. Wie gross ist die Steigung in %? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((hoehe / strecke) * 100 * 10) / 10, solution: `Steigung = ${hoehe} : ${strecke} × 100 = ${Math.round((hoehe / strecke) * 100 * 10) / 10} %` }; }
+function generateDistance() { const v = rnd(10, 120), t = rnd(1, 8); return { visual: null, prompt: `Ein Fahrzeug fährt mit ${v} km/h während ${t} h. Welche Strecke legt es zurück (in km)?`, answerType: "number", correct: v * t, solution: `s = v · t = ${v} km/h · ${t} h = ${v * t} km` }; }
+function generateSlope() { const hoehe = rnd(1, 30), strecke = rnd(20, 200); return { visual: null, prompt: `Eine Strasse steigt auf ${strecke} m horizontaler Strecke um ${hoehe} m an. Wie gross ist die Steigung in %? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((hoehe / strecke) * 100 * 10) / 10, solution: `Steigung = ${hoehe} : ${strecke} · 100 = ${Math.round((hoehe / strecke) * 100 * 10) / 10} %` }; }
 
 /* ---- Mathematik 3. Jahr: Generatoren ---- */
 function generateSlopeTwoPoints() {
   const m = rndNonZero(-5, 5);
   const x1 = rnd(-8, 8), dx = rnd(1, 6), x2 = x1 + dx;
   const y1 = rnd(-8, 8), y2 = y1 + m * dx;
-  return { visual: null, prompt: `Eine Gerade verläuft durch die Punkte P1(${x1}|${y1}) und P2(${x2}|${y2}). Wie gross ist die Steigung m?`, answerType: "number", correct: m, solution: `m = (y2 − y1) : (x2 − x1) = (${y2} − (${y1})) : (${x2} − (${x1})) = ${y2 - y1} : ${dx} = ${m}` };
+  return { visual: null, prompt: `Eine Gerade verläuft durch die Punkte P₁${pkt(x1, y1)} und P₂${pkt(x2, y2)}. Wie gross ist die Steigung a?`, answerType: "number", correct: m, solution: `a = (y₂ − y₁) : (x₂ − x₁) = (${y2} − (${y1})) : (${x2} − (${x1})) = ${y2 - y1} : ${dx} = ${m}` };
 }
 function generateFunctionValue() {
   const m = rndNonZero(-6, 6), q = rnd(-15, 15), x0 = rnd(-8, 8);
   const sign = q >= 0 ? "+" : "−";
-  return { visual: null, prompt: `Gegeben ist die Funktion f(x) = ${m}x ${sign} ${Math.abs(q)}. Berechne f(${x0}).`, answerType: "number", correct: m * x0 + q, solution: `f(${x0}) = ${m} · (${x0}) ${sign} ${Math.abs(q)} = ${m * x0} ${sign} ${Math.abs(q)} = ${m * x0 + q}` };
+  return { visual: null, prompt: `Gegeben ist die Gerade y = ${cx(m)}x ${sign} ${Math.abs(q)}. Berechne y für x = ${x0}.`, answerType: "number", correct: m * x0 + q, solution: `y = ${nm(m)} · (${x0}) ${sign} ${Math.abs(q)} = ${m * x0} ${sign} ${Math.abs(q)} = ${m * x0 + q}` };
 }
 function generateSimilarFigures() {
   const bc = rnd(4, 20), cd = rnd(4, 20);
@@ -3361,7 +3368,7 @@ function generateScientificNotation() {
   const expPool = [-5, -4, -3, -2, 2, 3, 4, 5, 6];
   const exp = expPool[rnd(0, expPool.length - 1)];
   const plain = sciToPlainString(mantissaStr, exp);
-  return { visual: null, prompt: `Schreibe ${plain} in wissenschaftlicher Schreibweise (Form a × 10ⁿ, z.B. 4.5 × 10⁴).`, answerType: "pair", pairStyle: "scientific", correct: [mantissa, exp] };
+  return { visual: null, prompt: `Schreibe ${plain} in wissenschaftlicher Schreibweise (Form a · 10ⁿ, z.B. 4.5 · 10⁴).`, answerType: "pair", pairStyle: "scientific", correct: [mantissa, exp] };
 }
 function generateNegativeExponent() {
   const base = rnd(2, 9), exp = rnd(2, 4);
@@ -3371,14 +3378,14 @@ function generateJahreszins() {
   const k = rnd(1, 200) * 100;
   const pOptions = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
   const p = pOptions[rnd(0, pOptions.length - 1)];
-  return { visual: null, prompt: `Kapital: ${k} CHF, Zinssatz: ${p}%. Wie viel Jahreszins (in CHF) resultiert daraus? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(k * p / 100 * 100) / 100, solution: `Jahreszins = ${k} × ${p} : 100 = ${Math.round(k * p / 100 * 100) / 100} CHF` };
+  return { visual: null, prompt: `Kapital: ${k} CHF, Zinssatz: ${p}%. Wie viel Jahreszins (in CHF) resultiert daraus? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(k * p / 100 * 100) / 100, solution: `Jahreszins = ${k} · ${p} : 100 = ${Math.round(k * p / 100 * 100) / 100} CHF` };
 }
 function generateMarchzins() {
   const k = rnd(1, 200) * 100;
   const pOptions = [0.5, 1, 1.5, 2, 2.5, 3];
   const p = pOptions[rnd(0, pOptions.length - 1)];
   const d = rnd(10, 300);
-  return { visual: null, prompt: `Kapital: ${k} CHF, Zinssatz: ${p}%, Anlagedauer: ${d} Tage. Wie viel Marchzins (in CHF) resultiert? (Bankjahr = 360 Tage, auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(k * p / 100 * d / 360 * 100) / 100, solution: `Jahreszins: ${k} × ${p} : 100 = ${Math.round(k * p) / 100} CHF\nFür ${d} Tage: × ${d} : 360 = ${Math.round(k * p / 100 * d / 360 * 100) / 100} CHF` };
+  return { visual: null, prompt: `Kapital: ${k} CHF, Zinssatz: ${p}%, Anlagedauer: ${d} Tage. Wie viel Marchzins (in CHF) resultiert? (Bankjahr = 360 Tage, auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(k * p / 100 * d / 360 * 100) / 100, solution: `Jahreszins: ${k} · ${p} : 100 = ${Math.round(k * p) / 100} CHF\nFür ${d} Tage: · ${d} : 360 = ${Math.round(k * p / 100 * d / 360 * 100) / 100} CHF` };
 }
 function generateConeVolume() { const r = rnd(2, 12), h = rnd(3, 20); return { visual: null, prompt: `Berechne das Volumen eines Kegels mit Radius ${r} cm und Höhe ${h} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.PI * r * r * h / 3 * 10) / 10 }; }
 function generateSphereVolume() { const r = rnd(2, 25); return { visual: null, prompt: `Berechne das Volumen einer Kugel mit Radius ${r} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round((4 / 3) * Math.PI * r * r * r * 10) / 10 }; }
@@ -3402,7 +3409,7 @@ function generateLinearSystem() {
     const termB = (Math.abs(b) === 1 ? "" : Math.abs(b)) + "y";
     return `${termA} ${b < 0 ? "−" : "+"} ${termB} = ${c}`;
   };
-  return { visual: null, prompt: `Löse das Gleichungssystem: ${fmt(a1, b1, c1)} und ${fmt(a2, b2, c2)}. Wie lautet die Lösung (x|y)?`, answerType: "pair", pairStyle: "coordinate", correct: [x, y] };
+  return { visual: null, prompt: `Löse das Gleichungssystem: ${fmt(a1, b1, c1)} und ${fmt(a2, b2, c2)}. Wie lautet die Lösung (x/y)?`, answerType: "pair", pairStyle: "coordinate", correct: [x, y] };
 }
 function generatePermutations() {
   const n = rnd(4, 10);
@@ -3434,7 +3441,7 @@ function generateCreditRate() {
   const k = rnd(5, 80) * 100;
   const months = [6, 12, 18, 24, 36][rnd(0, 4)];
   const kosten = Math.round(k * (rnd(3, 15) / 100));
-  return { visual: null, prompt: `Ein Kredit über ${k} CHF wird in ${months} gleichen Monatsraten zurückbezahlt. Zusätzlich fallen ${kosten} CHF Zinsen und Kosten an. Wie hoch ist die monatliche Rate (in CHF)? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round((k + kosten) / months * 100) / 100 };
+  return { visual: null, prompt: `Ein Kredit über ${k} CHF wird in ${months} gleichen Monatsraten zurückbezahlt. Zusätzlich fallen ${kosten} CHF Zinsen und Kosten an. Wie hoch ist die monatliche Rate (in CHF)? (auf 5 Rappen runden)`, answerType: "number", correct: round5((k + kosten) / months), solution: `(${k} + ${kosten}) : ${months} = ${exact4((k + kosten) / months)} → ${chf(round5((k + kosten) / months))} CHF` };
 }
 function nGonAntiprismSolid(n) { return { name: `${n}-eckiges Antiprisma`, faces: 2 * n + 2, edges: 4 * n, vertices: 2 * n }; }
 const PLATONIC_SOLIDS = [
@@ -3674,9 +3681,9 @@ function reflectPointAcrossLine(P, L1, L2) {
 // des sichtbaren Bereichs bleiben.
 const IMAGE_POINT_FIGURES = [
   { name: "Dreieck", verts: ["A", "B", "C"], points: { A: { x: 20, y: 150 }, B: { x: 70, y: 158 }, C: { x: 35, y: 105 } } },
-  { name: "Drachenviereck", verts: ["A", "B", "C", "D"], points: { A: { x: 45, y: 158 }, B: { x: 70, y: 120 }, C: { x: 45, y: 65 }, D: { x: 20, y: 120 } } },
-  { name: "Parallelogramm", verts: ["A", "B", "C", "D"], points: { A: { x: 15, y: 155 }, B: { x: 70, y: 155 }, C: { x: 85, y: 110 }, D: { x: 30, y: 110 } } },
-  { name: "Raute", verts: ["A", "B", "C", "D"], points: { A: { x: 45, y: 158 }, B: { x: 70, y: 115 }, C: { x: 45, y: 72 }, D: { x: 20, y: 115 } } }
+  { name: "Drachen", verts: ["A", "B", "C", "D"], points: { A: { x: 45, y: 158 }, B: { x: 70, y: 120 }, C: { x: 45, y: 65 }, D: { x: 20, y: 120 } } },
+  { name: "Parallelenviereck", verts: ["A", "B", "C", "D"], points: { A: { x: 15, y: 155 }, B: { x: 70, y: 155 }, C: { x: 85, y: 110 }, D: { x: 30, y: 110 } } },
+  { name: "Rhombus", verts: ["A", "B", "C", "D"], points: { A: { x: 45, y: 158 }, B: { x: 70, y: 115 }, C: { x: 45, y: 72 }, D: { x: 20, y: 115 } } }
 ];
 function figurePolySVG(fig, color) {
   const pts = fig.verts.map(v => `${fig.points[v].x},${fig.points[v].y}`).join(" ");
@@ -3781,7 +3788,7 @@ const MULTI_AXIS_SHAPES = [
     axes: [[[100, 15], [100, 185]], [[15, 100], [185, 100]], [[15, 15], [185, 185]], [[15, 185], [185, 15]]] },
   { name: "Rechteck", points: [[55, 70], [145, 70], [145, 130], [55, 130]],
     axes: [[[100, 40], [100, 160]], [[30, 100], [170, 100]]] },
-  { name: "Raute (Rhombus)", points: [[100, 25], [160, 100], [100, 175], [40, 100]],
+  { name: "Rhombus", points: [[100, 25], [160, 100], [100, 175], [40, 100]],
     axes: [[[100, 25], [100, 175]], [[40, 100], [160, 100]]] }
 ];
 function generateMultiSymmetryAxisHotspot() {
@@ -3896,7 +3903,7 @@ function generateParallelogramMissingVertexHotspot() {
   const visual = `<svg viewBox="0 0 200 200" class="mt-shape">${seg}${labels}</svg>`;
   return {
     visual,
-    prompt: "Diese drei Punkte sind drei Ecken eines Parallelogramms ABCD. Tippe auf die ungefähre Lage der vierten Ecke D.",
+    prompt: "Diese drei Punkte sind drei Ecken eines Parallelenvierecks ABCD. Tippe auf die ungefähre Lage der vierten Ecke D.",
     answerType: "hotspot",
     hotspotMode: "point",
     viewBox: "0 0 200 200",
@@ -4198,7 +4205,7 @@ function generateCalcChain() {
     if (t === 0) { const n = rnd(2, 25); val += n; opsText.push(`+${n}`); }
     else if (t === 1 && val > 2) { const n = rnd(2, Math.min(25, val)); val -= n; opsText.push(`−${n}`); }
     else if (t === 1) { const n = rnd(2, 25); val += n; opsText.push(`+${n}`); }
-    else { const n = rnd(2, 4); val *= n; opsText.push(`×${n}`); }
+    else { const n = rnd(2, 4); val *= n; opsText.push(`·${n}`); }
   }
   return { visual: null, prompt: `Rechenkette: Starte bei ${start}. Rechne der Reihe nach: ${opsText.join(", ")}. Was ist das Ergebnis?`, answerType: "number", correct: val };
 }
@@ -4264,7 +4271,7 @@ function generateBarChartMaxHotspot() {
   const visual = barChartSVG(labels, values, max);
   return {
     visual,
-    prompt: "Tippe auf den höchsten Balken.",
+    prompt: "Tippe auf die höchste Säule.",
     answerType: "hotspot",
     hotspotMode: "point",
     viewBox: "0 0 240 180",
@@ -4280,7 +4287,7 @@ function generateFractionOfQuantity() {
   const total = d * mult;
   const units = ["kg", "cm", "Fr.", "Liter", "m"];
   const unit = units[rnd(0, units.length - 1)];
-  return { visual: null, prompt: `${n}/${d} von ${total} ${unit} = ? ${unit}`, answerType: "number", correct: (total / d) * n, solution: `1/${d} von ${total} = ${total} : ${d} = ${total / d}\n${n}/${d} = ${total / d} × ${n} = ${(total / d) * n} ${unit}` };
+  return { visual: null, prompt: `${n}/${d} von ${total} ${unit} = ? ${unit}`, answerType: "number", correct: (total / d) * n, solution: `1/${d} von ${total} = ${total} : ${d} = ${total / d}\n${n}/${d} = ${total / d} · ${n} = ${(total / d) * n} ${unit}` };
 }
 function generateFractionToPercentM1() {
   const v = FRACTION_DECIMAL_PERCENT_VALUES[rnd(0, FRACTION_DECIMAL_PERCENT_VALUES.length - 1)];
@@ -4428,7 +4435,7 @@ function generateLadderConversion(kinds, needMix) {
     visual: null, answerType: "number", correct: toV,
     prompt: `Rechne um: ${fmtK3(fromV)} ${fromU} = ? ${toU}`,
     solution: R === 1 ? `1 ${a} = 1 ${b}, also ${fmtK3(fromV)} ${fromU} = ${fmtK3(toV)} ${toU}`
-      : `1 ${a} = ${fmtK3(R)} ${b}\n${down ? `kleinere Einheit → Zahl wird grösser: ${fmtK3(fromV)} × ${fmtK3(R)}` : `grössere Einheit → Zahl wird kleiner: ${fmtK3(fromV)} : ${fmtK3(R)}`} = ${fmtK3(toV)} ${toU}`
+      : `1 ${a} = ${fmtK3(R)} ${b}\n${down ? `kleinere Einheit → Zahl wird grösser: ${fmtK3(fromV)} · ${fmtK3(R)}` : `grössere Einheit → Zahl wird kleiner: ${fmtK3(fromV)} : ${fmtK3(R)}`} = ${fmtK3(toV)} ${toU}`
   };
 }
 function generateMeasureConversionK3() { return generateLadderConversion(["laenge", "hohl", "gewicht"]); }
@@ -4511,7 +4518,7 @@ function generateTimeConvertK3() {
     return { visual: null, answerType: "number", correct: m * 60 + s, prompt: `Rechne in Sekunden um: ${m}:${String(s).padStart(2, "0")} min = ? s`, solution: `${m} min = ${m * 60} s\n${m * 60} s + ${s} s = ${m * 60 + s} s` };
   }
   const d = pickOne([1, 2, 3, 4, 5, 7]), half = Math.random() < 0.5;
-  return { visual: null, answerType: "number", correct: d * 24 + (half ? 12 : 0), prompt: `Wie viele Stunden sind ${d}${half ? "½" : ""} d (Tage)?`, solution: `1 d = 24 h\n${d} × 24 h${half ? " + 12 h" : ""} = ${d * 24 + (half ? 12 : 0)} h` };
+  return { visual: null, answerType: "number", correct: d * 24 + (half ? 12 : 0), prompt: `Wie viele Stunden sind ${d}${half ? "½" : ""} d (Tage)?`, solution: `1 d = 24 h\n${d} · 24 h${half ? " + 12 h" : ""} = ${d * 24 + (half ? 12 : 0)} h` };
 }
 // Mit Zeiten rechnen: 2:44 min + 7:50 min = 10:34 min
 function generateTimeCalcK3() {
@@ -4631,24 +4638,24 @@ function generateScale() {
 const QUAD_CLUES = [
   { text: "Ein Viereck mit vier rechten Winkeln und paarweise gleich langen, aber nicht allen gleich langen Seiten.", answer: "Rechteck" },
   { text: "Ein Viereck mit vier gleich langen Seiten und vier rechten Winkeln.", answer: "Quadrat" },
-  { text: "Ein Viereck mit zwei Paaren paralleler Seiten, aber ohne rechte Winkel.", answer: "Parallelogramm" },
-  { text: "Ein Viereck mit vier gleich langen Seiten, aber ohne rechte Winkel.", answer: "Raute" },
+  { text: "Ein Viereck mit zwei Paaren paralleler Seiten, aber ohne rechte Winkel.", answer: "Parallelenviereck" },
+  { text: "Ein Viereck mit vier gleich langen Seiten, aber ohne rechte Winkel.", answer: "Rhombus" },
   { text: "Ein Viereck mit genau einem Paar paralleler Seiten.", answer: "Trapez" },
-  { text: "Ein Viereck mit zwei Paaren gleich langer, benachbarter Seiten, dessen Diagonalen senkrecht aufeinander stehen, aber nicht parallel zu den Seiten sind.", answer: "Drachenviereck" }
+  { text: "Ein Viereck mit zwei Paaren gleich langer, benachbarter Seiten, dessen Diagonalen senkrecht aufeinander stehen, aber nicht parallel zu den Seiten sind.", answer: "Drachen" }
 ];
 function generateQuadFromClueMC() {
   const c = QUAD_CLUES[rnd(0, QUAD_CLUES.length - 1)];
-  const allNames = ["Rechteck", "Quadrat", "Parallelogramm", "Raute", "Trapez", "Drachenviereck"];
+  const allNames = ["Rechteck", "Quadrat", "Parallelenviereck", "Rhombus", "Trapez", "Drachen"];
   const options = [c.answer];
   while (options.length < 4) { const cand = allNames[rnd(0, allNames.length - 1)]; if (!options.includes(cand)) options.push(cand); }
   options.sort(() => Math.random() - 0.5);
   return { visual: null, prompt: `${c.text} Um welches Viereck handelt es sich?`, answerType: "mc", options, correct: c.answer };
 }
-function generateKiteArea() { const e = rnd(4, 30), f = rnd(4, 30); return { visual: null, prompt: `Ein Drachenviereck hat die Diagonalen e = ${e} cm und f = ${f} cm. Berechne den Flächeninhalt (in cm²): A = e × f ÷ 2.`, answerType: "number", correct: Math.round(e * f / 2 * 100) / 100 }; }
+function generateKiteArea() { const e = rnd(4, 30), f = rnd(4, 30); return { visual: null, prompt: `Ein Drachen hat die Diagonalen e = ${e} cm und f = ${f} cm. Berechne den Flächeninhalt (in cm²): A = e · f : 2.`, answerType: "number", correct: Math.round(e * f / 2 * 100) / 100 }; }
 function generateQuadPerimeterGeneral() {
-  if (Math.random() < 0.5) { const a = rnd(3, 25); return { visual: null, prompt: `Berechne den Umfang einer Raute mit Seitenlänge ${a} cm.`, answerType: "number", correct: 4 * a }; }
+  if (Math.random() < 0.5) { const a = rnd(3, 25); return { visual: null, prompt: `Berechne den Umfang eines Rhombus mit Seitenlänge ${a} cm.`, answerType: "number", correct: 4 * a }; }
   const a = rnd(3, 25), b = rnd(3, 25);
-  return { visual: null, prompt: `Berechne den Umfang eines Parallelogramms mit den Seitenlängen ${a} cm und ${b} cm.`, answerType: "number", correct: 2 * (a + b) };
+  return { visual: null, prompt: `Berechne den Umfang eines Parallelenvierecks mit den Seitenlängen ${a} cm und ${b} cm.`, answerType: "number", correct: 2 * (a + b) };
 }
 function generateRegularPolygonAngle() {
   const n = rnd(3, 12);
@@ -4737,7 +4744,7 @@ const THALES_STATEMENTS = [
   { text: "Beim Satz des Thales liegt der rechte Winkel immer im Mittelpunkt des Kreises.", val: false }
 ];
 function generateThalesStatementTruth() { const s = THALES_STATEMENTS[rnd(0, THALES_STATEMENTS.length - 1)]; return { visual: null, prompt: s.text, answerType: "boolean", correct: s.val ? 1 : 0 }; }
-function generateSpaceDiagonal() { const a = rnd(3, 20), b = rnd(3, 20), c = rnd(3, 20); return { visual: null, prompt: `Ein Quader hat die Kanten ${a} cm, ${b} cm und ${c} cm. Wie lang ist die Raumdiagonale? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.sqrt(a * a + b * b + c * c) * 10) / 10 }; }
+function generateSpaceDiagonal() { const a = rnd(3, 20), b = rnd(3, 20), c = rnd(3, 20); return { visual: null, prompt: `Ein Quader hat die Kanten ${a} cm, ${b} cm und ${c} cm. Wie lang ist die Körperdiagonale? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.sqrt(a * a + b * b + c * c) * 10) / 10 }; }
 
 function generateProportionTypeMC() {
   const kind = rnd(0, 2);
@@ -4747,7 +4754,7 @@ function generateProportionTypeMC() {
   else if (kind === 1) { const prod = [24, 36, 48, 60][rnd(0, 3)]; const divs = divisors.filter(d => prod % d === 0); x1 = divs[rnd(0, divs.length - 1)]; do { x2 = divs[rnd(0, divs.length - 1)]; } while (x2 === x1); y1 = prod / x1; y2 = prod / x2; correct = "umgekehrt proportional"; }
   else { x1 = rnd(2, 9); do { x2 = rnd(2, 9); } while (x2 === x1); y1 = rnd(2, 30); do { y2 = rnd(2, 30); } while (y1 * x2 === y2 * x1 || x1 * y1 === x2 * y2); correct = "weder noch"; }
   const options = ["proportional", "umgekehrt proportional", "weder noch"];
-  return { visual: null, prompt: `Wertepaare: (${x1}|${y1}) und (${x2}|${y2}). Wie hängen x und y zusammen?`, answerType: "mc", options, correct };
+  return { visual: null, prompt: `Wertepaare: ${pkt(x1, y1)} und ${pkt(x2, y2)}. Wie hängen x und y zusammen?`, answerType: "mc", options, correct };
 }
 
 function generatePrismMissing() {
@@ -4928,7 +4935,7 @@ const FACHBEGRIFFE = [
   { term: "Gemischte Zahl", expl: "Zahl aus ganzer Zahl und Bruch, z.B. 2 ¾", tier: 1 },
   { term: "Kürzen", expl: "Zähler und Nenner durch dieselbe Zahl teilen", tier: 1 },
   { term: "Erweitern", expl: "Zähler und Nenner mit derselben Zahl multiplizieren", tier: 1 },
-  { term: "Kehrwert", expl: "Bruch mit vertauschtem Zähler und Nenner", tier: 1 },
+  { term: "Kehrzahl", expl: "Bruch mit vertauschtem Zähler und Nenner", tier: 1 },
   { term: "Grundwert", expl: "Die Ausgangsgrösse, von der ein Prozentsatz berechnet wird", tier: 1 },
   { term: "Prozentsatz", expl: "Angabe in Prozent (%)", tier: 1 },
   { term: "Prozentwert", expl: "Ergebnis der Prozentrechnung vom Grundwert", tier: 1 },
@@ -4971,8 +4978,8 @@ const FACHBEGRIFFE = [
   { term: "Exponent", expl: "Zeigt an, wie oft die Basis mit sich selbst multipliziert wird", tier: 2 },
   { term: "Quadratzahl", expl: "Ergebnis einer Zahl hoch 2", tier: 2 },
   { term: "Quadratwurzel", expl: "Umkehrung des Quadrierens", tier: 2 },
-  { term: "Parallelogramm", expl: "Viereck mit zwei Paaren paralleler Seiten", tier: 2 },
-  { term: "Raute", expl: "Parallelogramm mit vier gleich langen Seiten", tier: 2 },
+  { term: "Parallelenviereck", expl: "Viereck mit zwei Paaren paralleler Seiten", tier: 2 },
+  { term: "Rhombus", expl: "Parallelenviereck mit vier gleich langen Seiten", tier: 2 },
   { term: "Trapez", expl: "Viereck mit genau einem Paar paralleler Seiten", tier: 2 },
   { term: "Prisma", expl: "Körper mit zwei deckungsgleichen, parallelen Grundflächen", tier: 2 },
   { term: "Pyramide", expl: "Körper mit einer Grundfläche und einer Spitze", tier: 2 },
@@ -4986,8 +4993,8 @@ const FACHBEGRIFFE = [
   { term: "Umgekehrt proportional", expl: "Wenn die eine Grösse steigt, sinkt die andere im gleichen Verhältnis", tier: 2 },
   { term: "Dreisatz", expl: "Rechenverfahren zur Lösung von Proportionalitätsaufgaben", tier: 2 },
   { term: "Massstab", expl: "Verhältnis zwischen Darstellung und Wirklichkeit", tier: 2 },
-  { term: "Mittelwert", expl: "Summe aller Werte geteilt durch ihre Anzahl", tier: 2 },
-  { term: "Median", expl: "Der mittlere Wert einer der Grösse nach geordneten Liste", tier: 2 },
+  { term: "Arithmetisches Mittel", expl: "Summe aller Werte geteilt durch ihre Anzahl («Durchschnitt»)", tier: 2 },
+  { term: "Zentralwert (Median)", expl: "Der mittlere Wert einer der Grösse nach geordneten Liste", tier: 2 },
   { term: "Spannweite", expl: "Differenz zwischen grösstem und kleinstem Wert", tier: 2 },
   { term: "Wahrscheinlichkeit", expl: "Mass dafür, wie wahrscheinlich ein Ereignis eintritt", tier: 2 },
   { term: "Relative Häufigkeit", expl: "Anteil eines Ereignisses an allen Versuchen", tier: 2 },
@@ -5004,7 +5011,7 @@ const FACHBEGRIFFE = [
   { term: "Platonischer Körper", expl: "Regelmässiger Körper mit lauter gleichen Flächen (z.B. Würfel)", tier: 3 },
   { term: "Ähnlichkeit", expl: "Figuren mit gleicher Form, aber unterschiedlicher Grösse", tier: 3 },
   { term: "Streckfaktor", expl: "Faktor, um den eine Figur vergrössert/verkleinert wird", tier: 3 },
-  { term: "Wissenschaftliche Schreibweise", expl: "Zahl als a × 10ⁿ dargestellt", tier: 3 },
+  { term: "Wissenschaftliche Schreibweise", expl: "Zahl als a · 10ⁿ dargestellt", tier: 3 },
   { term: "Kapital", expl: "Der Geldbetrag, auf den sich die Zinsberechnung bezieht", tier: 3 },
   { term: "Zins", expl: "Betrag, der für geliehenes/angelegtes Geld bezahlt wird", tier: 3 },
   { term: "Zinssatz", expl: "Zins in Prozent des Kapitals pro Jahr", tier: 3 },
@@ -5045,9 +5052,9 @@ const EXERCISE_INFO = {
   "m3-6a-faktor": { d: "Bestimme den Wachstumsfaktor zu einer prozentualen Zu- oder Abnahme – oder umgekehrt.", g: "Prozentuale Veränderungen als Faktor ausdrücken." },
   "m3-4a-zinseszins": { d: "Berechne das Kapital nach mehreren Jahren mit Zinseszins.", g: "Wiederholtes prozentuales Wachstum mit dem Wachstumsfaktor berechnen." },
   "m3-1b-tabelle": { d: "Ergänze den fehlenden Wert in der Wertetabelle einer linearen Funktion.", g: "Die konstante Zunahme linearer Funktionen erkennen." },
-  "m3-1b-nullstelle": { d: "Berechne, wo der Graph einer linearen Funktion die x-Achse schneidet.", g: "Nullstellen durch Lösen von f(x) = 0 bestimmen." },
-  "m3-1a-gleichung": { d: "Wähle die Funktionsgleichung, die zur gezeichneten Geraden gehört.", g: "Graph und Gleichung y = mx + q einander zuordnen." },
-  "m3-1a-graph-q": { d: "Lies den y-Achsenabschnitt einer Geraden ab.", g: "Die Bedeutung von q in y = mx + q am Graphen erkennen." },
+  "m3-1b-nullstelle": { d: "Berechne, wo eine Gerade die x-Achse schneidet.", g: "Den Schnittpunkt mit der x-Achse durch Einsetzen von y = 0 bestimmen." },
+  "m3-1a-gleichung": { d: "Wähle die Geradengleichung, die zur gezeichneten Geraden gehört.", g: "Graph und Gleichung y = a · x + b einander zuordnen." },
+  "m3-1a-graph-q": { d: "Lies den y-Achsenabschnitt einer Geraden ab.", g: "Die Bedeutung von b in y = a · x + b am Graphen erkennen." },
   "m3-1a-graph-m": { d: "Lies die Steigung einer Geraden im Koordinatensystem ab.", g: "Die Steigung mit einem Steigungsdreieck bestimmen." },
   "m2-1b-fehler": { d: "Finde den Schritt, in dem beim Addieren zweier Brüche ein Fehler passiert ist.", g: "Typische Fehler beim Bruchrechnen erkennen und vermeiden." },
   "8b-fehler": { d: "Finde den Schritt, in dem beim Lösen einer Gleichung ein Fehler passiert ist.", g: "Umformungsschritte kontrollieren und typische Fehler erkennen." },
@@ -5087,10 +5094,10 @@ const EXERCISE_INFO = {
   "bw-fach-3": { d: "Ordne Fachbegriffe bis und mit 3. Jahr ihrer richtigen Erklärung zu (und umgekehrt).", g: "Das gesamte mathematische Vokabular der Sek 1 sicher verstehen und anwenden." },
   "bw-prop-1": { d: "Beurteile bei einer Alltagssituation, ob zwei Grössen proportional, umgekehrt proportional oder nicht proportional zusammenhängen.", g: "Proportionale, umgekehrt proportionale und nicht-proportionale Zusammenhänge unterscheiden können." },
   "1a-1": { d: "Bestimme die Anzahl Symmetrieachsen einer Figur.", g: "Achsensymmetrie an Figuren erkennen." },
-  "1b-1": { d: "Bestimme die Drehsymmetrie-Ordnung einer Figur.", g: "Drehsymmetrie an Figuren erkennen." },
+  "1b-1": { d: "Bestimme den kleinsten Drehwinkel einer drehsymmetrischen Figur.", g: "Drehsymmetrische Figuren erkennen und den kleinsten Drehwinkel bestimmen." },
   "1c-x": { d: "Spiegle einen Punkt an der x-Achse.", g: "Achsenspiegelung an der x-Achse berechnen können." },
   "1c-y": { d: "Spiegle einen Punkt an der y-Achse.", g: "Achsenspiegelung an der y-Achse berechnen können." },
-  "1d-1": { d: "Spiegle einen Punkt am Ursprung.", g: "Punktspiegelung am Ursprung berechnen können." },
+  "1d-1": { d: "Spiegle einen Punkt am Nullpunkt.", g: "Punktspiegelung am Nullpunkt berechnen können." },
   "2a-berechnen": { d: "Berechne den Wert einer Potenz.", g: "Potenzen als wiederholte Multiplikation verstehen." },
   "2a-gesetz": { d: "Wende das Potenzgesetz für die Multiplikation gleicher Basen an.", g: "Potenzgesetze anwenden können." },
   "2a-reihenfolge": { d: "Berechne einen Term unter Beachtung von «Punkt vor Strich» und Klammern.", g: "Rechenreihenfolge korrekt anwenden." },
@@ -5119,8 +5126,8 @@ const EXERCISE_INFO = {
   "4a-faces": { d: "Zähle die Flächen eines geometrischen Körpers.", g: "Eigenschaften geometrischer Körper kennen." },
   "4a-edges": { d: "Zähle die Kanten eines geometrischen Körpers.", g: "Eigenschaften geometrischer Körper kennen." },
   "4a-vertices": { d: "Zähle die Ecken eines geometrischen Körpers.", g: "Eigenschaften geometrischer Körper kennen." },
-  "5-dice": { d: "Berechne die Wahrscheinlichkeit für ein Ereignis beim Würfeln.", g: "Wahrscheinlichkeit als Verhältnis günstig ÷ möglich berechnen." },
-  "5-bag": { d: "Berechne die Wahrscheinlichkeit, eine bestimmte Kugel aus einem Beutel zu ziehen.", g: "Wahrscheinlichkeit als Verhältnis günstig ÷ möglich berechnen." },
+  "5-dice": { d: "Berechne die Wahrscheinlichkeit für ein Ereignis beim Würfeln.", g: "Wahrscheinlichkeit als Verhältnis günstig : möglich berechnen." },
+  "5-bag": { d: "Berechne die Wahrscheinlichkeit, eine bestimmte Kugel aus einem Beutel zu ziehen.", g: "Wahrscheinlichkeit als Verhältnis günstig : möglich berechnen." },
   "6a-compare": { d: "Vergleiche zwei negative Zahlen.", g: "Grössenvergleich bei negativen Zahlen sicher durchführen." },
   "6a-order": { d: "Entscheide, welche von zwei ganzen Zahlen grösser ist.", g: "Ganze Zahlen der Grösse nach ordnen können." },
   "6b-read": { d: "Lies die Koordinaten eines Punktes ab (auch mit negativen Werten).", g: "Sich im Koordinatensystem mit allen vier Quadranten orientieren." },
@@ -5139,14 +5146,14 @@ const EXERCISE_INFO = {
   "9a-form": { d: "Bestimme die Form (Quadrat, Rechteck, Dreiecksart) einer im Würfel markierten Fläche.", g: "Vierecke und Dreiecke innerhalb eines Würfels erkennen und benennen können." },
   "9a-ecken": { d: "Zähle die Ecken einer im Würfel markierten Fläche.", g: "Vierecke und Dreiecke innerhalb eines Würfels anhand ihrer Eckenzahl unterscheiden können." },
   "9a-winkel": { d: "Zähle die rechten Winkel einer im Würfel markierten Fläche.", g: "Eigenschaften (rechte Winkel) von Vierecken und Dreiecken im Würfel erkennen können." },
-  "9a-seiten": { d: "Entscheide, ob alle Seiten einer im Würfel markierten Fläche gleich lang sind.", g: "Seitenlängen (Kante, Flächen- und Raumdiagonale) im Würfel vergleichen können." },
+  "9a-seiten": { d: "Entscheide, ob alle Seiten einer im Würfel markierten Fläche gleich lang sind.", g: "Seitenlängen (Kante, Flächen- und Körperdiagonale) im Würfel vergleichen können." },
   "9b-vol": { d: "Berechne das Volumen eines Würfels.", g: "Volumenformel des Würfels anwenden." },
   "9b-surf": { d: "Berechne die Oberfläche eines Würfels.", g: "Oberflächenformel des Würfels anwenden." },
   "m2-1a-comp": { d: "Vergleiche zwei Brüche.", g: "Brüche der Grösse nach vergleichen können." },
   "m2-1a-mixed": { d: "Wandle eine gemischte Zahl in einen unechten Bruch um.", g: "Zusammenhang zwischen gemischter Zahl und unechtem Bruch verstehen." },
   "m2-1b-add": { d: "Addiere zwei Brüche.", g: "Brüche mit unterschiedlichen Nennern addieren können." },
   "m2-1b-mul": { d: "Multipliziere zwei Brüche.", g: "Brüche multiplizieren können." },
-  "m2-1b-div": { d: "Dividiere zwei Brüche.", g: "Brüche dividieren können (Kehrwert bilden)." },
+  "m2-1b-div": { d: "Dividiere zwei Brüche.", g: "Brüche dividieren können (Kehrzahl bilden)." },
   "m2-1c-eq": { d: "Löse eine lineare Gleichung nach x auf.", g: "Lineare Gleichungen lösen können." },
   "m2-1c-fraceq": { d: "Löse eine Gleichung mit einem Bruch vor dem x auf beiden Seiten nach x auf.", g: "Bruchgleichungen (lineare Gleichungen mit Brüchen auf beiden Seiten) lösen können." },
   "m2-1c-seq": { d: "Setze eine Zahlenfolge fort (additiv, multiplikativ, mit wachsender Differenz, abwechselnd, Fibonacci-artig oder Quadratzahlen).", g: "Verschiedene Muster in Zahlenfolgen erkennen und fortsetzen." },
@@ -5182,7 +5189,7 @@ const EXERCISE_INFO = {
   "m2-9a-s": { d: "Berechne die zurückgelegte Strecke aus Geschwindigkeit und Zeit.", g: "Zusammenhang von Strecke, Zeit und Geschwindigkeit anwenden." },
   "m2-9b-1": { d: "Berechne die Steigung in Prozent.", g: "Steigung als Verhältnis von Höhenunterschied und Strecke berechnen." },
   "m3-1a-1": { d: "Berechne die Steigung einer Geraden durch zwei Punkte.", g: "Steigung einer Geraden bestimmen können." },
-  "m3-1b-1": { d: "Berechne den Funktionswert einer linearen Funktion.", g: "Funktionsgleichungen auswerten können." },
+  "m3-1b-1": { d: "Berechne den y-Wert zu einem x-Wert auf einer Geraden.", g: "Geradengleichungen auswerten können." },
   "m3-2a-1": { d: "Berechne eine fehlende Seite bei ähnlichen Figuren.", g: "Streckfaktor bei ähnlichen Figuren anwenden." },
   "m3-2b-vol": { d: "Berechne das Volumen eines Körpers nach einer Streckung.", g: "Verhalten des Volumens bei linearer Streckung (Faktor³) verstehen." },
   "m3-2b-surf": { d: "Berechne die Oberfläche eines Körpers nach einer Streckung.", g: "Verhalten der Oberfläche bei linearer Streckung (Faktor²) verstehen." },
@@ -5279,7 +5286,7 @@ const EXERCISE_INFO = {
   "3c-mehrnamig": { d: "Schreibe Flächen und Volumen wie «6 m² 13 dm²» mit einer Einheit.", g: "Zwischen Flächen- und Raummasseinheiten umrechnen." },
   "3c-schaetzen": { d: "Wähle die passende Schätzung für eine Fläche oder ein Volumen.", g: "Flächen- und Rauminhalte abschätzen." },
   "3a-chart": { d: "Lies einen Wert aus einem Säulendiagramm ab.", g: "Aussagen aus Diagrammen herauslesen." },
-  "3a-chart-tap": { d: "Tippe im Säulendiagramm auf den grössten Balken.", g: "Diagramme lesen und Werte vergleichen." },
+  "3a-chart-tap": { d: "Tippe im Säulendiagramm auf die höchste Säule.", g: "Diagramme lesen und Werte vergleichen." },
   "3b-bruchteil": { d: "Berechne einen Bruchteil einer Grösse, z. B. 3/4 von 20 kg.", g: "Bruchteile von Grössen berechnen." },
   "3b-b2p": { d: "Wandle einen Bruch in Prozent um.", g: "Zwischen Brüchen und Prozenten umrechnen." },
   "3b-p2b": { d: "Schreibe eine Prozentzahl als vollständig gekürzten Bruch.", g: "Zwischen Prozenten und Brüchen umrechnen." },
@@ -5292,10 +5299,10 @@ const EXERCISE_INFO = {
   "5-relfreq-vgl": { d: "Vergleiche die Trefferquoten zweier Personen.", g: "Relative Häufigkeiten berechnen und vergleichen." },
   "6b-massstab": { d: "Rechne Kartendistanzen mit dem Massstab in wahre Distanzen um.", g: "Mit dem Massstab zwischen Karte und Wirklichkeit umrechnen." },
   "7b-clue": { d: "Erkenne die Vierecksform anhand ihrer Eigenschaften.", g: "Vierecksformen an ihren Eigenschaften erkennen." },
-  "7b-drachen": { d: "Berechne den Flächeninhalt eines Drachens aus den Diagonalen.", g: "Den Flächeninhalt von Drachen (und Rauten) berechnen." },
-  "7b-umfang": { d: "Berechne den Umfang von Raute und Parallelogramm.", g: "Den Umfang verschiedener Vierecke berechnen." },
+  "7b-drachen": { d: "Berechne den Flächeninhalt eines Drachens aus den Diagonalen.", g: "Den Flächeninhalt von Drachen (und Rhomben) berechnen." },
+  "7b-umfang": { d: "Berechne den Umfang von Rhombus und Parallelenviereck.", g: "Den Umfang verschiedener Vierecke berechnen." },
   "7b-innenwinkel": { d: "Berechne einen Innenwinkel eines regelmässigen Vielecks.", g: "Innenwinkel regelmässiger Vielecke berechnen." },
-  "7b-parallelo-tap": { d: "Tippe den fehlenden Eckpunkt eines Parallelogramms an.", g: "Eigenschaften des Parallelogramms nutzen." },
+  "7b-parallelo-tap": { d: "Tippe den fehlenden Eckpunkt eines Parallelenvierecks an.", g: "Eigenschaften des Parallelenvierecks nutzen." },
   "8a-gleichwertig": { d: "Wähle den Term, der zum gegebenen Term gleichwertig ist.", g: "Gleichwertige Terme erkennen." },
   "8a-beurteilen": { d: "Entscheide, ob eine Termumformung richtig ist.", g: "Termumformungen überprüfen." },
   "9b-formula-mc": { d: "Wähle die richtige Formel für Volumen oder Oberfläche von Würfel und Quader.", g: "Volumen- und Oberflächenformeln unterscheiden." },
@@ -5308,7 +5315,7 @@ const EXERCISE_INFO = {
   "m2-2a-thales": { d: "Berechne einen fehlenden Winkel in einem Dreieck am Thaleskreis.", g: "Den Satz des Thales anwenden." },
   "m2-2a-thales-tf": { d: "Beurteile Aussagen über Winkel am Thaleskreis.", g: "Den Satz des Thales erklären." },
   "m2-2b-check": { d: "Prüfe mit der Umkehrung des Pythagoras, ob ein Dreieck rechtwinklig ist.", g: "Mit der Umkehrung des Satzes von Pythagoras Rechtwinkligkeit prüfen." },
-  "m2-2d-raum": { d: "Berechne die Raumdiagonale eines Quaders.", g: "Mit Pythagoras Streckenlängen im Raum berechnen." },
+  "m2-2d-raum": { d: "Berechne die Körperdiagonale eines Quaders.", g: "Mit Pythagoras Streckenlängen im Raum berechnen." },
   "m2-3a-typ": { d: "Entscheide, ob eine Zuordnung proportional, umgekehrt proportional oder weder noch ist.", g: "Proportionale und umgekehrt proportionale Zuordnungen unterscheiden." },
   "m2-4a-fehlend": { d: "Berechne aus dem Volumen die Höhe oder die Grundfläche eines Prismas.", g: "Die Volumenformel des Prismas umstellen." },
   "m2-4c-fehlend": { d: "Berechne aus dem Volumen die Höhe oder die Grundfläche einer Pyramide.", g: "Die Volumenformel der Pyramide umstellen." },
@@ -5353,12 +5360,17 @@ const EXERCISE_INFO = {
    ========================================================================= */
 function mcShuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 // Zahl mit typografischem Minus (nur für die Anzeige, die Eingabe nutzt weiterhin "-")
+// Punkt/Wertepaar wie im Lehrmittel: (x/y). Mit «∕» (U+2215), damit die Anzeige daraus keinen Bruch macht.
+function pkt(x, y) { const f = v => String(v).replace(/^-/, "−"); return `(${f(x)}∕${f(y)})`; }
 function nm(n) { const r = Math.round(n * 1000) / 1000; return r < 0 ? "−" + String(-r) : String(r); }
 // "+ 5" bzw. "− 5" zum Anhängen an einen Term
 function sg(n) { return n < 0 ? `− ${nm(-n)}` : `+ ${nm(n)}`; }
 // Koeffizient vor x: 1 → "", −1 → "−", sonst die Zahl
 function cx(a) { return a === 1 ? "" : a === -1 ? "−" : nm(a); }
 function round2(n) { return Math.round(n * 100) / 100; }
+// Franken wie im Skript M2 K5 auf 5 Rappen runden (3.72 → 3.70, 3.73 → 3.75, 3.775 → 3.80)
+function round5(n) { return Math.round(n * 20 + 1e-9) / 20; }
+function exact4(n) { return Math.round(n * 10000) / 10000; }
 function fracText(n, d) { const [a, b] = simplifyFraction(n, d); const nn = b < 0 ? -a : a, dd = Math.abs(b); return dd === 1 ? nm(nn) : `${nm(nn)}/${dd}`; }
 
 /* ---- Fehler finden ---- */
@@ -5413,16 +5425,16 @@ function generateEstimateMC() {
   let prompt, exact, over;
   if (mode === 0) {
     const a = rnd(110, 990) / 10, b = rnd(110, 990) / 10;
-    exact = round2(a * b); over = `${roundSig1(a)} × ${roundSig1(b)} = ${roundSig1(a) * roundSig1(b)}`;
-    prompt = `Überschlage: Welches Ergebnis passt zu ${a} × ${b}?`;
+    exact = round2(a * b); over = `${roundSig1(a)} · ${roundSig1(b)} = ${roundSig1(a) * roundSig1(b)}`;
+    prompt = `Überschlage: Welches Ergebnis passt zu ${a} · ${b}?`;
   } else if (mode === 1) {
     const b = rnd(12, 89), q = rnd(12, 480), a = b * q + rnd(0, b - 1);
     exact = round2(a / b); over = `${roundSig1(a)} : ${roundSig1(b)} ≈ ${Math.round(roundSig1(a) / roundSig1(b))}`;
     prompt = `Überschlage: Welches Ergebnis passt zu ${a} : ${b}?`;
   } else {
     const a = rnd(21, 99) / 10, b = rnd(110, 990);
-    exact = round2(a * b); over = `${roundSig1(a)} × ${roundSig1(b)} = ${roundSig1(a) * roundSig1(b)}`;
-    prompt = `Überschlage: Welches Ergebnis passt zu ${a} × ${b}?`;
+    exact = round2(a * b); over = `${roundSig1(a)} · ${roundSig1(b)} = ${roundSig1(a) * roundSig1(b)}`;
+    prompt = `Überschlage: Welches Ergebnis passt zu ${a} · ${b}?`;
   }
   const fmt = v => String(Math.round(v * 100) / 100);
   const correct = fmt(exact);
@@ -5439,7 +5451,7 @@ function generateWordProblem() {
     const n = rnd(2, 5), p = rnd(12, 48) / 10, s = rnd(10, 35) / 10;
     const price = round2(Math.round(p * 20) / 20), stift = round2(Math.round(s * 20) / 20);
     const total = round2(n * price + stift), pay = total <= 16 ? 20 : 50, back = round2(pay - total);
-    return { visual: null, prompt: `${name} kauft ${n} Hefte zu je ${price.toFixed(2)} Fr. und einen Stift zu ${stift.toFixed(2)} Fr. ${name} bezahlt mit einer ${pay}-Franken-Note. Wie viel Rückgeld gibt es (in Fr.)?`, answerType: "number", correct: back, solution: `Hefte: ${n} × ${price.toFixed(2)} = ${round2(n * price).toFixed(2)} Fr.\nTotal: ${round2(n * price).toFixed(2)} + ${stift.toFixed(2)} = ${total.toFixed(2)} Fr.\nRückgeld: ${pay} − ${total.toFixed(2)} = ${back.toFixed(2)} Fr.` };
+    return { visual: null, prompt: `${name} kauft ${n} Hefte zu je ${price.toFixed(2)} Fr. und einen Stift zu ${stift.toFixed(2)} Fr. ${name} bezahlt mit einer ${pay}-Franken-Note. Wie viel Rückgeld gibt es (in Fr.)?`, answerType: "number", correct: back, solution: `Hefte: ${n} · ${price.toFixed(2)} = ${round2(n * price).toFixed(2)} Fr.\nTotal: ${round2(n * price).toFixed(2)} + ${stift.toFixed(2)} = ${total.toFixed(2)} Fr.\nRückgeld: ${pay} − ${total.toFixed(2)} = ${back.toFixed(2)} Fr.` };
   }
   if (t === 1) {
     const h = rnd(6, 16), m = rnd(0, 59), dur = rnd(25, 170);
@@ -5451,7 +5463,7 @@ function generateWordProblem() {
     const base = [2, 4, 5][rnd(0, 2)], g = base * rnd(25, 80) / base, per = rnd(30, 90) * 5 / 5;
     const amount = per * base, target = [3, 6, 8, 10, 12].filter(x => x !== base)[rnd(0, 3)];
     const res = round2(amount / base * target);
-    return { visual: null, prompt: `Ein Rezept für ${base} Personen braucht ${amount} g Mehl. Wie viel Mehl (in g) braucht man für ${target} Personen?`, answerType: "number", correct: res, solution: `Für 1 Person: ${amount} : ${base} = ${round2(amount / base)} g\nFür ${target} Personen: ${round2(amount / base)} × ${target} = ${res} g` };
+    return { visual: null, prompt: `Ein Rezept für ${base} Personen braucht ${amount} g Mehl. Wie viel Mehl (in g) braucht man für ${target} Personen?`, answerType: "number", correct: res, solution: `Für 1 Person: ${amount} : ${base} = ${round2(amount / base)} g\nFür ${target} Personen: ${round2(amount / base)} · ${target} = ${res} g` };
   }
   if (t === 3) {
     const n = rnd(14, 26), per = rnd(18, 65) * 5, total = n * per;
@@ -5460,11 +5472,11 @@ function generateWordProblem() {
   if (t === 4) {
     const l = rnd(6, 25), b = rnd(4, 18), tor = rnd(1, 3);
     const u = 2 * (l + b), res = u - tor;
-    return { visual: null, prompt: `Ein rechteckiger Garten ist ${l} m lang und ${b} m breit. Er wird ringsum eingezäunt, nur für das Tor bleiben ${tor} m frei. Wie viele Meter Zaun braucht es?`, answerType: "number", correct: res, solution: `Umfang: 2 × (${l} + ${b}) = ${u} m\nOhne Tor: ${u} − ${tor} = ${res} m` };
+    return { visual: null, prompt: `Ein rechteckiger Garten ist ${l} m lang und ${b} m breit. Er wird ringsum eingezäunt, nur für das Tor bleiben ${tor} m frei. Wie viele Meter Zaun braucht es?`, answerType: "number", correct: res, solution: `Umfang: 2 · (${l} + ${b}) = ${u} m\nOhne Tor: ${u} − ${tor} = ${res} m` };
   }
   const start = rnd(10, 60), rate = [2.5, 4, 5, 7.5, 8, 10][rnd(0, 5)], goal = start + rate * rnd(4, 14) - rnd(0, 2);
   const weeks = Math.ceil((goal - start) / rate);
-  return { visual: null, prompt: `${name} hat ${start} Fr. und spart jede Woche ${rate} Fr. dazu. Nach wie vielen Wochen hat ${name} zum ersten Mal mindestens ${goal} Fr.?`, answerType: "number", correct: weeks, solution: `Es fehlen ${goal} − ${start} = ${round2(goal - start)} Fr.\n${round2(goal - start)} : ${rate} = ${round2((goal - start) / rate)} Wochen\nAufrunden (sonst reicht es noch nicht): ${weeks} Wochen\nKontrolle: ${start} + ${weeks} × ${rate} = ${round2(start + weeks * rate)} Fr.` };
+  return { visual: null, prompt: `${name} hat ${start} Fr. und spart jede Woche ${rate} Fr. dazu. Nach wie vielen Wochen hat ${name} zum ersten Mal mindestens ${goal} Fr.?`, answerType: "number", correct: weeks, solution: `Es fehlen ${goal} − ${start} = ${round2(goal - start)} Fr.\n${round2(goal - start)} : ${rate} = ${round2((goal - start) / rate)} Wochen\nAufrunden (sonst reicht es noch nicht): ${weeks} Wochen\nKontrolle: ${start} + ${weeks} · ${rate} = ${round2(start + weeks * rate)} Fr.` };
 }
 
 /* ---- Basiswissen: Dezimalzahlen und Brüche im Kopf ---- */
@@ -5472,10 +5484,10 @@ function generateDecimalArith() {
   const t = rnd(0, 4);
   if (t === 0) { const a = rnd(11, 999) / 10, b = rnd(11, 999) / 100; const r = round2(a + b); return { visual: null, prompt: `${a} + ${b} =`, answerType: "number", correct: r, solution: `Komma unter Komma schreiben:\n${a.toFixed(2)} + ${b.toFixed(2)} = ${r}` }; }
   if (t === 1) { let a = rnd(20, 999) / 10, b = rnd(11, 999) / 100; if (b > a) [a, b] = [b, a]; const r = round2(a - b); return { visual: null, prompt: `${a} − ${b} =`, answerType: "number", correct: r, solution: `Komma unter Komma, fehlende Stellen mit 0 auffüllen:\n${a.toFixed(2)} − ${b.toFixed(2)} = ${r}` }; }
-  if (t === 2) { const a = rnd(11, 9999) / 100, f = [10, 100, 1000][rnd(0, 2)], mul = Math.random() < 0.5; const r = Math.round((mul ? a * f : a / f) * 100000) / 100000; const k = String(f).length - 1; return { visual: null, prompt: `${a} ${mul ? "×" : ":"} ${f} =`, answerType: "number", correct: r, solution: `${mul ? "Mal" : "Durch"} ${f}: Komma um ${k} Stelle${k > 1 ? "n" : ""} nach ${mul ? "rechts" : "links"} verschieben.\n${a} ${mul ? "×" : ":"} ${f} = ${r}` }; }
-  if (t === 3) { const a = rnd(2, 9), b = rnd(1, 9) / 10; const r = round2(a * b); return { visual: null, prompt: `${a} × ${b} =`, answerType: "number", correct: r, solution: `${a} × ${Math.round(b * 10)} = ${a * Math.round(b * 10)}, dann durch 10 (eine Nachkommastelle):\n${a} × ${b} = ${r}` }; }
+  if (t === 2) { const a = rnd(11, 9999) / 100, f = [10, 100, 1000][rnd(0, 2)], mul = Math.random() < 0.5; const r = Math.round((mul ? a * f : a / f) * 100000) / 100000; const k = String(f).length - 1; return { visual: null, prompt: `${a} ${mul ? "·" : ":"} ${f} =`, answerType: "number", correct: r, solution: `${mul ? "Mal" : "Durch"} ${f}: Komma um ${k} Stelle${k > 1 ? "n" : ""} nach ${mul ? "rechts" : "links"} verschieben.\n${a} ${mul ? "·" : ":"} ${f} = ${r}` }; }
+  if (t === 3) { const a = rnd(2, 9), b = rnd(1, 9) / 10; const r = round2(a * b); return { visual: null, prompt: `${a} · ${b} =`, answerType: "number", correct: r, solution: `${a} · ${Math.round(b * 10)} = ${a * Math.round(b * 10)}, dann durch 10 (eine Nachkommastelle):\n${a} · ${b} = ${r}` }; }
   const a = rnd(1, 9) / 10, b = rnd(1, 9) / 10; const r = round2(a * b);
-  return { visual: null, prompt: `${a} × ${b} =`, answerType: "number", correct: r, solution: `${Math.round(a * 10)} × ${Math.round(b * 10)} = ${Math.round(a * 10) * Math.round(b * 10)}\nZusammen 2 Nachkommastellen: ${r}` };
+  return { visual: null, prompt: `${a} · ${b} =`, answerType: "number", correct: r, solution: `${Math.round(a * 10)} · ${Math.round(b * 10)} = ${Math.round(a * 10) * Math.round(b * 10)}\nZusammen 2 Nachkommastellen: ${r}` };
 }
 function generateFractionMental() {
   const pairs = [[2, 4], [2, 8], [4, 8], [3, 6], [2, 6], [2, 10], [5, 10], [3, 9], [4, 12], [3, 12], [6, 12], [2, 3], [3, 4], [2, 5]];
@@ -5532,11 +5544,11 @@ function pickLine() {
 function generateLineGraphSlope() {
   const { m, q, pts } = pickLine();
   const [[x1, y1], [x2, y2]] = pts;
-  return { visual: lineGraphSVG(m, q, pts), prompt: "Lies die Steigung m der Geraden ab. (Brüche als Dezimalzahl, z.B. 0.5)", answerType: "number", correct: m, solution: `Steigungsdreieck zwischen den roten Punkten (${nm(x1)}|${nm(y1)}) und (${nm(x2)}|${nm(y2)}):\nnach rechts ${x2 - x1}, nach ${y2 >= y1 ? "oben" : "unten"} ${Math.abs(y2 - y1)}\nm = ${nm(y2 - y1)} : ${x2 - x1} = ${nm(m)}` };
+  return { visual: lineGraphSVG(m, q, pts), prompt: "Lies die Steigung a der Geraden ab. (Brüche als Dezimalzahl, z.B. 0.5)", answerType: "number", correct: m, solution: `Steigungsdreieck zwischen den roten Punkten ${pkt(nm(x1), nm(y1))} und ${pkt(nm(x2), nm(y2))}:\nnach rechts ${x2 - x1}, nach ${y2 >= y1 ? "oben" : "unten"} ${Math.abs(y2 - y1)}\na = ${nm(y2 - y1)} : ${x2 - x1} = ${nm(m)}` };
 }
 function generateLineGraphIntercept() {
   const { m, q, pts } = pickLine();
-  return { visual: lineGraphSVG(m, q, []), prompt: "Wo schneidet die Gerade die y-Achse? Gib den y-Achsenabschnitt q an.", answerType: "number", correct: q, solution: `Die Gerade schneidet die y-Achse (x = 0) im Punkt (0|${nm(q)}).\nq = ${nm(q)}` };
+  return { visual: lineGraphSVG(m, q, []), prompt: "Wo schneidet die Gerade die y-Achse? Gib den y-Achsenabschnitt b an.", answerType: "number", correct: q, solution: `Die Gerade schneidet die y-Achse (x = 0) im Punkt ${pkt(0, nm(q))}.\nb = ${nm(q)}` };
 }
 function generateLineEquationFromGraphMC() {
   const { m, q, pts } = pickLine();
@@ -5544,12 +5556,12 @@ function generateLineEquationFromGraphMC() {
   const cands = [fmtLinearFn(-m, q), q !== 0 ? fmtLinearFn(m, -q) : fmtLinearFn(m, q + 2), (Number.isInteger(q) && q !== 0 && Math.abs(q) <= 3 && q !== m) ? fmtLinearFn(q, m) : fmtLinearFn(m * 2, q), fmtLinearFn(-m, -q || 1), fmtLinearFn(m, q - 1)];
   const wrongs = [...new Set(cands)].filter(w => w !== correct).slice(0, 3);
   for (let d = 3; wrongs.length < 3; d++) { const w = fmtLinearFn(m, q + d); if (!wrongs.includes(w) && w !== correct) wrongs.push(w); }
-  return { visual: lineGraphSVG(m, q, pts), prompt: "Welche Funktionsgleichung gehört zu dieser Geraden?", answerType: "mc", options: mcShuffle([correct, ...wrongs]), correct, solution: `y-Achsenabschnitt ablesen: q = ${nm(q)}\nSteigung mit dem Steigungsdreieck: m = ${nm(m)}\n→ ${correct}` };
+  return { visual: lineGraphSVG(m, q, pts), prompt: "Welche Geradengleichung gehört zu dieser Geraden?", answerType: "mc", options: mcShuffle([correct, ...wrongs]), correct, solution: `y-Achsenabschnitt ablesen: b = ${nm(q)}\nSteigung mit dem Steigungsdreieck: a = ${nm(m)}\n→ ${correct}` };
 }
 function generateLinearZero() {
   const m = rndNonZero(-5, 5), x0 = rnd(-8, 8), q = -m * x0;
   const fn = q === 0 ? `${cx(m)}x` : `${cx(m)}x ${sg(q)}`;
-  return { visual: null, prompt: `Bei welchem x schneidet der Graph von f(x) = ${fn} die x-Achse (Nullstelle)?`, answerType: "number", correct: x0, solution: `Nullstelle: f(x) = 0 setzen\n0 = ${fn}\n${cx(m)}x = ${nm(-q)}\nx = ${nm(-q)} : ${nm(m)} = ${nm(x0)}` };
+  return { visual: null, prompt: `Bei welchem x schneidet die Gerade y = ${fn} die x-Achse?`, answerType: "number", correct: x0, solution: `Auf der x-Achse ist y = 0:\n0 = ${fn}\n${cx(m)}x = ${nm(-q)}\nx = ${nm(-q)} : ${nm(m)} = ${nm(x0)}` };
 }
 function generateValueTableMissing() {
   const m = rndNonZero(-4, 4), q = rnd(-6, 8), x0 = rnd(-2, 1);
@@ -5558,7 +5570,7 @@ function generateValueTableMissing() {
   const cell = "border:1px solid #94a3b8; padding:6px 10px; text-align:center;";
   const row = (label, vals) => `<tr><th style="${cell} background:#f1f5f9;">${label}</th>${vals.map(v => `<td style="${cell}">${v}</td>`).join("")}</tr>`;
   const visual = `<table style="border-collapse:collapse; margin:0 auto 12px; font-size:1.1rem; font-weight:700; background:#fff; color:#0f172a;">${row("x", xs.map(nm))}${row("y", ys.map((y, i) => i === miss ? "?" : nm(y)))}</table>`;
-  return { visual, prompt: "Die Wertetabelle gehört zu einer linearen Funktion. Welcher Wert fehlt?", answerType: "number", correct: ys[miss], solution: `Pro Schritt nach rechts ändert sich y um ${nm(ys[1])} − ${nm(ys[0])} = ${nm(m)}.\nAlso: ${nm(ys[miss - 1])} ${sg(m)} = ${nm(ys[miss])}\n(Funktionsgleichung: ${fmtLinearFn(m, q)})` };
+  return { visual, prompt: "Die Wertetabelle gehört zu einer linearen Funktion. Welcher Wert fehlt?", answerType: "number", correct: ys[miss], solution: `Pro Schritt nach rechts ändert sich y um ${nm(ys[1])} − ${nm(ys[0])} = ${nm(m)}.\nAlso: ${nm(ys[miss - 1])} ${sg(m)} = ${nm(ys[miss])}\n(Geradengleichung: ${fmtLinearFn(m, q)})` };
 }
 
 /* ---- Ungleichungen und Gleichungen mit Klammern (Jahr 3 / Jahr 1) ---- */
@@ -5614,8 +5626,8 @@ function generateTriangleTypeMC() {
   const s = mcShuffle([a, b, c]);
   const sorted = [a, b, c].sort((x, y) => x - y);
   const possible = sorted[0] + sorted[1] > sorted[2];
-  const correct = !possible ? "kein Dreieck möglich" : (a === b && b === c) ? "gleichseitig" : (a === b || b === c || a === c) ? "gleichschenklig" : "unregelmässig";
-  return { visual: null, prompt: `Ein Dreieck soll die Seiten ${s[0]} cm, ${s[1]} cm und ${s[2]} cm haben. Was für ein Dreieck ist das?`, answerType: "mc", options: ["gleichseitig", "gleichschenklig", "unregelmässig", "kein Dreieck möglich"], correct, fixedOptions: true, solution: `Dreiecksungleichung: die zwei kürzeren Seiten zusammen müssen länger sein als die längste.\n${sorted[0]} + ${sorted[1]} = ${sorted[0] + sorted[1]} ${possible ? ">" : "≤"} ${sorted[2]}` + (possible ? `\n${correct === "gleichseitig" ? "Alle drei Seiten gleich lang" : correct === "gleichschenklig" ? "Zwei Seiten gleich lang" : "Alle Seiten verschieden lang"} → ${correct}` : `\n→ kein Dreieck möglich`) };
+  const correct = !possible ? "kein Dreieck möglich" : (a === b && b === c) ? "gleichseitig" : (a === b || b === c || a === c) ? "gleichschenklig" : "ungleichseitig";
+  return { visual: null, prompt: `Ein Dreieck soll die Seiten ${s[0]} cm, ${s[1]} cm und ${s[2]} cm haben. Was für ein Dreieck ist das?`, answerType: "mc", options: ["gleichseitig", "gleichschenklig", "ungleichseitig", "kein Dreieck möglich"], correct, fixedOptions: true, solution: `Dreiecksungleichung: die zwei kürzeren Seiten zusammen müssen länger sein als die längste.\n${sorted[0]} + ${sorted[1]} = ${sorted[0] + sorted[1]} ${possible ? ">" : "≤"} ${sorted[2]}` + (possible ? `\n${correct === "gleichseitig" ? "Alle drei Seiten gleich lang" : correct === "gleichschenklig" ? "Zwei Seiten gleich lang" : "Alle Seiten verschieden lang"} → ${correct}` : `\n→ kein Dreieck möglich`) };
 }
 function generateTriangleHeightHotspot() {
   for (let tries = 0; tries < 100; tries++) {
@@ -5645,7 +5657,7 @@ function generateTriangleHeightHotspot() {
 function generateCompoundInterest() {
   const K = rnd(10, 200) * 100, p = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5][rnd(0, 7)], n = rnd(2, 6);
   const f = 1 + p / 100, res = round2(K * Math.pow(f, n));
-  return { visual: null, prompt: `${K} Fr. werden zu ${p} % Jahreszins angelegt. Der Zins wird jedes Jahr dazugeschlagen (Zinseszins). Wie gross ist das Kapital nach ${n} Jahren (in Fr.)? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: res, solution: `Wachstumsfaktor: 1 + ${p}/100 = ${f}\nNach ${n} Jahren: ${K} × ${f}^${n} = ${res.toFixed(2)} Fr.` };
+  return { visual: null, prompt: `${K} Fr. werden zu ${p} % Jahreszins angelegt. Der Zins wird jedes Jahr dazugeschlagen (Zinseszins). Wie gross ist das Kapital nach ${n} Jahren (in Fr.)? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: res, solution: `Wachstumsfaktor: 1 + ${p}/100 = ${f}\nNach ${n} Jahren: ${K} · ${f}^${n} = ${res.toFixed(2)} Fr.` };
 }
 function generateGrowthFactor() {
   const t = rnd(0, 2);
@@ -5661,7 +5673,7 @@ function generatePercentChainChange() {
   const f1 = upFirst ? 1 + p / 100 : 1 - p / 100, f2 = upFirst ? 1 - q / 100 : 1 + q / 100;
   const total = round2((f1 * f2 - 1) * 100);
   const t1 = upFirst ? `steigt zuerst um ${p} %` : `sinkt zuerst um ${p} %`, t2 = upFirst ? `sinkt danach um ${q} %` : `steigt danach um ${q} %`;
-  return { visual: null, prompt: `Ein Preis ${t1} und ${t2}. Um wie viele Prozent hat er sich insgesamt verändert? (Abnahme negativ angeben)`, answerType: "number", correct: total, solution: `Faktoren multiplizieren (nicht Prozente addieren!):\n${round2(f1)} × ${round2(f2)} = ${round2(f1 * f2)}\n${round2(f1 * f2 * 100)} % − 100 % = ${nm(total)} %` };
+  return { visual: null, prompt: `Ein Preis ${t1} und ${t2}. Um wie viele Prozent hat er sich insgesamt verändert? (Abnahme negativ angeben)`, answerType: "number", correct: total, solution: `Faktoren multiplizieren (nicht Prozente addieren!):\n${round2(f1)} · ${round2(f2)} = ${round2(f1 * f2)}\n${round2(f1 * f2 * 100)} % − 100 % = ${nm(total)} %` };
 }
 
 /* ---- Überarbeitete bestehende Aufgaben ---- */
@@ -5677,7 +5689,7 @@ function generateTreeCountVaried() {
   ];
   const s = scen[rnd(0, scen.length - 1)]();
   const res = s.f.reduce((x, y) => x * y, 1);
-  return { visual: null, prompt: s.p, answerType: "number", correct: res, solution: `Jede Stufe im Baumdiagramm vervielfacht die Anzahl Äste:\n${s.f.join(" × ")} = ${res}` };
+  return { visual: null, prompt: s.p, answerType: "number", correct: res, solution: `Jede Stufe im Baumdiagramm vervielfacht die Anzahl Äste:\n${s.f.join(" · ")} = ${res}` };
 }
 // Primzahl: je etwa zur Hälfte Primzahlen und Nicht-Primzahlen, darunter typische Fallen (51, 57, 91 …)
 function generateIsPrimeBalanced() {
@@ -5690,7 +5702,7 @@ function generateIsPrimeBalanced() {
   let sol;
   if (n === 1) sol = "1 ist keine Primzahl (eine Primzahl hat genau zwei Teiler: 1 und sich selbst).";
   else if (isPrime(n)) sol = n < 4 ? `${n} ist nur durch 1 und ${n} teilbar → Primzahl.` : `${n} ist nur durch 1 und ${n} teilbar → Primzahl.\n(Es reicht, die Primzahlen bis √${n} zu prüfen: ${[2, 3, 5, 7].filter(p => p * p <= n).join(", ")} – keine teilt ${n}.)`;
-  else { let t = 2; while (n % t !== 0) t++; sol = `${n} = ${t} × ${n / t} → keine Primzahl.`; }
+  else { let t = 2; while (n % t !== 0) t++; sol = `${n} = ${t} · ${n / t} → keine Primzahl.`; }
   return { visual: null, prompt: `Ist ${n} eine Primzahl?`, answerType: "boolean", correct: isPrime(n) ? 1 : 0, solution: sol };
 }
 // Potenzen: nur Ergebnisse bis ca. 1000 (Verständnis statt Fleissarbeit)
@@ -6004,7 +6016,7 @@ function generatePointDistance() {
   let x1, y1, x2, y2;
   do { x1 = rnd(-8, 8); y1 = rnd(-8, 8); x2 = rnd(-8, 8); y2 = rnd(-8, 8); } while (x1 === x2 || y1 === y2);
   const dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1), d2 = dx * dx + dy * dy, d = round1(Math.sqrt(d2));
-  return { visual: null, prompt: `Wie weit sind die Punkte A(${x1}|${y1}) und B(${x2}|${y2}) voneinander entfernt? (1 Einheit = 1 cm, auf 1 Dezimale runden)`, answerType: "number", correct: d, solution: `Waagrechter Abstand: ${dx}, senkrechter Abstand: ${dy}\nAB² = ${dx}² + ${dy}² = ${d2}\nAB = √${d2} ≈ ${d} cm` };
+  return { visual: null, prompt: `Wie weit sind die Punkte A${pkt(x1, y1)} und B${pkt(x2, y2)} voneinander entfernt? (1 Einheit = 1 cm, auf 1 Dezimale runden)`, answerType: "number", correct: d, solution: `Waagrechter Abstand: ${dx}, senkrechter Abstand: ${dy}\nAB² = ${dx}² + ${dy}² = ${d2}\nAB = √${d2} ≈ ${d} cm` };
 }
 /* ---- Runden von Dezimalzahlen (Basiswissen "Runden" und Pythagoras) ----
    Gerechnet wird mit ganzzahlig skalierten Werten, damit keine Gleitkomma-Fehler
@@ -6172,14 +6184,14 @@ function generatePrismTriangleMantle() {
   const [a, b, c] = pickOne(PYTH_TRIPLES_KLEIN.slice(0, 6)), h = rnd(4, 20), G = a * b / 2, U = a + b + c, M = U * h, O = 2 * G + M, V = G * h;
   const ask = ["das Volumen (in cm³)", "die Mantelfläche (in cm²)", "den Oberflächeninhalt (in cm²)"][t];
   const base = `G = ${a} · ${b} : 2 = ${G} cm²\nu = ${a} + ${b} + ${c} = ${U} cm\n`;
-  const sol = [`${base}V = G · h = ${G} · ${h} = ${V} cm³`, `${base}M = u · h = ${U} · ${h} = ${M} cm²`, `${base}M = u · h = ${U} · ${h} = ${M} cm²\nO = 2 · G + M = ${2 * G} + ${M} = ${O} cm²`][t];
+  const sol = [`${base}V = G · h = ${G} · ${h} = ${V} cm³`, `${base}M = u · h = ${U} · ${h} = ${M} cm²`, `${base}M = u · h = ${U} · ${h} = ${M} cm²\nS = 2 · G + M = ${2 * G} + ${M} = ${O} cm²`][t];
   return { visual: null, prompt: `Ein gerades Prisma hat als Grundfläche ein rechtwinkliges Dreieck mit den Katheten ${a} cm und ${b} cm und der Hypotenuse ${c} cm. Das Prisma ist ${h} cm hoch. Berechne ${ask}.`, answerType: "number", correct: [V, M, O][t], solution: sol };
 }
 // M2 4c: Oberflächeninhalt der quadratischen Pyramide
 function generatePyramidSurface() {
   if (Math.random() < 0.6) {
     const a = rnd(3, 15), hs = rnd(4, 20), O = a * a + 2 * a * hs;
-    return { visual: null, prompt: `Eine quadratische Pyramide hat die Grundkante a = ${a} cm. Die Höhe einer Seitenfläche (Dreieck) beträgt ${hs} cm. Berechne den Oberflächeninhalt (in cm²).`, answerType: "number", correct: O, solution: `Grundfläche: ${a} · ${a} = ${a * a} cm²\n4 Dreiecke: 4 · ${a} · ${hs} : 2 = ${2 * a * hs} cm²\nO = ${a * a} + ${2 * a * hs} = ${O} cm²` };
+    return { visual: null, prompt: `Eine quadratische Pyramide hat die Grundkante a = ${a} cm. Die Höhe einer Seitenfläche (Dreieck) beträgt ${hs} cm. Berechne den Oberflächeninhalt (in cm²).`, answerType: "number", correct: O, solution: `Grundfläche: ${a} · ${a} = ${a * a} cm²\n4 Dreiecke: 4 · ${a} · ${hs} : 2 = ${2 * a * hs} cm²\nS = ${a * a} + ${2 * a * hs} = ${O} cm²` };
   }
   const [p, q, r] = pickOne([[3, 4, 5], [5, 12, 13], [4, 3, 5], [8, 15, 17], [6, 8, 10]]), k = rnd(1, 3), half = p * k, h = q * k, hs = r * k;
   return { visual: null, prompt: `Eine quadratische Pyramide hat die Grundkante a = ${2 * half} cm und die Körperhöhe h = ${h} cm. Wie gross ist die Höhe einer Seitenfläche (in cm)?`, answerType: "number", correct: hs, solution: `Halbe Grundkante, Körperhöhe und Seitenflächenhöhe bilden ein rechtwinkliges Dreieck:\nhs² = ${half}² + ${h}² = ${half * half} + ${h * h} = ${hs * hs}\nhs = ${hs} cm` };
@@ -6210,8 +6222,8 @@ const WECHSELKURSE = [["EUR", "Euro", 0.915, 0.965], ["USD", "US-Dollar", 0.765,
 function generateExchangeBuySell() {
   const [code, name, ank, verk] = pickOne(WECHSELKURSE), kurse = `(Ankauf ${ank.toFixed(4)}, Verkauf ${verk.toFixed(4)} CHF pro 1 ${code})`;
   const t = rnd(0, 2);
-  if (t === 0) { const b = rnd(5, 80) * 10, r = round2(b * verk); return { visual: null, prompt: `Vor den Ferien kaufst du bei der Bank ${b} ${code}. Wie viele Franken bezahlst du? ${kurse}`, answerType: "number", correct: r, solution: `Die Bank verkauft dir ${name} → Verkaufskurs\n${b} · ${verk} = ${chf(r)} CHF` }; }
-  if (t === 1) { const b = rnd(2, 40) * 5, r = round2(b * ank); return { visual: null, prompt: `Nach den Ferien wechselst du ${b} ${code} zurück. Wie viele Franken erhältst du? ${kurse}`, answerType: "number", correct: r, solution: `Die Bank kauft dir ${name} ab → Ankaufskurs\n${b} · ${ank} = ${chf(r)} CHF` }; }
+  if (t === 0) { const b = rnd(5, 80) * 10, r = round5(b * verk); return { visual: null, prompt: `Vor den Ferien kaufst du bei der Bank ${b} ${code}. Wie viele Franken bezahlst du? ${kurse} (auf 5 Rappen runden)`, answerType: "number", correct: r, solution: `Die Bank verkauft dir ${name} → Verkaufskurs\n${b} · ${verk} = ${exact4(b * verk)} → ${chf(r)} CHF` }; }
+  if (t === 1) { const b = rnd(2, 40) * 5, r = round5(b * ank); return { visual: null, prompt: `Nach den Ferien wechselst du ${b} ${code} zurück. Wie viele Franken erhältst du? ${kurse} (auf 5 Rappen runden)`, answerType: "number", correct: r, solution: `Die Bank kauft dir ${name} ab → Ankaufskurs\n${b} · ${ank} = ${exact4(b * ank)} → ${chf(r)} CHF` }; }
   const c = rnd(5, 60) * 10, r = round2(c / verk);
   return { visual: null, prompt: `Wie viele ${code} erhältst du für ${c} CHF? ${kurse} (auf 2 Dezimalen runden)`, answerType: "number", correct: r, solution: `Die Bank verkauft dir ${name} → Verkaufskurs\n${c} : ${verk} ≈ ${chf(r)} ${code}` };
 }
@@ -6371,7 +6383,7 @@ function generateFormulaSolveM3() {
   if (t === 1) { const a = rnd(6, 20), c = rnd(2, a - 2), h = rnd(2, 12), A = (a + c) * h / 2; return { visual: null, prompt: `Trapez: A = (a + c) · h : 2\nA = ${A} cm², a = ${a} cm, c = ${c} cm. Wie gross ist h (in cm)?`, answerType: "number", correct: h, solution: `h = 2 · A : (a + c)\nh = ${2 * A} : ${a + c} = ${h} cm` }; }
   if (t === 2) { const r = rnd(2, 10), h = rnd(3, 20), V = round1(Math.PI * r * r * h), ans = round1(V / (Math.PI * r * r)); return { visual: null, prompt: `Zylinder: V = π · r² · h\nV = ${V} cm³, r = ${r} cm. Wie gross ist h (in cm)? (auf 1 Dezimale runden)`, answerType: "number", correct: ans, solution: `h = V : (π · r²)\nh = ${V} : (π · ${r * r}) ≈ ${ans} cm` }; }
   const a = rnd(2, 12), b = rnd(2, 12), c = rnd(2, 12), O = 2 * (a * b + a * c + b * c);
-  return { visual: null, prompt: `Quader: O = 2 · (a · b + a · c + b · c)\nO = ${O} cm², a = ${a} cm, b = ${b} cm. Wie gross ist c (in cm)?`, answerType: "number", correct: c, solution: `O : 2 = a · b + c · (a + b)\n${O / 2} = ${a * b} + c · ${a + b}\nc = (${O / 2} − ${a * b}) : ${a + b} = ${c} cm` };
+  return { visual: null, prompt: `Quader: S = 2 · (a · b + a · c + b · c)\nS = ${O} cm², a = ${a} cm, b = ${b} cm. Wie gross ist c (in cm)?`, answerType: "number", correct: c, solution: `S : 2 = a · b + c · (a + b)\n${O / 2} = ${a * b} + c · ${a + b}\nc = (${O / 2} − ${a * b}) : ${a + b} = ${c} cm` };
 }
 // M3 7a: Ganzzahlige Lösungen von Ungleichungen
 function generateIntegerInequality() {
@@ -6445,7 +6457,7 @@ const BASISWISSEN_CHAPTERS = [
   chapter("bw-koord", "Koordinatensystem", [
     ex("bw-koord-1", "Punkte ablesen", generateCoordinateRead, "Die erste Zahl (x) ist der Wert auf der waagrechten Achse, die zweite (y) auf der senkrechten Achse."),
     ex("bw-koord-2", "Punkt verschieben", generateCoordinateOffset, "Lies zuerst die Koordinaten von P ab, dann rechne die Verschiebung auf x und y separat dazu bzw. davon ab."),
-    ex("bw-koord-tap", "Punkt einzeichnen", generatePointPlacementHotspot, "Gehe vom Ursprung (Schnittpunkt der Achsen) zuerst so viele Kästchen nach rechts/links wie die erste Zahl angibt (x), dann so viele nach oben/unten wie die zweite Zahl angibt (y). Tippe genau dort hin.")
+    ex("bw-koord-tap", "Punkt einzeichnen", generatePointPlacementHotspot, "Gehe vom Nullpunkt (Schnittpunkt der Achsen) zuerst so viele Kästchen nach rechts/links wie die erste Zahl angibt (x), dann so viele nach oben/unten wie die zweite Zahl angibt (y). Tippe genau dort hin.")
   ]),
   chapter("bw-mass", "Masseinheiten umrechnen", [
     ex("bw-mass-1", "Masseinheiten umrechnen", generateUnitConversion, "Überlege, ob die neue Einheit grösser oder kleiner ist: bei einer grösseren Einheit wird die Zahl kleiner, bei einer kleineren Einheit wird die Zahl grösser.")
@@ -6488,10 +6500,10 @@ const JAHR1_CHAPTERS = [
     ex("1a-1", "Symmetrieachsen zählen", generateAxisSymmetry, "Falte die Figur gedanklich entlang einer Linie. Liegen beide Hälften genau aufeinander, ist es eine Symmetrieachse."),
     ex("1a-symachse", "Symmetrieachse erkennen", generateAxisMirrorLineMC, "Eine Symmetrieachse muss die Figur so teilen, dass beide Hälften beim Falten genau aufeinander liegen. Prüfe für jede eingezeichnete Linie, ob sie durch die Spitze(n) bzw. die Mitte gegenüberliegender Seiten verläuft."),
     ex("1a-symachse-tippen", "Symmetrieachse einzeichnen", generateSymmetryAxisHotspot, "Eine Symmetrieachse teilt die Figur in zwei spiegelgleiche Hälften. Suche zwei Punkte auf dieser Achse (z.B. eine Spitze und die Mitte der gegenüberliegenden Seite) und tippe sie an – danach kannst du beide Punkte noch feinjustieren."),
-    ex("1a-symachse-mehrere", "Mehrere Symmetrieachsen einzeichnen", generateMultiSymmetryAxisHotspot, "Quadrat und Rechteck/Raute haben mehrere Symmetrieachsen. Finde und zeichne nacheinander jede einzelne ein, bis alle markiert sind.")
+    ex("1a-symachse-mehrere", "Mehrere Symmetrieachsen einzeichnen", generateMultiSymmetryAxisHotspot, "Quadrat, Rechteck und Rhombus haben mehrere Symmetrieachsen. Finde und zeichne nacheinander jede einzelne ein, bis alle markiert sind.")
   ]),
   chapter("1b", "Die Drehsymmetrie", [
-    ex("1b-1", "Drehsymmetrie-Ordnung bestimmen", generateRotSymmetry, "Drehe die Figur gedanklich um ihren Mittelpunkt und zähle, bei wie vielen Drehungen (inkl. der vollen 360°) sie wieder gleich aussieht."),
+    ex("1b-1", "Kleinsten Drehwinkel bestimmen", generateRotSymmetry, "Drehe die Figur gedanklich um ihren Mittelpunkt und zähle, wie oft sie sich bei einer vollen Drehung mit sich selbst deckt. Kleinster Drehwinkel = 360° : diese Anzahl (z.B. Quadrat: 360° : 4 = 90°)."),
     ex("1b-doppelspieg", "Verkettete Spiegelung", generateDoubleReflectionMC, "Spiegle zuerst jeden Eckpunkt der Figur an Achse 1, und spiegle das Ergebnis danach nochmals an Achse 2. Beide Schritte müssen ausgeführt werden – nicht nur einer davon. Das Ergebnis entspricht immer einer Drehung um den Schnittpunkt der beiden Achsen.")
   ]),
   chapter("1c", "Die Achsenspiegelung", [
@@ -6502,24 +6514,24 @@ const JAHR1_CHAPTERS = [
     ex("1c-konstruktion", "Konstruktionen: Mittelsenkrechte, Winkelhalbierende, Mittelparallele", generateConstructionMixedTask, "Mittelsenkrechte: zwei Kreisbögen mit gleichem Radius (grösser als die halbe Streckenlänge) um A und B schneiden sich in zwei Punkten - diese legen zusammen die Mittelsenkrechte fest. Winkelhalbierende: ein Bogen um den Scheitelpunkt schneidet beide Schenkel, von diesen zwei Punkten aus zwei gleich grosse Bögen schneiden sich auf der Winkelhalbierenden. Mittelparallele: verbindet die (durch Konstruktion gefundenen) Mittelpunkte zweier Seiten. Diese Konstruktionen werden auch gebraucht, um Spiegelachsen zu konstruieren.")
   ]),
   chapter("1d", "Die Punktspiegelung", [
-    ex("1d-1", "Punktspiegelung am Ursprung", generatePointReflection, "Bei der Punktspiegelung am Ursprung wechseln beide Koordinaten das Vorzeichen."),
+    ex("1d-1", "Punktspiegelung am Nullpunkt", generatePointReflection, "Bei der Punktspiegelung am Nullpunkt wechseln beide Koordinaten das Vorzeichen."),
     ex("1d-spiegelzentrum", "Spiegelzentrum finden", generatePointReflectionCenterHotspot, "Das Zentrum einer Punktspiegelung liegt immer genau in der Mitte zwischen einem Punkt und seinem Bildpunkt."),
     ex("1d-typ", "Abbildungstyp erkennen", generateTransformationTypeMC, "Achsenspiegelung: die Figur wird spiegelverkehrt (Wimpel zeigt in die andere Richtung). Punktspiegelung: die Figur ist um 180° gedreht (Wimpel zeigt exakt entgegengesetzt, aber nicht spiegelverkehrt). Verschiebung: gleiche Ausrichtung, nur an anderer Stelle. Drehung: um 90° oder 270° gedreht, aber nicht spiegelverkehrt."),
     ex("1d-eigen", "Eigenschaften von Kongruenzabbildungen", generateTransformTruth, "Bei allen vier Kongruenzabbildungen (Achsenspiegelung, Punktspiegelung, Verschiebung, Drehung) bleiben Streckenlängen und Winkel erhalten – nur die Lage und manchmal die Orientierung ändern sich."),
     ex("1d-kongruent", "Kongruent oder nicht?", generateTriangleCongruentTruth, "Zwei Dreiecke sind kongruent, wenn sie in allen Seitenlängen und Winkeln übereinstimmen (z.B. in zwei Seiten und dem eingeschlossenen Winkel). Vergleiche die angegebenen Masse beider Dreiecke genau.")
   ]),
   chapter("2a", "Potenzen/Regeln und Gesetze", [
-    ex("2a-berechnen", "Potenz berechnen", generatePowerCalcLimited, "a^n heisst: a wird n-mal mit sich selbst multipliziert."),
-    ex("2a-gesetz", "Potenzgesetz: Multiplikation", generatePowerRule, "Bei gleicher Basis: Exponenten addieren (a^m · a^n = a^(m+n))."),
-    ex("2a-reihenfolge", "Punkt vor Strich", generateOrderOfOperations, "Punkt-Rechnungen (× und :) werden vor Strich-Rechnungen (+ und −) ausgeführt. Bei Klammern: zuerst die Klammer ausrechnen."),
-    ex("2a-als-potenz", "Produkt als Potenz notieren", generateProductAsPowerMC, "Zähle, wie oft der gleiche Faktor vorkommt: Der Faktor ist die Basis, die Anzahl die Hochzahl. 2 · 2 · 2 · 2 · 2 = 2^5."),
-    ex("2a-vergleich", "Grösser, kleiner oder gleich?", generatePowerCompareMC, "Rechne beide Seiten aus. Achtung: 4^3 = 4 · 4 · 4 = 64, nicht 4 · 3 = 12."),
+    ex("2a-berechnen", "Potenz berechnen", generatePowerCalcLimited, "aⁿ heisst: a wird n-mal mit sich selbst multipliziert (a ist die Basis, n die Hochzahl)."),
+    ex("2a-gesetz", "Potenzgesetz: Multiplikation", generatePowerRule, "Bei gleicher Basis: Exponenten addieren (aᵐ · aⁿ = aᵐ⁺ⁿ)."),
+    ex("2a-reihenfolge", "Punkt vor Strich", generateOrderOfOperations, "Punkt-Rechnungen (· und :) werden vor Strich-Rechnungen (+ und −) ausgeführt. Bei Klammern: zuerst die Klammer ausrechnen."),
+    ex("2a-als-potenz", "Produkt als Potenz notieren", generateProductAsPowerMC, "Zähle, wie oft der gleiche Faktor vorkommt: Der Faktor ist die Basis, die Anzahl die Hochzahl. 2 · 2 · 2 · 2 · 2 = 2⁵."),
+    ex("2a-vergleich", "Grösser, kleiner oder gleich?", generatePowerCompareMC, "Rechne beide Seiten aus. Achtung: 4³ = 4 · 4 · 4 = 64, nicht 4 · 3 = 12."),
     ex("2a-klammer", "Klammer richtig setzen", generateBracketPlacementMC, "Rechne jede Möglichkeit aus: Zuerst die Klammer, dann Punkt vor Strich."),
     ex("2a-wortterm", "Rechnung aus Worten", generateWordTerm, "Schreibe zuerst den Term auf (Summe = +, Differenz = −, Produkt = ·, Quotient = :). Was zuerst gerechnet werden muss, kommt in Klammern."),
     ex("2a-rechengesetze", "Rechengesetze erkennen", generateLawRecognizeMC, "K: Zahlen werden vertauscht. A: Klammern werden verschoben. D: Eine Zahl wird auf jeden Summanden in der Klammer verteilt."),
     ex("2a-vorteilhaft", "Vorteilhaft rechnen", generateClever, "Suche Zahlen, die zusammen «schöne» Ergebnisse geben (25 · 4 = 100), zerlege Zahlen (7 · 98 = 7 · 100 − 7 · 2) oder klammere aus (9 · 14 − 9 · 4 = 9 · 10)."),
     ex("2a-stellenwert", "Stellenwert", generatePlaceValue, "Zähle von rechts: Einer, Zehner, Hunderter, Tausender, Zehntausender, Hunderttausender, Millionen …"),
-    ex("2a-grosse-zahlen", "Grosse Zahlen und Zehnerpotenzen", generateBigNumberPower, "1 Mio. = 10^6, 1 Mia. = 10^9, 1 Bio. = 10^12. Bei der Schreibweise mit einer Ziffer vor dem Punkt: Zähle, um wie viele Stellen der Dezimalpunkt nach links wandert.")
+    ex("2a-grosse-zahlen", "Grosse Zahlen und Zehnerpotenzen", generateBigNumberPower, "1 Mio. = 10⁶, 1 Mia. = 10⁹, 1 Bio. = 10¹². Bei der Schreibweise mit einer Ziffer vor dem Punkt: Zähle, um wie viele Stellen der Dezimalpunkt nach links wandert.")
   ]),
   chapter("2b", "Variablen", [
     ex("2b-1", "Term auswerten", generateVariables, "Setze den gegebenen Wert für die Variable ein und rechne aus."),
@@ -6529,7 +6541,7 @@ const JAHR1_CHAPTERS = [
   ]),
   chapter("2c", "Teiler, Vielfache und Primzahlen", [
     ex("2c-prim", "Ist es eine Primzahl?", generateIsPrimeBalanced, "Eine Primzahl ist nur durch 1 und sich selbst teilbar. Prüfe die Teilbarkeit durch 2, 3, 5, 7 ..."),
-    ex("2c-teiler", "Teiler zählen", generateDivisorCount, "Prüfe nur die Zahlen von 1 bis zur Wurzel der Zahl. Jeder gefundene Teiler hat einen Partner (Zahl ÷ Teiler) – zähle beide mit."),
+    ex("2c-teiler", "Teiler zählen", generateDivisorCount, "Prüfe nur die Zahlen von 1 bis zur Wurzel der Zahl. Jeder gefundene Teiler hat einen Partner (Zahl : Teiler) – zähle beide mit."),
     ex("2c-kgv", "kgV berechnen", generateLcm, "Liste die Vielfachen beider Zahlen auf und suche das kleinste gemeinsame."),
     ex("2c-primfaktor", "Primfaktorzerlegung", generatePrimeFactorization, "Teile die Zahl so lange durch die kleinste passende Primzahl (2, 3, 5, 7, ...), bis 1 übrig bleibt. Die verwendeten Primzahlen sind die Primfaktoren."),
     ex("2c-kette", "Rechenketten", generateCalcChain, "Rechne die Kette Schritt für Schritt von links nach rechts durch, immer mit dem bisherigen Zwischenergebnis weiter."),
@@ -6541,8 +6553,8 @@ const JAHR1_CHAPTERS = [
   ]),
   chapter("3a", "Daten darstellen", [
     ex("3a-strich", "Daten auszählen (Strichliste)", generateTallyCount, "Mache für jede Antwort einen Strich in der richtigen Zeile und zähle dann. Kontrolle: Alle Anzahlen zusammen ergeben die Anzahl Antworten."),
-    ex("3a-chart", "Werte aus Diagrammen ablesen", generateBarChartRead, "Lies die Höhe des gesuchten Balkens an der senkrechten Achse ab."),
-    ex("3a-chart-tap", "Grössten Balken finden", generateBarChartMaxHotspot, "Vergleiche die Höhe aller Balken und tippe auf denjenigen, der am weitesten nach oben reicht."),
+    ex("3a-chart", "Werte aus Diagrammen ablesen", generateBarChartRead, "Lies die Höhe der gesuchten Säule an der senkrechten Achse ab."),
+    ex("3a-chart-tap", "Höchste Säule finden", generateBarChartMaxHotspot, "Vergleiche die Höhe aller Säulen und tippe auf diejenige, die am weitesten nach oben reicht."),
     ex("3b-bruchteil", "Bruchteil einer Grösse", generateFractionOfQuantity, "Teile das Ganze durch den Nenner und multipliziere mit dem Zähler: 2/3 von 21 = 21 : 3 · 2 = 14."),
     ex("3a-anteil", "Anteil als gekürzter Bruch", generateShareFractionK3, "8 von 20 sind 8/20. Kürze vollständig: 8/20 = 2/5."),
     ex("3a-linie", "Liniendiagramm: Zunahme und Abnahme", generateLineChartChange, "Steigt die Linie, ist es eine Zunahme, fällt sie, eine Abnahme. Je steiler die Strecke, desto grösser die Veränderung.")
@@ -6576,10 +6588,10 @@ const JAHR1_CHAPTERS = [
   lockedChapter("4b", "Körper und ihre Ansichten"),
   chapter("5", "Regelmässigkeiten des Zufalls", [
     ex("5-dice", "Wahrscheinlichkeit Würfel", generateDiceProb, "Zähle die günstigen Ergebnisse (z.B. gerade Zahlen) und teile durch die Gesamtzahl der möglichen Ergebnisse (6)."),
-    ex("5-bag", "Wahrscheinlichkeit Beutel", generateBagProb, "Wahrscheinlichkeit = Anzahl der gesuchten Kugeln ÷ Gesamtzahl aller Kugeln."),
-    ex("5-relfreq-bruch", "Relative Häufigkeit als Bruch", generateRelFreqFraction, "Relative Häufigkeit = Anzahl der Treffer ÷ Anzahl aller Versuche, als Bruch."),
+    ex("5-bag", "Wahrscheinlichkeit Beutel", generateBagProb, "Wahrscheinlichkeit = Anzahl der gesuchten Kugeln : Gesamtzahl aller Kugeln."),
+    ex("5-relfreq-bruch", "Relative Häufigkeit als Bruch", generateRelFreqFraction, "Relative Häufigkeit = Anzahl der Treffer : Anzahl aller Versuche, als Bruch."),
     ex("5-relfreq-pct", "Relative Häufigkeit in Prozent", generateRelFreqPercentM1, "Teile die Anzahl der Treffer durch die Gesamtzahl der Versuche und multipliziere mit 100."),
-    ex("5-relfreq-vgl", "Zwei relative Häufigkeiten vergleichen", generateCompareRelFreqMC, "Berechne für beide Personen die relative Häufigkeit (Treffer ÷ Versuche) und vergleiche die beiden Werte.")
+    ex("5-relfreq-vgl", "Zwei relative Häufigkeiten vergleichen", generateCompareRelFreqMC, "Berechne für beide Personen die relative Häufigkeit (Treffer : Versuche) und vergleiche die beiden Werte.")
   ]),
   chapter("6a", "Negative Zahlen", [
     ex("6a-compare", "Negative Zahlen vergleichen", generateNegativeCompare, "Auf dem Zahlenstrahl ist eine Zahl grösser, wenn sie weiter rechts liegt. -3 ist grösser als -8."),
@@ -6600,24 +6612,24 @@ const JAHR1_CHAPTERS = [
     ex("6c-fahrenheit", "Celsius, Fahrenheit, Kelvin", generateFahrenheit, "Setze die Temperatur in den Term ein und rechne Schritt für Schritt: F = C · 9 : 5 + 32, C = (F − 32) · 5 : 9, K = C + 273.")
   ]),
   chapter("7a", "Umfang und Flächeninhalt von Rechtecken", [
-    ex("7a-umfang", "Umfang berechnen", generateRectPerimeter, "Umfang = 2 × (Länge + Breite)."),
-    ex("7a-flaeche", "Fläche berechnen", generateRectArea7a, "Fläche = Länge × Breite."),
+    ex("7a-umfang", "Umfang berechnen", generateRectPerimeter, "Umfang = 2 · (Länge + Breite)."),
+    ex("7a-flaeche", "Fläche berechnen", generateRectArea7a, "Fläche = Länge · Breite."),
     ex("7a-zusammen", "Zusammengesetzte Figuren", generateCompositeRect, "Ergänzungsmethode: Berechne das ganze Rechteck und ziehe das fehlende Stück ab. Beim Umfang zählen alle Randstücke – bei einer L-Figur ist er gleich gross wie beim ganzen Rechteck.")
   ]),
   chapter("7b", "Vielfalt der Vierecksformen", [
-    ex("7b-1", "Vierecke: Eigenschaften bestimmen", generateQuadProperty, "Überlege dir die typische Form: Quadrat und Rechteck haben je 4 rechte Winkel und 2 Paare paralleler, gleich langer Seiten. Parallelogramm und Raute haben keine rechten Winkel, aber 2 Paare parallele Seiten. Ein Trapez hat nur 1 Paar paralleler Seiten. Drachenviereck und unregelmässiges Viereck haben meist keine dieser Eigenschaften."),
-    ex("7b-2", "Vierecke: Aussagen beurteilen", generateQuadPropertyTruth, "Überlege dir die typische Form: Quadrat und Rechteck haben je 4 rechte Winkel und 2 Paare paralleler, gleich langer Seiten. Parallelogramm und Raute haben keine rechten Winkel, aber 2 Paare parallele Seiten. Ein Trapez hat nur 1 Paar paralleler Seiten. Drachenviereck und unregelmässiges Viereck haben meist keine dieser Eigenschaften."),
-    ex("7b-clue", "Vierecksform anhand Eigenschaft erkennen", generateQuadFromClueMC, "Vergleiche die beschriebenen Eigenschaften (rechte Winkel, parallele Seiten, gleich lange Seiten) mit den typischen Merkmalen von Quadrat, Rechteck, Parallelogramm, Raute, Trapez und Drachenviereck."),
-    ex("7b-drachen", "Flächeninhalt Drachen", generateKiteArea, "Fläche des Drachenvierecks = Diagonale e × Diagonale f ÷ 2."),
-    ex("7b-umfang", "Umfang von Vierecken", generateQuadPerimeterGeneral, "Bei der Raute sind alle vier Seiten gleich lang (Umfang = 4 × Seite). Beim Parallelogramm sind gegenüberliegende Seiten gleich lang (Umfang = 2 × (a + b))."),
-    ex("7b-innenwinkel", "Innenwinkel regelmässiger Vielecke", generateRegularPolygonAngle, "Ein Innenwinkel eines regelmässigen n-Ecks berechnet sich mit 180° − 360° ÷ n."),
-    ex("7b-parallelo-tap", "Fehlender Eckpunkt", generateParallelogramMissingVertexHotspot, "In einem Parallelogramm ABCD sind gegenüberliegende Seiten gleich lang und parallel. Verschiebe A um denselben Pfeil, der von B nach C führt, um die Lage von D zu finden.")
+    ex("7b-1", "Vierecke: Eigenschaften bestimmen", generateQuadProperty, "Überlege dir die typische Form: Quadrat und Rechteck haben je 4 rechte Winkel und 2 Paare paralleler, gleich langer Seiten. Parallelenviereck und Rhombus haben keine rechten Winkel, aber 2 Paare parallele Seiten. Ein Trapez hat nur 1 Paar paralleler Seiten. Drachen und allgemeines Viereck haben meist keine dieser Eigenschaften."),
+    ex("7b-2", "Vierecke: Aussagen beurteilen", generateQuadPropertyTruth, "Überlege dir die typische Form: Quadrat und Rechteck haben je 4 rechte Winkel und 2 Paare paralleler, gleich langer Seiten. Parallelenviereck und Rhombus haben keine rechten Winkel, aber 2 Paare parallele Seiten. Ein Trapez hat nur 1 Paar paralleler Seiten. Drachen und allgemeines Viereck haben meist keine dieser Eigenschaften."),
+    ex("7b-clue", "Vierecksform anhand Eigenschaft erkennen", generateQuadFromClueMC, "Vergleiche die beschriebenen Eigenschaften (rechte Winkel, parallele Seiten, gleich lange Seiten) mit den typischen Merkmalen von Quadrat, Rechteck, Parallelenviereck, Rhombus, Trapez und Drachen."),
+    ex("7b-drachen", "Flächeninhalt Drachen", generateKiteArea, "Fläche des Drachens (und des Rhombus) = Diagonale e · Diagonale f : 2."),
+    ex("7b-umfang", "Umfang von Vierecken", generateQuadPerimeterGeneral, "Beim Rhombus sind alle vier Seiten gleich lang (Umfang = 4 · Seite). Beim Parallelenviereck sind gegenüberliegende Seiten gleich lang (Umfang = 2 · (a + b))."),
+    ex("7b-innenwinkel", "Innenwinkel regelmässiger Vielecke", generateRegularPolygonAngle, "Ein Innenwinkel eines regelmässigen n-Ecks berechnet sich mit 180° − 360° : n."),
+    ex("7b-parallelo-tap", "Fehlender Eckpunkt", generateParallelogramMissingVertexHotspot, "In einem Parallelenviereck ABCD sind gegenüberliegende Seiten gleich lang und parallel. Verschiebe A um denselben Pfeil, der von B nach C führt, um die Lage von D zu finden.")
   ]),
   chapter("7c", "Dreiecke", [
     ex("7c-1", "Winkelsumme im Dreieck", generateTriangleAngleSum, "Die Winkelsumme im Dreieck ist immer 180°. Ziehe die beiden bekannten Winkel von 180° ab."),
-    ex("7c-art", "Dreiecksart bestimmen", generateTriangleTypeMC, "Nach Winkeln: spitzwinklig (alle Winkel < 90°), rechtwinklig (ein Winkel = 90°), stumpfwinklig (ein Winkel > 90°). Nach Seiten: gleichseitig (3 gleiche Seiten), gleichschenklig (2 gleiche Seiten), unregelmässig. Prüfe zuerst, ob das Dreieck überhaupt möglich ist (Winkelsumme 180°, die zwei kürzeren Seiten zusammen länger als die längste)."),
+    ex("7c-art", "Dreiecksart bestimmen", generateTriangleTypeMC, "Nach Winkeln: spitzwinklig (alle Winkel < 90°), rechtwinklig (ein Winkel = 90°), stumpfwinklig (ein Winkel > 90°). Nach Seiten: gleichseitig (3 gleiche Seiten), gleichschenklig (2 gleiche Seiten), ungleichseitig (alle Seiten verschieden lang). Prüfe zuerst, ob das Dreieck überhaupt möglich ist (Winkelsumme 180°, die zwei kürzeren Seiten zusammen länger als die längste)."),
     ex("7c-hoehe", "Höhe einzeichnen", generateTriangleHeightHotspot, "Die Höhe hc geht von der Ecke C aus und steht senkrecht (90°) auf der gegenüberliegenden Seite c. Stell dir ein Geodreieck vor, das mit der Mittellinie auf c liegt und an C stösst."),
-    ex("7c-flaeche", "Fläche Dreieck", generateTriArea, "Fläche des Dreiecks = Grundseite × Höhe ÷ 2. Die Höhe muss senkrecht zur gewählten Grundseite stehen.")
+    ex("7c-flaeche", "Fläche Dreieck", generateTriArea, "Fläche des Dreiecks = Grundseite · Höhe : 2. Die Höhe muss senkrecht zur gewählten Grundseite stehen.")
   ]),
   chapter("8a", "Terme und Termumformungen", [
     ex("8a-1", "Terme zusammenfassen", generateSimplifyTerms, "Gleichartige Terme (gleiche Variable) werden addiert/subtrahiert, indem man ihre Zahlen (Koeffizienten) verrechnet."),
@@ -6633,16 +6645,16 @@ const JAHR1_CHAPTERS = [
     ex("8b-formel", "Formeln umstellen", generateFormulaSolveM1, "Setze die bekannten Werte in die Formel ein und löse wie eine Gleichung nach der gesuchten Grösse auf (Umkehroperationen).")
   ]),
   chapter("9a", "Körper untersuchen und skizzieren", [
-    ex("9a-form", "Form erkennen", () => generateCubeShapeProperty(0), "Verbinden Kanten des Würfels nur Eckpunkte, entsteht oft ein Dreieck oder Viereck über eine Flächen- oder Raumdiagonale – zähl die Ecken, prüfe die rechten Winkel und vergleiche die Seitenlängen, um die Form zu bestimmen."),
+    ex("9a-form", "Form erkennen", () => generateCubeShapeProperty(0), "Verbinden Kanten des Würfels nur Eckpunkte, entsteht oft ein Dreieck oder Viereck über eine Flächen- oder Körperdiagonale – zähl die Ecken, prüfe die rechten Winkel und vergleiche die Seitenlängen, um die Form zu bestimmen."),
     ex("9a-ecken", "Ecken zählen", () => generateCubeShapeProperty(1), "Zähle, wie viele Eckpunkte die markierte Fläche hat: 3 = Dreieck, 4 = Viereck."),
-    ex("9a-winkel", "Rechte Winkel zählen", () => generateCubeShapeProperty(2), "Ein Winkel zwischen zwei Kanten des Würfels (z.B. an einer Ecke) ist immer rechtwinklig; ein Winkel entlang einer Flächen- oder Raumdiagonale meist nicht."),
-    ex("9a-seiten", "Seitenlängen vergleichen", () => generateCubeShapeProperty(3), "Würfelkanten sind alle gleich lang, Flächendiagonalen sind alle gleich lang (aber länger als eine Kante), Raumdiagonalen sind nochmals länger – mischt eine Fläche mehrere davon, sind die Seiten nicht alle gleich lang.")
+    ex("9a-winkel", "Rechte Winkel zählen", () => generateCubeShapeProperty(2), "Ein Winkel zwischen zwei Kanten des Würfels (z.B. an einer Ecke) ist immer rechtwinklig; ein Winkel entlang einer Flächen- oder Körperdiagonale meist nicht."),
+    ex("9a-seiten", "Seitenlängen vergleichen", () => generateCubeShapeProperty(3), "Würfelkanten sind alle gleich lang, Flächendiagonalen sind alle gleich lang (aber länger als eine Kante), Körperdiagonalen (Raumdiagonalen) sind nochmals länger – mischt eine Fläche mehrere davon, sind die Seiten nicht alle gleich lang.")
   ]),
   chapter("9b", "Volumen und Oberflächeninhalt", [
-    ex("9b-vol", "Volumen Würfel", generateCubeVolume, "Volumen des Würfels = Kantenlänge × Kantenlänge × Kantenlänge."),
-    ex("9b-surf", "Oberfläche Würfel", generateCubeSurface, "Oberfläche des Würfels = 6 × Kantenlänge²."),
+    ex("9b-vol", "Volumen Würfel", generateCubeVolume, "Volumen des Würfels = Kantenlänge · Kantenlänge · Kantenlänge."),
+    ex("9b-surf", "Oberfläche Würfel", generateCubeSurface, "Oberfläche des Würfels = 6 · Kantenlänge²."),
     ex("9b-formula-mc", "Welche Formel stimmt?", generateCubeFormulaMC, "Volumen misst den Raum im Innern (3 Längen multipliziert), Oberfläche misst die Summe aller 6 Seitenflächen."),
-    ex("9b-quader", "Oberfläche Quader", generateCuboidSurface, "Oberfläche des Quaders = 2 × (a×b + a×c + b×c), wobei a, b, c die drei Kantenlängen sind."),
+    ex("9b-quader", "Oberfläche Quader", generateCuboidSurface, "Oberfläche des Quaders = 2 · (a · b + a · c + b · c), wobei a, b, c die drei Kantenlängen sind."),
     ex("9b-vol-quader", "Volumen Quader und zusammengesetzte Körper", generateCuboidVolume, "V = Länge · Breite · Höhe. Zusammengesetzte Körper zerlegst du in Quader und addierst deren Volumen."),
     ex("9b-hohlmass", "Raummass und Hohlmass", generateVolumeCapacity, "1 dm³ = 1 l, 1 cm³ = 1 ml, 1 m³ = 1000 l. 1 Liter Regen pro m² ergibt 1 mm Wasserhöhe.")
   ])
@@ -6660,7 +6672,7 @@ const JAHR2_CHAPTERS = [
     ex("m2-1b-add", "Brüche addieren", generateFractionAdd, "Bringe beide Brüche auf einen gemeinsamen Nenner (z.B. das Produkt der Nenner), addiere die Zähler, kürze am Schluss."),
     ex("m2-1b-sub", "Brüche subtrahieren", generateFractionSub, "Bringe beide Brüche auf einen gemeinsamen Nenner (z.B. das Produkt der Nenner), subtrahiere die Zähler, kürze am Schluss."),
     ex("m2-1b-mul", "Brüche multiplizieren", generateFractionMul, "Multipliziere Zähler mit Zähler und Nenner mit Nenner, kürze am Schluss."),
-    ex("m2-1b-div", "Brüche dividieren", generateFractionDiv, "Multipliziere mit dem Kehrwert des zweiten Bruchs (Zähler und Nenner vertauschen), dann wie bei der Multiplikation rechnen."),
+    ex("m2-1b-div", "Brüche dividieren", generateFractionDiv, "Multipliziere mit der Kehrzahl des zweiten Bruchs (Zähler und Nenner vertauschen), dann wie bei der Multiplikation rechnen."),
     ex("m2-1b-fehler", "Fehler finden: Brüche addieren", generateFindErrorFraction, "Typische Fehler: beim Erweitern nur den Nenner verändern, die Nenner auch addieren oder beim Kürzen nur den Zähler teilen. Rechne jeden Schritt selbst nach."),
     ex("m2-1b-wurzel", "Wurzeln vergleichen", generateSquareRootCompareMC, "Ziehe von jeder Wurzel näherungsweise die Quadratwurzel (z.B. mit dem Taschenrechner oder durch Abschätzen zwischen zwei Quadratzahlen) und vergleiche die Werte.")
   ]),
@@ -6693,117 +6705,117 @@ const JAHR2_CHAPTERS = [
   ]),
   chapter("2d", "Anwendungen des Pythagoras", [
     ex("m2-2d-1", "Rechteck-Diagonale", generatePythagorasDiagonal, "Die Diagonale eines Rechtecks ist die Hypotenuse eines rechtwinkligen Dreiecks aus den beiden Seiten: d = √(l² + b²).", true),
-    ex("m2-2d-raum", "Raumdiagonale im Quader", generateSpaceDiagonal, "Die Raumdiagonale eines Quaders berechnet sich mit d = √(a² + b² + c²) (Pythagoras im Raum, zweimal angewendet).", true)
+    ex("m2-2d-raum", "Körperdiagonale im Quader", generateSpaceDiagonal, "Die Körperdiagonale (Raumdiagonale) eines Quaders berechnet sich mit d = √(a² + b² + c²) (Pythagoras im Raum, zweimal angewendet).", true)
   ]),
   chapter("3a", "Zuordnungen und Abhängigkeiten", [
-    ex("m2-3a-1", "Proportional oder nicht?", generateProportionalCheck, "Bei direkter Proportionalität ist der Quotient y÷x bei allen Wertepaaren immer gleich gross."),
-    ex("m2-3a-typ", "Art der Zuordnung bestimmen", generateProportionTypeMC, "Proportional: y÷x ist bei beiden Wertepaaren gleich. Umgekehrt proportional: x×y ist bei beiden Wertepaaren gleich. Sonst: weder noch.")
+    ex("m2-3a-1", "Proportional oder nicht?", generateProportionalCheck, "Bei direkter Proportionalität ist der Quotient y : x bei allen Wertepaaren immer gleich gross."),
+    ex("m2-3a-typ", "Art der Zuordnung bestimmen", generateProportionTypeMC, "Proportional: y : x ist bei beiden Wertepaaren gleich. Umgekehrt proportional: x · y ist bei beiden Wertepaaren gleich. Sonst: weder noch.")
   ]),
   chapter("3b", "Proportionalität", [
-    ex("m2-3b-1", "Dreisatz (direkt)", generateDirectProportion, "Berechne zuerst den Preis für 1 Stück (÷ Menge), dann multipliziere mit der gesuchten Menge.", true),
+    ex("m2-3b-1", "Dreisatz (direkt)", generateDirectProportion, "Berechne zuerst den Preis für 1 Stück (durch die Menge teilen), dann multipliziere mit der gesuchten Menge.", true),
     ex("m2-3b-sach", "Proportionale Sachaufgaben", generateProportionalWord, "Operator-Methode: Rechne zuerst auf 1 (dividieren), dann auf die gesuchte Menge (multiplizieren). Oder: Verhältnisgleichung y : x = y₁ : x₁ aufstellen."),
     ex("m2-3b-preisvergleich", "Preisvergleich (Kilopreis)", generatePriceCompareMC, "Berechne für beide Packungen den Preis für 1 kg (Preis : Gewicht in kg) und vergleiche.", true)
   ]),
   chapter("3c", "Umgekehrte Proportionalität", [
-    ex("m2-3c-1", "Dreisatz (umgekehrt)", generateInverseProportion, "Bei umgekehrter Proportionalität bleibt das Produkt gleich: Arbeiter × Tage = konstant.", true),
+    ex("m2-3c-1", "Dreisatz (umgekehrt)", generateInverseProportion, "Bei umgekehrter Proportionalität bleibt das Produkt gleich: Arbeiter · Tage = konstant.", true),
     ex("m2-3c-sach", "Umgekehrt proportionale Sachaufgaben", generateInverseWord, "Umgekehrt proportional: Das Produkt bleibt gleich. Stelle die Produktgleichung x₁ · y₁ = x₂ · y₂ auf und löse nach dem Gesuchten auf."),
     ex("m2-3c-uhr", "Winkel der Uhrzeiger", generateClockAngle, "Minutenzeiger: 360° in 60 Minuten → 6° pro Minute. Stundenzeiger: 360° in 12 Stunden → 30° pro Stunde bzw. 0.5° pro Minute.")
   ]),
   chapter("4a", "Das gerade Prisma", [
-    ex("m2-4a-1", "Volumen Prisma", generatePrismVolume, "Volumen = Grundfläche × Höhe."),
-    ex("m2-4a-fehlend", "Fehlende Grösse bei Prisma", generatePrismMissing, "Löse V = Grundfläche × Höhe nach der gesuchten Grösse auf: Höhe = V ÷ Grundfläche, bzw. Grundfläche = V ÷ Höhe.")
+    ex("m2-4a-1", "Volumen Prisma", generatePrismVolume, "Volumen = Grundfläche · Höhe."),
+    ex("m2-4a-fehlend", "Fehlende Grösse bei Prisma", generatePrismMissing, "Löse V = Grundfläche · Höhe nach der gesuchten Grösse auf: Höhe = V : Grundfläche, bzw. Grundfläche = V : Höhe.")
   ]),
   chapter("4b", "Volumen und Oberflächeninhalt beim geraden Prisma", [
-    ex("m2-4b-1", "Oberfläche Prisma", generatePrismSurface, "Oberfläche = 2 × Grundfläche + Umfang der Grundfläche × Höhe (Mantelfläche)."),
-    ex("m2-4b-dreieck", "Prisma: Volumen, Mantel, Oberfläche", generatePrismTriangleMantle, "Grundfläche G (Dreieck: Kathete · Kathete : 2), Umfang u der Grundfläche. V = G · h, Mantel M = u · h, Oberfläche O = 2 · G + M.")
+    ex("m2-4b-1", "Oberfläche Prisma", generatePrismSurface, "Oberfläche = 2 · Grundfläche + Umfang der Grundfläche · Höhe (Mantelfläche)."),
+    ex("m2-4b-dreieck", "Prisma: Volumen, Mantel, Oberfläche", generatePrismTriangleMantle, "Grundfläche G (Dreieck: Kathete · Kathete : 2), Umfang u der Grundfläche. V = G · h, Mantel M = u · h, Oberflächeninhalt S = 2 · G + M.")
   ]),
   chapter("4c", "Die Pyramide", [
-    ex("m2-4c-1", "Volumen Pyramide", generatePyramidVolume, "Volumen = ⅓ × Grundfläche × Höhe."),
-    ex("m2-4c-fehlend", "Fehlende Grösse bei Pyramide", generatePyramidMissing, "Löse V = ⅓ × Grundfläche × Höhe nach der gesuchten Grösse auf: Höhe = 3×V ÷ Grundfläche, bzw. Grundfläche = 3×V ÷ Höhe."),
-    ex("m2-4c-ober", "Oberfläche Pyramide", generatePyramidSurface, "O = Grundfläche + 4 Seitendreiecke (je a · hs : 2). Die Seitenflächenhöhe hs findest du mit Pythagoras aus halber Grundkante und Körperhöhe.", true)
+    ex("m2-4c-1", "Volumen Pyramide", generatePyramidVolume, "Volumen = ⅓ · Grundfläche · Höhe."),
+    ex("m2-4c-fehlend", "Fehlende Grösse bei Pyramide", generatePyramidMissing, "Löse V = ⅓ · Grundfläche · Höhe nach der gesuchten Grösse auf: Höhe = 3 · V : Grundfläche, bzw. Grundfläche = 3 · V : Höhe."),
+    ex("m2-4c-ober", "Oberfläche Pyramide", generatePyramidSurface, "S = Grundfläche + 4 Seitendreiecke (je a · hs : 2). Die Seitenflächenhöhe hs findest du mit Pythagoras aus halber Grundkante und Körperhöhe.", true)
   ]),
   chapter("5a", "Preise – Aktionen – Mehrwertsteuer", [
-    ex("m2-5a-rabatt", "Rabatt berechnen", generateDiscount, "Ziehe den Rabatt-Prozentsatz vom ursprünglichen Preis ab: neuer Preis = Preis × (1 − Rabatt/100).", true),
-    ex("m2-5a-mwst", "MWST berechnen", generateVAT, "Preis inkl. MWST = Preis exkl. MWST × (1 + Satz/100).", true),
-    ex("m2-5a-rabattpct", "Rabatt in % berechnen", generateDiscountPercent, "Rabatt in % = (Bruttopreis − Nettopreis) ÷ Bruttopreis × 100.", true),
+    ex("m2-5a-rabatt", "Rabatt berechnen", generateDiscount, "Ziehe den Rabatt-Prozentsatz vom ursprünglichen Preis ab: neuer Preis = Preis · (1 − Rabatt/100). Preise auf 5 Rappen runden.", true),
+    ex("m2-5a-mwst", "MWST berechnen", generateVAT, "Preis inkl. MWST = Preis exkl. MWST · (1 + Satz/100). Preise auf 5 Rappen runden.", true),
+    ex("m2-5a-rabattpct", "Rabatt in % berechnen", generateDiscountPercent, "Rabatt in % = (Bruttopreis − Nettopreis) : Bruttopreis · 100.", true),
     ex("m2-5a-runden", "Preise auf 5 Rappen runden", generateRoundTo5Rappen, "Teile den Preis durch 0.05, runde auf eine ganze Zahl und multipliziere wieder mit 0.05.", true),
     ex("m2-5a-brutto", "Bruttopreis zurückrechnen", generateGrossFromNet, "Der Nettopreis ist (100 − Rabatt) % des Bruttopreises. Rechne auf 1 % und dann auf 100 %. Nicht den Rabatt vom Nettopreis dazurechnen!", true),
     ex("m2-5a-mwst-anteil", "Anteil Anbieter und MWST", generateVatShare, "Verkaufspreis = 108.1 % (bzw. 102.6 %). Anteil Anbieter = Verkaufspreis : 1.081 (bzw. : 1.026). MWST = Verkaufspreis − Anteil Anbieter.", true),
     ex("m2-5a-mehrfach", "Mehrfachrabatt", generateMultiDiscount, "Prozente nacheinander nicht addieren! Rechne mit den Restanteilen: z.B. 30 % und dann 50 % → 0.7 · 0.5 = 0.35, es bleiben 35 %, Rabatt 65 %.")
   ]),
   chapter("5b", "Währungen und Budget", [
-    ex("m2-5b-1", "Währung umrechnen", generateCurrency, "Multipliziere den Betrag mit dem Wechselkurs.", true),
+    ex("m2-5b-1", "Währung umrechnen", generateCurrency, "Der Kurs sagt, wie viele Franken 1 € kostet. Euro → Franken: Betrag · Kurs (auf 5 Rappen runden). Franken → Euro: Betrag : Kurs (auf 2 Dezimalen runden).", true),
     ex("m2-5b-kurs", "Ankauf und Verkauf", generateExchangeBuySell, "Kaufst du Fremdwährung, verkauft die Bank → Verkaufskurs (höher). Wechselst du zurück, kauft die Bank → Ankaufskurs (tiefer). Franken = Betrag · Kurs.", true),
     ex("m2-5b-budget", "Budget in Prozent", generateBudgetPercent, "Alle Anteile zusammen ergeben 100 %. Betrag = Gesamtbudget · Prozentsatz : 100.")
   ]),
   chapter("6a", "Der Kreisumfang und die Kreisfläche", [
-    ex("m2-6a-u", "Kreisumfang berechnen", generateCircleCircumference, "Umfang = 2 × π × Radius.", true),
-    ex("m2-6a-a", "Kreisfläche berechnen", generateCircleArea, "Fläche = π × Radius².", true),
+    ex("m2-6a-u", "Kreisumfang berechnen", generateCircleCircumference, "Umfang = 2 · π · Radius.", true),
+    ex("m2-6a-a", "Kreisfläche berechnen", generateCircleArea, "Fläche = π · Radius².", true),
     ex("m2-6a-formula-mc", "Welche Formel stimmt?", generateCircleFormulaMC, "Umfang misst die Länge der Kreislinie (einfache Länge), Fläche misst den Platz im Innern (Radius im Quadrat)."),
-    ex("m2-6a-r-von-u", "Radius/Durchmesser aus Umfang", generateRadiusFromCircumference, "Löse U = 2 × π × r nach r auf: r = U ÷ (2 × π).", true),
-    ex("m2-6a-r-von-a", "Radius aus Fläche", generateRadiusFromArea, "Löse A = π × r² nach r auf: r = √(A ÷ π).", true),
+    ex("m2-6a-r-von-u", "Radius/Durchmesser aus Umfang", generateRadiusFromCircumference, "Löse U = 2 · π · r nach r auf: r = U : (2 · π).", true),
+    ex("m2-6a-r-von-a", "Radius aus Fläche", generateRadiusFromArea, "Löse A = π · r² nach r auf: r = √(A : π).", true),
     ex("m2-6a-zusammen", "Zusammengesetzte Figuren mit Kreisteilen", generateCompositeCircle, "Zerlege die Figur in Rechteck/Quadrat und Halb- bzw. Viertelkreise. Beim Umfang zählen nur die äusseren Linien, innere Kanten fallen weg.", true)
   ]),
   chapter("6b", "Der Kreissektor/Geraden und Kreise", [
-    ex("m2-6b-1", "Kreissektor-Fläche", generateCircleSector, "Fläche des Sektors = (Mittelpunktswinkel ÷ 360°) × π × Radius².", true),
-    ex("m2-6b-formula-mc", "Welche Formel stimmt?", generateCircleSectorFormulaMC, "Der Sektor ist ein Anteil des ganzen Kreises: Anteil = Mittelpunktswinkel ÷ 360°, davon die Kreisfläche π × r²."),
-    ex("m2-6b-bogen", "Bogenlänge des Kreissektors", generateArcLength, "Bogenlänge = (Mittelpunktswinkel ÷ 360°) × 2 × π × Radius.", true)
+    ex("m2-6b-1", "Kreissektor-Fläche", generateCircleSector, "Fläche des Sektors = (Mittelpunktswinkel : 360°) · π · Radius².", true),
+    ex("m2-6b-formula-mc", "Welche Formel stimmt?", generateCircleSectorFormulaMC, "Der Sektor ist ein Anteil des ganzen Kreises: Anteil = Mittelpunktswinkel : 360°, davon die Kreisfläche π · r²."),
+    ex("m2-6b-bogen", "Bogenlänge des Kreissektors", generateArcLength, "Bogenlänge = (Mittelpunktswinkel : 360°) · 2 · π · Radius.", true)
   ]),
   chapter("7a", "Baumdarstellungen, Wiederholung und Vertiefung", [
-    ex("m2-7a-1", "Kombinationen zählen", generateTreeCountVaried, "Zeichne (gedanklich) ein Baumdiagramm: Jede Stufe vervielfacht die Anzahl Äste. Multipliziere die Anzahl Möglichkeiten aller Stufen (Produktregel), z.B. 3 Vorspeisen × 4 Hauptgänge = 12 Menüs."),
+    ex("m2-7a-1", "Kombinationen zählen", generateTreeCountVaried, "Zeichne (gedanklich) ein Baumdiagramm: Jede Stufe vervielfacht die Anzahl Äste. Multipliziere die Anzahl Möglichkeiten aller Stufen (Produktregel), z.B. 3 Vorspeisen · 4 Hauptgänge = 12 Menüs."),
     ex("m2-7a-mehrstufig", "Mehrstufige Zufallsexperimente", generateTwoStageProb, "Entlang eines Pfades multiplizieren, verschiedene Pfade addieren. Bei «mindestens einmal» ist oft das Gegenereignis einfacher: P = 1 − P(nie).")
   ]),
   chapter("7b", "Statistische Kennwerte", [
     ex("m2-7b-1", "Modus bestimmen", generateMode, "Der Modus ist der Wert, der in der Liste am häufigsten vorkommt."),
-    ex("m2-7b-median", "Median einer Zahlenliste", generateMedian, "Sortiere die Zahlen der Grösse nach. Der Median ist die Zahl genau in der Mitte."),
+    ex("m2-7b-median", "Zentralwert (Median) einer Zahlenliste", generateMedian, "Sortiere die Zahlen der Grösse nach. Der Zentralwert (Median) ist die Zahl genau in der Mitte. Bei gerader Anzahl liegt er in der Mitte zwischen den beiden mittleren Zahlen."),
     ex("m2-7b-mean", "Arithmetisches Mittel", generateMean, "Addiere alle Zahlen und teile die Summe durch die Anzahl der Zahlen.", true),
     ex("m2-7b-range", "Spannweite", generateRange, "Spannweite = grösste Zahl minus kleinste Zahl."),
-    ex("m2-7b-note", "Fehlende Note für Ziel-Durchschnitt", generateRequiredGrade, "Durchschnitt = Summe aller Noten ÷ Anzahl Noten. Löse nach der gesuchten (letzten) Note auf: gesuchte Note = Ziel-Durchschnitt × neue Anzahl − Summe der bisherigen Noten.", true),
-    ex("m2-7b-gleitend", "Gleitender Durchschnitt", generateMovingAverage, "3er-Fenster: Mittelwert aus Vorgänger, Wert selbst und Nachfolger."),
+    ex("m2-7b-note", "Fehlende Note für Ziel-Durchschnitt", generateRequiredGrade, "Durchschnitt = Summe aller Noten : Anzahl Noten. Löse nach der gesuchten (letzten) Note auf: gesuchte Note = Ziel-Durchschnitt · neue Anzahl − Summe der bisherigen Noten.", true),
+    ex("m2-7b-gleitend", "Gleitender Durchschnitt", generateMovingAverage, "3er-Fenster: arithmetisches Mittel aus Vorgänger, Wert selbst und Nachfolger."),
     ex("m2-7b-quartil", "Quartile (Boxplot)", generateQuartile, "Sortiere die Werte und teile sie in eine untere und eine obere Hälfte. Das Quartil ist der Zentralwert (Median) dieser Hälfte.")
   ]),
   chapter("7c", "Simulationen/Statistik praktisch", [
-    ex("m2-7c-1", "Relative Häufigkeit", generateRelativeFrequency, "Relative Häufigkeit = absolute Häufigkeit ÷ Gesamtzahl der Versuche × 100%.", true),
-    ex("m2-7c-laplace", "Laplace-Wahrscheinlichkeit", generateLaplaceProb, "Bei gleich wahrscheinlichen Ergebnissen: Wahrscheinlichkeit = Anzahl günstiger Fälle ÷ Anzahl möglicher Fälle."),
+    ex("m2-7c-1", "Relative Häufigkeit", generateRelativeFrequency, "Relative Häufigkeit = absolute Häufigkeit : Gesamtzahl der Versuche · 100%.", true),
+    ex("m2-7c-laplace", "Laplace-Wahrscheinlichkeit", generateLaplaceProb, "Bei gleich wahrscheinlichen Ergebnissen: Wahrscheinlichkeit = Anzahl günstiger Fälle : Anzahl möglicher Fälle."),
     ex("m2-7c-pfad", "Pfadwahrscheinlichkeit aus Baumdiagramm", generatePathProbability, "Bei unabhängigen, aufeinanderfolgenden Ereignissen multiplizierst du die Wahrscheinlichkeiten entlang des Pfades.")
   ]),
   chapter("8", "Zylinder", [
-    ex("m2-8-vol", "Volumen Zylinder", generateCylinderVolume, "Volumen = π × Radius² × Höhe.", true),
-    ex("m2-8-surf", "Oberfläche Zylinder", generateCylinderSurface, "Oberfläche = 2 × π × Radius² (Deckel+Boden) + 2 × π × Radius × Höhe (Mantel).", true),
-    ex("m2-8-fehlend", "Fehlende Grösse beim Zylinder", generateCylinderMissing, "Löse V = π × r² × h nach der gesuchten Grösse auf: r = √(V ÷ (π×h)), bzw. h = V ÷ (π×r²).", true),
-    ex("m2-8-kegel", "Kegelvolumen", generateConeVolume, "Volumen = ⅓ × π × Radius² × Höhe.", true),
-    ex("m2-8-kugel-vol", "Kugelvolumen", generateSphereVolume, "Volumen = 4/3 × π × Radius³.", true),
-    ex("m2-8-kugel-surf", "Kugeloberfläche", generateSphereSurface, "Oberfläche = 4 × π × Radius².", true)
+    ex("m2-8-vol", "Volumen Zylinder", generateCylinderVolume, "Volumen = π · Radius² · Höhe.", true),
+    ex("m2-8-surf", "Oberfläche Zylinder", generateCylinderSurface, "Oberfläche = 2 · π · Radius² (Deckel+Boden) + 2 · π · Radius · Höhe (Mantel).", true),
+    ex("m2-8-fehlend", "Fehlende Grösse beim Zylinder", generateCylinderMissing, "Löse V = π · r² · h nach der gesuchten Grösse auf: r = √(V : (π · h)), bzw. h = V : (π · r²).", true),
+    ex("m2-8-kegel", "Kegelvolumen", generateConeVolume, "Volumen = ⅓ · π · Radius² · Höhe.", true),
+    ex("m2-8-kugel-vol", "Kugelvolumen", generateSphereVolume, "Volumen = 4/3 · π · Radius³.", true),
+    ex("m2-8-kugel-surf", "Kugeloberfläche", generateSphereSurface, "Oberfläche = 4 · π · Radius².", true)
   ]),
   chapter("9a", "Weg – Zeit – Geschwindigkeit", [
-    ex("m2-9a-v", "Geschwindigkeit berechnen", generateSpeed, "Geschwindigkeit = Strecke ÷ Zeit."),
-    ex("m2-9a-s", "Strecke berechnen", generateDistance, "Strecke = Geschwindigkeit × Zeit."),
+    ex("m2-9a-v", "Geschwindigkeit berechnen", generateSpeed, "Geschwindigkeit = Strecke : Zeit."),
+    ex("m2-9a-s", "Strecke berechnen", generateDistance, "Strecke = Geschwindigkeit · Zeit."),
     ex("m2-9a-einheit", "Einheiten umrechnen km/h ↔ m/s", generateSpeedUnitConvert, "km/h → m/s: durch 3.6 teilen. m/s → km/h: mit 3.6 multiplizieren."),
-    ex("m2-9a-zeit", "Zeit berechnen bei gegebener Geschwindigkeit", generateTimeFromSpeedDistance, "Zeit = Strecke ÷ Geschwindigkeit."),
+    ex("m2-9a-zeit", "Zeit berechnen bei gegebener Geschwindigkeit", generateTimeFromSpeedDistance, "Zeit = Strecke : Geschwindigkeit."),
     ex("m2-9a-anhalteweg", "Reaktions-, Brems- und Anhalteweg", generateStoppingDistance, "Faustregeln: Reaktionsweg = v : 10 · 3, Bremsweg = (v : 10)², Anhalteweg = Reaktionsweg + Bremsweg (v in km/h, Wege in m).")
   ]),
   chapter("9b", "Steigung und Gefälle", [
-    ex("m2-9b-1", "Steigung berechnen", generateSlope, "Steigung in % = (Höhenunterschied ÷ horizontale Strecke) × 100."),
+    ex("m2-9b-1", "Steigung berechnen", generateSlope, "Steigung in % = (Höhenunterschied : horizontale Strecke) · 100."),
     ex("m2-9b-hoehe", "Höhenunterschied und Distanz", generateSlopeHeight, "Steigung in % = Höhenunterschied : horizontale Distanz · 100. Daraus: Höhe = Distanz · Steigung : 100, Distanz = Höhe : Steigung · 100.")
   ])
 ];
 
 const JAHR3_CHAPTERS = [
   chapter("1a", "Geraden", [
-    ex("m3-1a-1", "Steigung durch zwei Punkte", generateSlopeTwoPoints, "Steigung m = (y2 − y1) ÷ (x2 − x1)."),
-    ex("m3-1a-graph-m", "Steigung am Graphen ablesen", generateLineGraphSlope, "Zeichne ein Steigungsdreieck: Gehe von einem Punkt der Geraden nach rechts und dann nach oben/unten bis zur Geraden. Steigung m = Höhenänderung ÷ Schritte nach rechts (nach unten = negativ)."),
-    ex("m3-1a-graph-q", "y-Achsenabschnitt ablesen", generateLineGraphIntercept, "Der y-Achsenabschnitt q ist der y-Wert, bei dem die Gerade die senkrechte y-Achse schneidet (dort ist x = 0)."),
-    ex("m3-1a-gleichung", "Funktionsgleichung zum Graphen", generateLineEquationFromGraphMC, "Lies zuerst q (Schnittpunkt mit der y-Achse) ab, dann m mit einem Steigungsdreieck. Die Gleichung lautet y = mx + q.")
+    ex("m3-1a-1", "Steigung durch zwei Punkte", generateSlopeTwoPoints, "Steigung a = (y₂ − y₁) : (x₂ − x₁)."),
+    ex("m3-1a-graph-m", "Steigung am Graphen ablesen", generateLineGraphSlope, "Zeichne ein Steigungsdreieck: Gehe von einem Punkt der Geraden nach rechts und dann nach oben/unten bis zur Geraden. Steigung a = Höhenänderung : Schritte nach rechts (nach unten = negativ)."),
+    ex("m3-1a-graph-q", "y-Achsenabschnitt ablesen", generateLineGraphIntercept, "Der y-Achsenabschnitt b ist der y-Wert, bei dem die Gerade die senkrechte y-Achse schneidet (dort ist x = 0)."),
+    ex("m3-1a-gleichung", "Geradengleichung zum Graphen", generateLineEquationFromGraphMC, "Lies zuerst b (Schnittpunkt mit der y-Achse) ab, dann die Steigung a mit einem Steigungsdreieck. Die Gleichung lautet y = a · x + b.")
   ]),
   chapter("1b", "Lineare und nicht lineare Funktionen", [
-    ex("m3-1b-1", "Funktionswert berechnen", generateFunctionValue, "Setze den gegebenen x-Wert in die Funktionsgleichung ein und rechne aus."),
-    ex("m3-1b-nullstelle", "Nullstelle berechnen", generateLinearZero, "An der Nullstelle ist y = 0. Setze f(x) = 0 und löse die Gleichung nach x auf."),
-    ex("m3-1b-tabelle", "Wertetabelle ergänzen", generateValueTableMissing, "Bei einer linearen Funktion ändert sich y bei jedem Schritt nach rechts um denselben Betrag (die Steigung m). Bestimme diese Änderung aus zwei benachbarten Werten."),
+    ex("m3-1b-1", "y-Wert berechnen", generateFunctionValue, "Setze den gegebenen x-Wert in die Geradengleichung y = a · x + b ein und rechne aus."),
+    ex("m3-1b-nullstelle", "Schnittpunkt mit der x-Achse", generateLinearZero, "Auf der x-Achse ist y = 0. Setze in der Geradengleichung y = 0 und löse die Gleichung nach x auf."),
+    ex("m3-1b-tabelle", "Wertetabelle ergänzen", generateValueTableMissing, "Bei einer linearen Funktion ändert sich y bei jedem Schritt nach rechts um denselben Betrag (die Steigung a). Bestimme diese Änderung aus zwei benachbarten Werten."),
     ex("m3-1b-wachstum", "Linear oder exponentiell?", generateGrowthTypeMC, "Gleiche Differenzen zwischen den y-Werten → linear. Gleiche Quotienten (Faktor) → exponentiell. Sonst weder noch."),
     ex("m3-1b-prozent", "Zuwachs in Prozent aus der Tabelle", generateGrowthFromTable, "Wachstumsfaktor = neuer Wert : alter Wert. Faktor 1.2 heisst +20 %, Faktor 0.8 heisst −20 %.")
   ]),
   chapter("2a", "Ähnliche Figuren", [
-    ex("m3-2a-1", "Fehlende Seite berechnen", generateSimilarFigures, "Berechne den Streckfaktor k = EF ÷ CD. Die fehlende Seite FG = BC × k.", true),
+    ex("m3-2a-1", "Fehlende Seite berechnen", generateSimilarFigures, "Berechne den Streckfaktor k = EF : CD. Die fehlende Seite FG = BC · k.", true),
     ex("m3-2a-faktor", "Ähnlichkeits- und Flächenfaktor", generateSimilarityFactor, "k = Bildstrecke : Originalstrecke. Flächen ändern sich mit k², Volumen mit k³."),
     ex("m3-2a-massstab", "Kartenmassstab", generateMapScale, "1 : 50 000 heisst: 1 cm auf der Karte sind 50 000 cm = 500 m = 0.5 km in Wirklichkeit. 1 km = 100 000 cm.")
   ]),
@@ -6813,20 +6825,20 @@ const JAHR3_CHAPTERS = [
   ]),
   chapter("3a", "Potenzen und Wurzeln", [
     ex("m3-3a-sci", "Wissenschaftliche Schreibweise", generateScientificNotation, "Verschiebe das Komma so, dass vor dem Komma genau eine Ziffer (1–9) steht. Die Anzahl verschobener Stellen ist der Exponent von 10 (nach rechts verschoben = negativ, nach links = positiv)."),
-    ex("m3-3a-negexp", "Potenzen mit negativen Exponenten", generateNegativeExponent, "a^-n = 1 ÷ (a^n). Rechne a^n aus, das Ergebnis kommt in den Nenner, im Zähler steht 1."),
-    ex("m3-3a-negexp-mc", "Regel für negative Exponenten", generateNegExponentRuleMC, "a^-n = 1 ÷ (a^n). Der negative Exponent wird positiv, indem man in den Nenner eines Bruchs wechselt."),
+    ex("m3-3a-negexp", "Potenzen mit negativen Exponenten", generateNegativeExponent, "a⁻ⁿ = 1/aⁿ. Rechne aⁿ aus, das Ergebnis kommt in den Nenner, im Zähler steht 1."),
+    ex("m3-3a-negexp-mc", "Regel für negative Exponenten", generateNegExponentRuleMC, "a⁻ⁿ = 1/aⁿ. Der negative Exponent wird positiv, indem man in den Nenner eines Bruchs wechselt."),
     ex("m3-3a-kubik", "Dritte Potenz und dritte Wurzel", generateCubeRoot, "Würfel: V = a³, also a = ∛V. Suche die Zahl, die dreimal mit sich selbst multipliziert das Volumen ergibt.")
   ]),
   chapter("3b", "Vom Bild zum Term", [
-    ex("m3-3b-1", "Musterfolge fortsetzen", generatePatternTerm, "Berechne die Zunahme pro Schritt (Differenz zwischen Schritt 2 und Schritt 1) und wende sie so oft wie nötig an, oder finde die Formel a×n + b aus den ersten drei Schritten."),
+    ex("m3-3b-1", "Musterfolge fortsetzen", generatePatternTerm, "Berechne die Zunahme pro Schritt (Differenz zwischen Schritt 2 und Schritt 1) und wende sie so oft wie nötig an, oder finde die Formel a · n + b aus den ersten drei Schritten."),
     ex("m3-3b-2", "Binomische Formeln anwenden", generateBinomialApplication, "Nutze die binomischen Formeln als Rechentrick: (a+b)² = a²+2ab+b², (a−b)² = a²−2ab+b², (a+b)(a−b) = a²−b². Wähle a als die runde Zehnerzahl."),
     ex("m3-3b-3", "Binome ausmultiplizieren", generateBinomialExpansionMC, "Die drei binomischen Formeln: (x+b)² = x²+2bx+b², (x−b)² = x²−2bx+b², (x+b)(x−b) = x²−b². Achte besonders auf den mittleren Term und die Vorzeichen."),
     ex("m3-3b-4", "Trinome faktorisieren", generateTrinomialFactorMC, "Suche zwei Zahlen, deren Summe der Koeffizient vor x ist und deren Produkt die Zahl ohne x ist. Diese Zahlen kommen in die beiden Klammern (x + Zahl).")
   ]),
   chapter("4a", "Jahreszins und Marchzins", [
-    ex("m3-4a-jz", "Jahreszins berechnen", generateJahreszins, "Jahreszins = Kapital × Zinssatz ÷ 100.", true),
-    ex("m3-4a-mz", "Marchzins berechnen", generateMarchzins, "Marchzins = Kapital × Zinssatz ÷ 100 × Tage ÷ 360.", true),
-    ex("m3-4a-zinseszins", "Zinseszins berechnen", generateCompoundInterest, "Beim Zinseszins wird der Zins jedes Jahr zum Kapital geschlagen. Kapital nach n Jahren = Anfangskapital × (1 + p/100)^n.", true),
+    ex("m3-4a-jz", "Jahreszins berechnen", generateJahreszins, "Jahreszins = Kapital · Zinssatz : 100.", true),
+    ex("m3-4a-mz", "Marchzins berechnen", generateMarchzins, "Marchzins = Kapital · Zinssatz : 100 · Tage : 360.", true),
+    ex("m3-4a-zinseszins", "Zinseszins berechnen", generateCompoundInterest, "Beim Zinseszins wird der Zins jedes Jahr zum Kapital geschlagen. Kapital nach n Jahren = Anfangskapital · (1 + p/100)ⁿ.", true),
     ex("m3-4a-netto", "Verrechnungssteuer und Nettozins", generateNetInterest, "Bruttojahreszins = Kapital · Zinssatz : 100. Ist er grösser als 200 Fr., werden 35 % Verrechnungssteuer abgezogen: Nettozins = Bruttozins − Verrechnungssteuer.", true)
   ]),
   chapter("4b", "Konsumkredit und Leasing", [
@@ -6835,9 +6847,9 @@ const JAHR3_CHAPTERS = [
     ex("m3-4b-autokosten", "Autokosten und Kilometerkosten", generateCarCosts, "Kosten pro Jahr = fixe Kosten + variable Kosten pro km · Fahrleistung. Kilometerkosten = Kosten pro Jahr : Fahrleistung.", true)
   ]),
   chapter("5a", "Der Kegel und die Kugel", [
-    ex("m3-5a-kegel", "Kegelvolumen", generateConeVolume, "Volumen = ⅓ × π × Radius² × Höhe.", true),
-    ex("m3-5a-kugel", "Kugelvolumen", generateSphereVolume, "Volumen = 4/3 × π × Radius³.", true),
-    ex("m3-5a-kugel-ober", "Kugeloberfläche", generateSphereSurface, "Oberfläche = 4 × π × Radius².", true),
+    ex("m3-5a-kegel", "Kegelvolumen", generateConeVolume, "Volumen = ⅓ · π · Radius² · Höhe.", true),
+    ex("m3-5a-kugel", "Kugelvolumen", generateSphereVolume, "Volumen = 4/3 · π · Radius³.", true),
+    ex("m3-5a-kugel-ober", "Kugeloberfläche", generateSphereSurface, "Oberfläche = 4 · π · Radius².", true),
     ex("m3-5a-radius", "Kugelradius aus dem Volumen", generateSphereRadius, "Löse V = 4 · π · r³ : 3 nach r auf: r³ = 3 · V : (4 · π), dann die dritte Wurzel ziehen.", true)
   ]),
   chapter("5b", "Regelmässige Körper", [
@@ -6855,10 +6867,10 @@ const JAHR3_CHAPTERS = [
   ]),
   chapter("6a", "Wiederholung und Vertiefung", [
     ex("m3-6a-fdp", "Bruch–Dezimalzahl–Prozent umrechnen", generateFractionDecimalPercent, "Bruch → Dezimalzahl: Zähler durch Nenner teilen. Dezimalzahl → Prozent: mit 100 multiplizieren. Prozent → Bruch: die Prozentzahl über 100 schreiben und kürzen."),
-    ex("m3-6a-vergleich", "Prozentvergleich", generatePercentCompareOfferMC, "Berechne für beide Angebote den Endpreis (Preis × (1 − Rabatt/100)) und vergleiche die beiden Werte."),
-    ex("m3-6a-diagramm", "Werte aus Kreis-/Balkendiagramm", generateChartPercentToCount, "Wert = Gesamtzahl × Prozentsatz ÷ 100."),
+    ex("m3-6a-vergleich", "Prozentvergleich", generatePercentCompareOfferMC, "Berechne für beide Angebote den Endpreis (Preis · (1 − Rabatt/100)) und vergleiche die beiden Werte."),
+    ex("m3-6a-diagramm", "Werte aus Kreis-/Balkendiagramm", generateChartPercentToCount, "Wert = Gesamtzahl · Prozentsatz : 100."),
     ex("m3-6a-faktor", "Wachstumsfaktor", generateGrowthFactor, "Zunahme um p %: Faktor 1 + p/100 (z.B. +7 % → 1.07). Abnahme um p %: Faktor 1 − p/100 (z.B. −15 % → 0.85)."),
-    ex("m3-6a-kette", "Prozentuale Veränderung in zwei Schritten", generatePercentChainChange, "Prozente nacheinander darf man nicht einfach addieren! Rechne jeden Schritt als Faktor (z.B. +20 % → 1.2, −20 % → 0.8) und multipliziere die Faktoren: 1.2 × 0.8 = 0.96, also −4 %."),
+    ex("m3-6a-kette", "Prozentuale Veränderung in zwei Schritten", generatePercentChainChange, "Prozente nacheinander darf man nicht einfach addieren! Rechne jeden Schritt als Faktor (z.B. +20 % → 1.2, −20 % → 0.8) und multipliziere die Faktoren: 1.2 · 0.8 = 0.96, also −4 %."),
     ex("m3-6a-gleichung", "Lineare Gleichungen mit Brüchen (Repetition)", generateLinearEquationFraction, "Bringe zuerst die Zahl ohne x auf die andere Seite. Multipliziere danach beide Seiten mit dem Nenner des Bruchs vor dem x und löse nach x auf.")
   ]),
   lockedChapter("6b", "Problemlösen"),
@@ -6879,19 +6891,19 @@ const JAHR3_CHAPTERS = [
     ex("m3-8b-1", "Fibonacci-Folge fortsetzen", generateFibonacciNext, "Addiere die beiden letzten Zahlen der Folge, um die nächste zu erhalten."),
     ex("m3-8b-gold", "Goldener Schnitt", generateGoldenRatio, "Major ≈ 0.618 · Strecke, Minor = Strecke − Major (≈ 0.382 · Strecke). Der Quotient zweier benachbarter Fibonacci-Zahlen nähert sich 1.618.", true)
   ]),
-  chapter("8c", "Der Schattenwurf", [ex("m3-8c-1", "Höhe über den Schatten berechnen", generateShadowProblem, "Person und Mast bilden ähnliche Dreiecke: Höhe ÷ Schatten ist bei beiden gleich gross.", true)]),
+  chapter("8c", "Der Schattenwurf", [ex("m3-8c-1", "Höhe über den Schatten berechnen", generateShadowProblem, "Person und Mast bilden ähnliche Dreiecke: Höhe : Schatten ist bei beiden gleich gross.", true)]),
   chapter("9a", "Mobilität", [
-    ex("m3-9a-1", "Treibstoffverbrauch berechnen", generateFuelConsumption, "Treibstoff = Verbrauch pro 100 km × Strecke ÷ 100.", true),
-    ex("m3-9a-diagramm", "Werte aus Kreis-/Liniendiagramm", generateChartPercentToCount, "Wert = Gesamtzahl × Prozentsatz ÷ 100.")
+    ex("m3-9a-1", "Treibstoffverbrauch berechnen", generateFuelConsumption, "Treibstoff = Verbrauch pro 100 km · Strecke : 100.", true),
+    ex("m3-9a-diagramm", "Werte aus Kreis-/Balkendiagramm", generateChartPercentToCount, "Wert = Gesamtzahl · Prozentsatz : 100.")
   ]),
   chapter("9b", "Kombinatorik", [
     ex("m3-9b-1", "Anordnungen zählen", generatePermutations, "Für die 1. Position gibt es n Möglichkeiten, für die 2. Position noch (n−1), usw. Multipliziere alle Möglichkeiten (n Fakultät, n!)."),
-    ex("m3-9b-binom", "Binomialkoeffizient", generateBinomialCoefficient, "(n über k) = n! ÷ (k! × (n−k)!)."),
-    ex("m3-9b-diagonalen", "Anzahl Diagonalen im n-Eck", generateNGonDiagonals, "Anzahl Diagonalen = n × (n − 3) ÷ 2.")
+    ex("m3-9b-binom", "Binomialkoeffizient", generateBinomialCoefficient, "(n über k) = n! : (k! · (n−k)!)."),
+    ex("m3-9b-diagonalen", "Anzahl Diagonalen im n-Eck", generateNGonDiagonals, "Anzahl Diagonalen = n · (n − 3) : 2.")
   ]),
   chapter("9c", "Die Umfrage", [
-    ex("m3-9c-1", "Hochrechnung berechnen", generateSurveyExtrapolation, "Hochrechnung = Gesamtzahl × (Anzahl in der Umfrage ÷ Stichprobengrösse).", true),
-    ex("m3-9c-diagramm", "Werte aus Kreis-/Liniendiagramm", generateChartAbsoluteToPercent, "Prozentsatz = Anzahl ÷ Gesamtzahl × 100.")
+    ex("m3-9c-1", "Hochrechnung berechnen", generateSurveyExtrapolation, "Hochrechnung = Gesamtzahl · (Anzahl in der Umfrage : Stichprobengrösse).", true),
+    ex("m3-9c-diagramm", "Prozentanteile aus Umfragewerten", generateChartAbsoluteToPercent, "Prozentsatz = Anzahl : Gesamtzahl · 100.")
   ])
 ];
 
@@ -7587,7 +7599,7 @@ function setWidgetMode(prefix, answerType, pairStyle) {
     pw.classList.remove("hidden"); kp.classList.remove("hidden");
     const boxesEl = document.getElementById(`${prefix}_pairBoxes`), sepEl = document.getElementById(`${prefix}_pairSep`);
     if (pairStyle === "fraction") { boxesEl.className = "pair-boxes style-fraction"; sepEl.textContent = ""; }
-    else if (pairStyle === "scientific") { boxesEl.className = "pair-boxes style-coord style-sci"; sepEl.textContent = "×10^"; }
+    else if (pairStyle === "scientific") { boxesEl.className = "pair-boxes style-coord style-sci"; sepEl.textContent = "· 10^"; }
     else if (pairStyle === "linear") { boxesEl.className = "pair-boxes style-coord style-linear"; sepEl.textContent = "x +"; }
     else { boxesEl.className = "pair-boxes style-coord"; sepEl.textContent = "|"; }
     return;
@@ -8575,7 +8587,7 @@ function formatCorrectAnswer(task) {
   if (!task) return "";
   if (task.answerType === "pair") {
     if (task.pairStyle === "fraction") return task.correct[0] === 0 ? "0" : `${task.correct[0]}/${task.correct[1]}`;
-    if (task.pairStyle === "scientific") return `${task.correct[0]}×10^${task.correct[1]}`;
+    if (task.pairStyle === "scientific") return `${task.correct[0]} · 10^${task.correct[1]}`;
     if (task.pairStyle === "linear") return formatLinearTerm(task.correct[0], task.correct[1]);
     return `${task.correct[0]}|${task.correct[1]}`;
   }
@@ -9127,7 +9139,7 @@ function formatMyAnswerForDisplay(task, bufferStr) {
   if (task.answerType === "pair") {
     const parts = String(bufferStr).split(",");
     if (task.pairStyle === "fraction") return `${parts[0]}/${parts[1]}`;
-    if (task.pairStyle === "scientific") return `${parts[0]}×10^${parts[1]}`;
+    if (task.pairStyle === "scientific") return `${parts[0]} · 10^${parts[1]}`;
     if (task.pairStyle === "linear") return `${parts[0] || "?"}x + ${parts[1] || "?"}`;
     return `${parts[0]}|${parts[1]}`;
   }

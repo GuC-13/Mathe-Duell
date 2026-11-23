@@ -511,7 +511,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-23.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-23.2</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -2599,7 +2599,7 @@ function kopfSplitSolution(a, b, add) {
   const mid = add ? a + big : a - big;
   return `${a} ${add ? "+" : "−"} ${big} = ${mid}\n${mid} ${add ? "+" : "−"} ${rest} = ${add ? mid + rest : mid - rest}`;
 }
-function generateFractionExpand() { const bn = rnd(1, 8), bd = rnd(bn + 1, 9); const f = rnd(2, 5); return { visual: null, prompt: `Erweitere ${bn}/${bd} mit ${f}.`, answerType: "pair", pairStyle: "fraction", correct: [bn * f, bd * f], solution: `Zähler: ${bn} × ${f} = ${bn * f}\nNenner: ${bd} × ${f} = ${bd * f}\n→ ${bn * f}/${bd * f}` }; }
+function generateFractionExpand() { const bn = rnd(1, 8), bd = rnd(bn + 1, 9); const f = rnd(2, 5); return { visual: null, prompt: `Erweitere ${bn}/${bd} mit ${f}.`, answerType: "pair", pairStyle: "fraction", fractionExact: true, correct: [bn * f, bd * f], solution: `Zähler: ${bn} × ${f} = ${bn * f}\nNenner: ${bd} × ${f} = ${bd * f}\n→ ${bn * f}/${bd * f}` }; }
 function generateFractionReduce() {
   let bn = rnd(1, 6), bd = rnd(2, 7); if (bn === bd) bd++;
   const g = gcdFn(bn, bd); bn = bn / g; bd = bd / g;
@@ -2829,7 +2829,12 @@ function generateMean() {
   const res = Math.round((sum / n) * 100) / 100;
   return { visual: null, prompt: `Berechne den Mittelwert dieser Zahlen: ${vals.join(", ")}${Number.isInteger(sum / n) ? "" : " (auf 2 Nachkommastellen runden)"}`, answerType: "number", correct: res, solution: `Summe: ${vals.join(" + ")} = ${sum}\nAnzahl: ${n}\nMittelwert: ${sum} : ${n} = ${res}` };
 }
-function generateMedian() { const n = rnd(2, 3) * 2 + 1; const vals = Array.from({ length: n }, () => rnd(1, 30)); const sorted = [...vals].sort((a, b) => a - b); return { visual: null, prompt: `Bestimme den Median dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: sorted[Math.floor(n / 2)], solution: `Sortiert: ${sorted.join(", ")}\nDie mittlere (${Math.floor(n / 2) + 1}.) Zahl ist ${sorted[Math.floor(n / 2)]}.` }; }
+function generateMedian() {
+  const n = rnd(5, 8); const vals = Array.from({ length: n }, () => rnd(1, 30)); const sorted = [...vals].sort((a, b) => a - b);
+  if (n % 2 === 1) return { visual: null, prompt: `Bestimme den Zentralwert (Median) dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: sorted[Math.floor(n / 2)], solution: `Sortiert: ${sorted.join(", ")}\nDie mittlere (${Math.floor(n / 2) + 1}.) Zahl ist ${sorted[Math.floor(n / 2)]}.` };
+  const a = sorted[n / 2 - 1], b = sorted[n / 2];
+  return { visual: null, prompt: `Bestimme den Zentralwert (Median) dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: (a + b) / 2, solution: `Sortiert: ${sorted.join(", ")}\nGerade Anzahl: Mittelwert der beiden mittleren Zahlen (${a} + ${b}) : 2 = ${(a + b) / 2}` };
+}
 function generateRange() { const n = 5; const vals = Array.from({ length: n }, () => rnd(1, 40)); return { visual: null, prompt: `Bestimme die Spannweite (Maximum − Minimum) dieser Zahlen: ${vals.join(", ")}`, answerType: "number", correct: Math.max(...vals) - Math.min(...vals), solution: `Maximum ${Math.max(...vals)}, Minimum ${Math.min(...vals)}\n${Math.max(...vals)} − ${Math.min(...vals)} = ${Math.max(...vals) - Math.min(...vals)}` }; }
 
 function generatePercentValue() { const grund = rnd(20, 400), satz = rnd(5, 90); return { visual: null, prompt: `Wie viel sind ${satz}% von ${grund}?`, answerType: "number", correct: Math.round(grund * satz / 100 * 100) / 100, solution: `1 % von ${grund} = ${grund} : 100 = ${grund / 100}\n${satz} % = ${grund / 100} × ${satz} = ${Math.round(grund * satz / 100 * 100) / 100}` }; }
@@ -2870,13 +2875,13 @@ const DICE_PROB_SCENARIOS = [
 ];
 function generateDiceProb() {
   const s = DICE_PROB_SCENARIOS[rnd(0, DICE_PROB_SCENARIOS.length - 1)];
-  return { visual: null, prompt: `Du wirfst einen Würfel. Wie gross ist die Wahrscheinlichkeit für ${s.text}? (nicht kürzen)`, answerType: "pair", pairStyle: "fraction", correct: [s.n, 6], solution: `Günstige Ergebnisse: ${s.n}, mögliche Ergebnisse: 6\nP = ${s.n}/6` };
+  return { visual: null, prompt: `Du wirfst einen Würfel. Wie gross ist die Wahrscheinlichkeit für ${s.text}?`, answerType: "pair", pairStyle: "fraction", correct: [s.n, 6], solution: `Günstige Ergebnisse: ${s.n}, mögliche Ergebnisse: 6\nP = ${s.n}/6` };
 }
 function generateBagProb() {
   const rot = rnd(1, 6), blau = rnd(1, 6);
   const total = rot + blau;
   const askRot = Math.random() < 0.5;
-  return { visual: null, prompt: `In einem Beutel sind ${rot} rote und ${blau} blaue Kugeln. Wie gross ist die Wahrscheinlichkeit, eine ${askRot ? "rote" : "blaue"} Kugel zu ziehen? (nicht kürzen)`, answerType: "pair", pairStyle: "fraction", correct: [askRot ? rot : blau, total], solution: `Gesuchte Kugeln: ${askRot ? rot : blau}, alle Kugeln: ${rot} + ${blau} = ${total}\nP = ${askRot ? rot : blau}/${total}` };
+  return { visual: null, prompt: `In einem Beutel sind ${rot} rote und ${blau} blaue Kugeln. Wie gross ist die Wahrscheinlichkeit, eine ${askRot ? "rote" : "blaue"} Kugel zu ziehen?`, answerType: "pair", pairStyle: "fraction", correct: [askRot ? rot : blau, total], solution: `Gesuchte Kugeln: ${askRot ? rot : blau}, alle Kugeln: ${rot} + ${blau} = ${total}\nP = ${askRot ? rot : blau}/${total}` };
 }
 
 function generateNegativeCompare() { let a = rnd(-20, -1), b = rnd(-20, -1); if (a === b) b--; return { visual: null, prompt: `Stimmt die Aussage: ${a} < ${b} ?`, answerType: "boolean", correct: a < b ? 1 : 0 }; }
@@ -3249,16 +3254,41 @@ function generatePythagorasLadder() { const wall = rnd(3, 12), ground = rnd(2, 8
 function generatePythagorasDiagonal() { const l = rnd(4, 20), b = rnd(4, 20); return { visual: null, prompt: `Berechne die Diagonale eines Rechtecks mit den Seiten ${l} cm und ${b} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(Math.sqrt(l * l + b * b) * 10) / 10 }; }
 
 function generateProportionalCheck() {
-  const k = rnd(2, 6); const x1 = rnd(1, 8), x2 = rnd(1, 8);
+  const k = rnd(2, 6); const x1 = rnd(1, 8); let x2; do { x2 = rnd(1, 9); } while (x2 === x1);
   const isProportional = Math.random() < 0.5;
   const y1 = x1 * k, y2 = isProportional ? x2 * k : x2 * k + rnd(1, 5);
-  return { visual: null, prompt: `Wertepaare: (${x1}|${y1}) und (${x2}|${y2}). Ist y direkt proportional zu x?`, answerType: "boolean", correct: (y1 / x1 === y2 / x2) ? 1 : 0 };
+  return { visual: null, prompt: `Wertepaare: (${x1}|${y1}) und (${x2}|${y2}). Ist y direkt proportional zu x?`, answerType: "boolean", correct: (y1 / x1 === y2 / x2) ? 1 : 0, solution: `${y1} : ${x1} = ${Math.round(y1 / x1 * 100) / 100}, ${y2} : ${x2} = ${Math.round(y2 / x2 * 100) / 100}\n${isProportional ? "Gleicher Quotient → proportional" : "Verschiedene Quotienten → nicht proportional"}` };
 }
-function generateDirectProportion() { const menge1 = rnd(2, 8), preis1 = rnd(1, 5) * menge1 + rnd(0, 3); const menge2 = rnd(2, 15); return { visual: null, prompt: `${menge1} Stück kosten ${preis1} Fr. Wie viel kosten ${menge2} Stück? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round((preis1 / menge1) * menge2 * 100) / 100, solution: `1 Stück: ${preis1} : ${menge1} = ${Math.round(preis1 / menge1 * 10000) / 10000} Fr.\n${menge2} Stück: × ${menge2} = ${Math.round((preis1 / menge1) * menge2 * 100) / 100} Fr.` }; }
-function generateInverseProportion() { const arbeiter1 = rnd(2, 10), tage1 = rnd(2, 12); const arbeiter2 = rnd(2, 10); return { visual: null, prompt: `${arbeiter1} Arbeiter brauchen ${tage1} Tage für eine Arbeit. Wie viele Tage brauchen ${arbeiter2} Arbeiter (gleiches Tempo)? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round((arbeiter1 * tage1 / arbeiter2) * 100) / 100, solution: `1 Arbeiter bräuchte ${arbeiter1} × ${tage1} = ${arbeiter1 * tage1} Tage.\n${arbeiter2} Arbeiter: ${arbeiter1 * tage1} : ${arbeiter2} = ${Math.round((arbeiter1 * tage1 / arbeiter2) * 100) / 100} Tage` }; }
+function generateDirectProportion() {
+  const menge1 = rnd(2, 8); let menge2; do { menge2 = rnd(2, 15); } while (menge2 === menge1);
+  const stueck = rnd(4, 60) * 0.05; // Stückpreis in 5 Rappen
+  const preis1 = Math.round(menge1 * stueck * 100) / 100, preis2 = Math.round(menge2 * stueck * 100) / 100;
+  return { visual: null, prompt: `${menge1} Stück kosten ${preis1.toFixed(2)} Fr. Wie viel kosten ${menge2} Stück (in Fr.)?`, answerType: "number", correct: preis2, solution: `1 Stück: ${preis1.toFixed(2)} : ${menge1} = ${stueck.toFixed(2)} Fr.\n${menge2} Stück: ${stueck.toFixed(2)} · ${menge2} = ${preis2.toFixed(2)} Fr.` };
+}
+function generateInverseProportion() {
+  let a1, a2; do { a1 = rnd(2, 10); a2 = rnd(2, 10); } while (a1 === a2);
+  const step = a2 / gcdFn(a1, a2); // Tage so wählen, dass die Lösung aufgeht
+  const tage1 = step * rnd(1, Math.max(1, Math.floor(24 / step)));
+  const tage2 = a1 * tage1 / a2;
+  return { visual: null, prompt: `${a1} Arbeiter brauchen ${tage1} Tage für eine Arbeit. Wie viele Tage brauchen ${a2} Arbeiter (gleiches Tempo)?`, answerType: "number", correct: tage2, solution: `1 Arbeiter: ${a1} · ${tage1} = ${a1 * tage1} Tage\n${a2} Arbeiter: ${a1 * tage1} : ${a2} = ${tage2} Tage` };
+}
 
 function generatePrismVolume() { const g = rnd(10, 80), h = rnd(3, 20); return { visual: null, prompt: `Ein gerades Prisma hat die Grundfläche ${g} cm² und die Höhe ${h} cm. Berechne das Volumen (in cm³).`, answerType: "number", correct: g * h, solution: `V = G × h = ${g} × ${h} = ${g * h} cm³` }; }
-function generatePrismSurface() { const g = rnd(10, 60), u = rnd(10, 40), h = rnd(3, 15); return { visual: null, prompt: `Ein gerades Prisma hat die Grundfläche ${g} cm², den Grundflächen-Umfang ${u} cm und die Höhe ${h} cm. Berechne den Oberflächeninhalt (in cm²): O = 2×Grundfläche + Umfang×Höhe.`, answerType: "number", correct: 2 * g + u * h }; }
+// Grundfläche und Umfang passen zusammen: konkrete Grundfläche statt frei gewählter Zahlen.
+function generatePrismSurface() {
+  const h = rnd(3, 15);
+  let desc, G, u;
+  if (Math.random() < 0.5) {
+    const a = rnd(2, 12), b = rnd(2, 12);
+    desc = a === b ? `ein Quadrat mit der Seite ${a} cm` : `ein Rechteck mit den Seiten ${a} cm und ${b} cm`;
+    G = a * b; u = 2 * (a + b);
+  } else {
+    const [p, q, r] = pickOne([[3, 4, 5], [6, 8, 10], [5, 12, 13], [9, 12, 15], [8, 15, 17]]);
+    desc = `ein rechtwinkliges Dreieck mit den Katheten ${p} cm und ${q} cm und der Hypotenuse ${r} cm`;
+    G = p * q / 2; u = p + q + r;
+  }
+  return { visual: null, prompt: `Die Grundfläche eines geraden Prismas ist ${desc}. Das Prisma ist ${h} cm hoch. Berechne den Oberflächeninhalt (in cm²).`, answerType: "number", correct: 2 * G + u * h, solution: `Grundfläche G = ${G} cm², Umfang u = ${u} cm\nOberfläche = 2 · G + u · h = 2 · ${G} + ${u} · ${h} = ${2 * G + u * h} cm²` };
+}
 function generatePyramidVolume() { const g = rnd(10, 80), h = rnd(3, 20); return { visual: null, prompt: `Eine Pyramide hat die Grundfläche ${g} cm² und die Höhe ${h} cm. Berechne das Volumen (in cm³, auf 1 Nachkommastelle runden).`, answerType: "number", correct: Math.round((g * h / 3) * 10) / 10, solution: `V = G × h : 3 = ${g} × ${h} : 3 = ${g * h} : 3 ≈ ${Math.round((g * h / 3) * 10) / 10} cm³` }; }
 
 function generateDiscount() { const preis = rnd(20, 300), rabatt = rnd(5, 60); return { visual: null, prompt: `Ein Artikel kostet ${preis} Fr. Bei ${rabatt}% Rabatt: Wie viel kostet er noch? (auf 2 Nachkommastellen runden)`, answerType: "number", correct: Math.round(preis * (1 - rabatt / 100) * 100) / 100, solution: `Es bleiben 100 % − ${rabatt} % = ${100 - rabatt} %.\n${preis} × ${Math.round((1 - rabatt / 100) * 100) / 100} = ${Math.round(preis * (1 - rabatt / 100) * 100) / 100} Fr.` }; }
@@ -3385,16 +3415,14 @@ function generatePermutations() {
   return { visual: null, prompt: `Von ${n} Personen sollen ${k} für die ersten ${k} Plätze eines Wettbewerbs ausgewählt und in eine Reihenfolge gebracht werden. Wie viele verschiedene Möglichkeiten gibt es?`, answerType: "number", correct: f };
 }
 function generateStretchVolume() {
-  const kOptions = [0.5, 1.5, 2, 2.5, 3];
-  const k = kOptions[rnd(0, kOptions.length - 1)];
-  const v = rnd(2, 50);
-  return { visual: null, prompt: `Ein Körper mit Volumen ${v} cm³ wird um den Streckfaktor ${k} vergrössert (linear gestreckt). Wie gross ist das Volumen des gestreckten Körpers (in cm³)? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(v * Math.pow(k, 3) * 10) / 10 };
+  const k = pickOne([0.5, 1.5, 2, 2.5, 3]);
+  const a = rnd(2, 50);
+  return { visual: null, prompt: `Ein Körper mit ${"Volumen"} ${a} cm³ wird mit dem Streckfaktor k = ${k} ${k < 1 ? "verkleinert" : "vergrössert"}. Wie gross ist das Volumen des neuen Körpers (in cm³)? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(a * Math.pow(k, 3) * 10) / 10, solution: `Volumen wird mit k³ = ${Math.round(Math.pow(k, 3) * 1000) / 1000} multipliziert:\n${a} · ${Math.round(Math.pow(k, 3) * 1000) / 1000} = ${Math.round(a * Math.pow(k, 3) * 10) / 10} cm³` };
 }
 function generateStretchSurface() {
-  const kOptions = [0.5, 1.5, 2, 2.5, 3];
-  const k = kOptions[rnd(0, kOptions.length - 1)];
+  const k = pickOne([0.5, 1.5, 2, 2.5, 3]);
   const a = rnd(5, 200);
-  return { visual: null, prompt: `Ein Körper mit Oberfläche ${a} cm² wird um den Streckfaktor ${k} vergrössert (linear gestreckt). Wie gross ist die Oberfläche des gestreckten Körpers (in cm²)? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(a * Math.pow(k, 2) * 10) / 10 };
+  return { visual: null, prompt: `Ein Körper mit ${"Oberfläche"} ${a} cm² wird mit dem Streckfaktor k = ${k} ${k < 1 ? "verkleinert" : "vergrössert"}. Wie gross ist die Oberfläche des neuen Körpers (in cm²)? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(a * Math.pow(k, 2) * 10) / 10, solution: `Oberfläche wird mit k² = ${Math.round(Math.pow(k, 2) * 1000) / 1000} multipliziert:\n${a} · ${Math.round(Math.pow(k, 2) * 1000) / 1000} = ${Math.round(a * Math.pow(k, 2) * 10) / 10} cm²` };
 }
 function generatePatternTerm() {
   const a = rnd(2, 6), b = rnd(1, 5);
@@ -3421,13 +3449,19 @@ const PLATONIC_SOLIDS = [
 function generatePlatonicFaces() { const s = PLATONIC_SOLIDS[rnd(0, PLATONIC_SOLIDS.length - 1)]; return { visual: null, prompt: `Wie viele Flächen hat ein ${s.name}?`, answerType: "number", correct: s.faces }; }
 function generatePlatonicEdges() { const s = PLATONIC_SOLIDS[rnd(0, PLATONIC_SOLIDS.length - 1)]; return { visual: null, prompt: `Wie viele Kanten hat ein ${s.name}?`, answerType: "number", correct: s.edges }; }
 function generatePlatonicVertices() { const s = PLATONIC_SOLIDS[rnd(0, PLATONIC_SOLIDS.length - 1)]; return { visual: null, prompt: `Wie viele Ecken hat ein ${s.name}?`, answerType: "number", correct: s.vertices }; }
+// Ecken, Kanten, Flächen nur von Körpern, die es wirklich gibt (Platonische Körper,
+// n-seitige Prismen, Pyramiden, Doppelpyramiden, Fussball, Kuboktaeder).
+function eulerBodies() {
+  const list = [[4, 6, 4], [8, 12, 6], [6, 12, 8], [20, 30, 12], [12, 30, 20], [60, 90, 32], [12, 24, 14]];
+  for (let n = 3; n <= 10; n++) { list.push([2 * n, 3 * n, n + 2]); list.push([n + 1, 2 * n, n + 1]); if (n >= 4) list.push([n + 2, 3 * n, 2 * n]); }
+  return list;
+}
 function generateEulerFormula() {
-  const F = rnd(4, 20), E = rnd(F + 2, F + 40);
-  const V = E - F + 2;
-  const which = rnd(0, 2);
-  if (which === 0) return { visual: null, prompt: `Ein Polyeder hat ${F} Flächen und ${E} Kanten. Wie viele Ecken hat es? (Eulersche Polyederformel: Ecken − Kanten + Flächen = 2)`, answerType: "number", correct: V };
-  if (which === 1) return { visual: null, prompt: `Ein Polyeder hat ${V} Ecken und ${F} Flächen. Wie viele Kanten hat es? (Eulersche Polyederformel: Ecken − Kanten + Flächen = 2)`, answerType: "number", correct: E };
-  return { visual: null, prompt: `Ein Polyeder hat ${V} Ecken und ${E} Kanten. Wie viele Flächen hat es? (Eulersche Polyederformel: Ecken − Kanten + Flächen = 2)`, answerType: "number", correct: F };
+  const [V, E, F] = pickOne(eulerBodies());
+  const which = rnd(0, 2), hint = "(Ecken − Kanten + Flächen = 2)";
+  if (which === 0) return { visual: null, prompt: `Ein Körper hat ${F} Flächen und ${E} Kanten. Wie viele Ecken hat er? ${hint}`, answerType: "number", correct: V, solution: `Ecken = 2 + Kanten − Flächen = 2 + ${E} − ${F} = ${V}` };
+  if (which === 1) return { visual: null, prompt: `Ein Körper hat ${V} Ecken und ${F} Flächen. Wie viele Kanten hat er? ${hint}`, answerType: "number", correct: E, solution: `Kanten = Ecken + Flächen − 2 = ${V} + ${F} − 2 = ${E}` };
+  return { visual: null, prompt: `Ein Körper hat ${V} Ecken und ${E} Kanten. Wie viele Flächen hat er? ${hint}`, answerType: "number", correct: F, solution: `Flächen = 2 − Ecken + Kanten = 2 − ${V} + ${E} = ${F}` };
 }
 function generateFibonacciNext() {
   const a = rnd(1, 5), b = rnd(1, 8);
@@ -3437,9 +3471,9 @@ function generateFibonacciNext() {
   return { visual: null, prompt: `Diese Zahlenfolge funktioniert wie die Fibonacci-Folge (jede Zahl ist die Summe der zwei vorherigen): ${terms.join(", ")}, ? Wie lautet die nächste Zahl?`, answerType: "number", correct: next };
 }
 function generateShadowProblem() {
-  const personHeight = rnd(140, 190), personShadow = rnd(80, 250), poleShadow = rnd(200, 800);
-  const poleHeight = Math.round(personHeight * (poleShadow / personShadow) * 10) / 10;
-  return { visual: null, prompt: `Eine Person ist ${personHeight} cm gross und wirft einen ${personShadow} cm langen Schatten. Zur gleichen Zeit wirft ein Mast einen ${poleShadow} cm langen Schatten. Wie hoch ist der Mast (in cm)? (auf 1 Nachkommastelle runden)`, answerType: "number", correct: poleHeight };
+  const h = rnd(150, 190) / 100, s1 = rnd(8, 30) / 10, r = rnd(3, 10);
+  const s2 = Math.round(s1 * r * 10) / 10, H = Math.round(h * r * 100) / 100;
+  return { visual: null, prompt: `Eine ${h.toFixed(2)} m grosse Person wirft einen ${s1.toFixed(1)} m langen Schatten. Zur gleichen Zeit wirft ein Mast einen ${s2.toFixed(1)} m langen Schatten. Wie hoch ist der Mast (in m)?`, answerType: "number", correct: H, solution: `Der Mastschatten ist ${s2.toFixed(1)} : ${s1.toFixed(1)} = ${r}-mal so lang.\nMasthöhe = ${h.toFixed(2)} m · ${r} = ${H} m` };
 }
 function generateFuelConsumption() {
   const verbrauch = rnd(40, 120) / 10, strecke = rnd(20, 600);
@@ -4564,12 +4598,13 @@ function generateSolidClassifyMC() {
 }
 
 function generateRelFreqFraction() {
-  const total = rnd(50, 500), count = rnd(1, total);
-  return { visual: null, prompt: `Bei ${total} Würfen kam ${count}× "Zahl". Wie lautet die relative Häufigkeit als Bruch? (nicht kürzen)`, answerType: "pair", pairStyle: "fraction", correct: [count, total] };
+  const total = pickOne([20, 30, 40, 50, 60, 80, 100, 120, 200]);
+  const count = Math.round(total * rnd(40, 60) / 100); // Münze: ungefähr die Hälfte
+  return { visual: null, prompt: `Bei ${total} Münzwürfen kam ${count}× "Zahl". Wie lautet die relative Häufigkeit als Bruch?`, answerType: "pair", pairStyle: "fraction", correct: [count, total], solution: `relative Häufigkeit = Treffer : Würfe = ${count}/${total}` };
 }
 function generateRelFreqPercentM1() {
-  const total = rnd(20, 300), count = rnd(1, total);
-  return { visual: null, prompt: `Bei ${total} Würfen kam ${count}× "Kopf". Wie gross ist die relative Häufigkeit in Prozent? (auf eine ganze Zahl runden)`, answerType: "number", correct: Math.round((count / total) * 100) };
+  const total = rnd(20, 300), count = Math.round(total * rnd(38, 62) / 100);
+  return { visual: null, prompt: `Bei ${total} Münzwürfen kam ${count}× "Kopf". Wie gross ist die relative Häufigkeit in Prozent? (auf eine ganze Zahl runden)`, answerType: "number", correct: Math.round((count / total) * 100), solution: `${count} : ${total} = ${Math.round(count / total * 1000) / 1000} → ${Math.round((count / total) * 100)} %` };
 }
 function generateCompareRelFreqMC() {
   const names = ["Anna", "Ben", "Chiara", "David", "Elena", "Fabio"];
@@ -4750,12 +4785,12 @@ function generateRequiredGrade() {
 }
 function generateLaplaceProb() {
   const total = rnd(6, 20), favorable = rnd(1, total);
-  return { visual: null, prompt: `In einer Urne liegen ${total} nummerierte Kugeln (1 bis ${total}). Wie gross ist die Wahrscheinlichkeit, eine Zahl von 1 bis ${favorable} zu ziehen? (nicht kürzen)`, answerType: "pair", pairStyle: "fraction", correct: [favorable, total], solution: `Günstige Fälle: ${favorable}, mögliche Fälle: ${total}\nP = ${favorable}/${total}` };
+  return { visual: null, prompt: `In einer Urne liegen ${total} nummerierte Kugeln (1 bis ${total}). Wie gross ist die Wahrscheinlichkeit, eine Zahl von 1 bis ${favorable} zu ziehen?`, answerType: "pair", pairStyle: "fraction", correct: [favorable, total], solution: `Günstige Fälle: ${favorable}, mögliche Fälle: ${total}\nP = ${favorable}/${total}` };
 }
 function generatePathProbability() {
   const denomsA = [2, 3, 4, 5], dA = denomsA[rnd(0, denomsA.length - 1)], nA = rnd(1, dA - 1);
   const denomsB = [2, 3, 4, 5], dB = denomsB[rnd(0, denomsB.length - 1)], nB = rnd(1, dB - 1);
-  return { visual: null, prompt: `Ein Glücksrad wird zweimal gedreht. Beim 1. Drehen ist die Wahrscheinlichkeit für Rot ${nA}/${dA}, beim 2. Drehen unabhängig davon für Blau ${nB}/${dB}. Wie gross ist die Wahrscheinlichkeit für "1. Drehen Rot UND 2. Drehen Blau"? (nicht kürzen)`, answerType: "pair", pairStyle: "fraction", correct: [nA * nB, dA * dB] };
+  return { visual: null, prompt: `Ein Glücksrad wird zweimal gedreht. Beim 1. Drehen ist die Wahrscheinlichkeit für Rot ${nA}/${dA}, beim 2. Drehen unabhängig davon für Blau ${nB}/${dB}. Wie gross ist die Wahrscheinlichkeit für "1. Drehen Rot UND 2. Drehen Blau"?`, answerType: "pair", pairStyle: "fraction", correct: [nA * nB, dA * dB] };
 }
 
 function generateSphereSurface() { const r = rnd(2, 20); return { visual: null, prompt: `Berechne die Oberfläche einer Kugel mit Radius ${r} cm. (auf 1 Nachkommastelle runden)`, answerType: "number", correct: Math.round(4 * Math.PI * r * r * 10) / 10 }; }
@@ -4780,14 +4815,40 @@ function generatePercentCompareOfferMC() {
   const options = ["Angebot A", "Angebot B", "gleich gut"];
   return { visual: null, prompt: `Angebot A: ${priceA} Fr., ${discA}% Rabatt. Angebot B: ${priceB} Fr., ${discB}% Rabatt. Welches Angebot ist günstiger (tieferer Endpreis)?`, answerType: "mc", options, correct };
 }
+// Kreis- oder Balkendiagramm (100 %) mit Prozentangaben; daraus Anzahl Personen berechnen.
+function percentChartSVG(names, pcts) {
+  const colors = ["#2563eb", "#16a34a", "#f59e0b", "#db2777"];
+  let s = "";
+  if (Math.random() < 0.5) {
+    const cx = 80, cy = 90, r = 70; let a0 = -Math.PI / 2;
+    pcts.forEach((p, i) => {
+      const a1 = a0 + p / 100 * 2 * Math.PI, large = p > 50 ? 1 : 0;
+      s += `<path d="M${cx},${cy} L${cx + r * Math.cos(a0)},${cy + r * Math.sin(a0)} A${r},${r} 0 ${large} 1 ${cx + r * Math.cos(a1)},${cy + r * Math.sin(a1)} Z" fill="${colors[i]}" stroke="#fff" stroke-width="1.5"/>`;
+      const am = (a0 + a1) / 2;
+      s += `<text x="${cx + r * 0.62 * Math.cos(am)}" y="${cy + r * 0.62 * Math.sin(am) + 4}" font-size="11" font-weight="700" text-anchor="middle" fill="#fff">${p}%</text>`;
+      a0 = a1;
+    });
+  } else {
+    let x = 10;
+    pcts.forEach((p, i) => {
+      const w = p / 100 * 138;
+      s += `<rect x="${x}" y="70" width="${w}" height="40" fill="${colors[i]}" stroke="#fff" stroke-width="1.5"/>`;
+      s += `<text x="${x + w / 2}" y="94" font-size="10" font-weight="700" text-anchor="middle" fill="#fff">${p}%</text>`;
+      x += w;
+    });
+  }
+  names.forEach((n, i) => {
+    s += `<rect x="160" y="${38 + i * 28}" width="11" height="11" fill="${colors[i]}"/><text x="175" y="${47.5 + i * 28}" font-size="10" fill="#334155">${n}</text>`;
+  });
+  return `<svg viewBox="0 0 240 180" class="mt-shape">${s}</svg>`;
+}
 function generateChartPercentToCount() {
-  const total = [80, 120, 150, 200, 250, 300][rnd(0, 5)];
-  const cuts = [rnd(10, 30), rnd(35, 55), rnd(60, 80)];
-  const pcts = [cuts[0], cuts[1] - cuts[0], cuts[2] - cuts[1], 100 - cuts[2]];
+  const total = [40, 60, 80, 120, 200, 300][rnd(0, 5)];
+  const c1 = rnd(2, 6) * 5, c2 = rnd(c1 / 5 + 2, 12) * 5, c3 = rnd(c2 / 5 + 2, 18) * 5;
+  const pcts = [c1, c2 - c1, c3 - c2, 100 - c3];
   const names = ["Fussball", "Schwimmen", "Tennis", "Turnen"];
   const idx = rnd(0, 3);
-  const rows = names.map((n, i) => `${n}: ${pcts[i]}%`).join(", ");
-  return { visual: null, prompt: `Bei einer Umfrage unter ${total} Personen zur Lieblingssportart ergab sich: ${rows}. Wie viele Personen haben "${names[idx]}" gewählt? (auf eine ganze Zahl runden)`, answerType: "number", correct: Math.round(total * pcts[idx] / 100) };
+  return { visual: percentChartSVG(names, pcts), prompt: `Das Diagramm zeigt das Resultat einer Umfrage unter ${total} Personen zur Lieblingssportart. Wie viele Personen haben «${names[idx]}» gewählt?`, answerType: "number", correct: total * pcts[idx] / 100, solution: `${pcts[idx]} % von ${total} = ${total} : 100 · ${pcts[idx]} = ${total * pcts[idx] / 100}` };
 }
 function generateChartAbsoluteToPercent() {
   const total = [50, 80, 100, 120, 200][rnd(0, 4)];
@@ -4796,8 +4857,9 @@ function generateChartAbsoluteToPercent() {
   const names = ["Musik", "Sport", "Lesen", "Gaming"];
   const idx = rnd(0, 3);
   const counts = pcts.map(p => Math.round(total * p / 100));
+  counts[3] = total - counts[0] - counts[1] - counts[2]; // Summe ergibt immer das Total
   const rows = names.map((n, i) => `${n}: ${counts[i]} Personen`).join(", ");
-  return { visual: null, prompt: `Bei einer Umfrage unter ${total} Personen zur Lieblingsfreizeitbeschäftigung ergab sich: ${rows}. Wie viel Prozent haben "${names[idx]}" gewählt? (auf eine ganze Zahl runden)`, answerType: "number", correct: Math.round((counts[idx] / total) * 100) };
+  return { visual: null, prompt: `Bei einer Umfrage unter ${total} Personen zur Lieblingsfreizeitbeschäftigung ergab sich: ${rows}. Wie viel Prozent haben "${names[idx]}" gewählt? (auf eine ganze Zahl runden)`, answerType: "number", correct: Math.round((counts[idx] / total) * 100), solution: `${counts[idx]} : ${total} = ${Math.round(counts[idx] / total * 10000) / 10000} → ${Math.round((counts[idx] / total) * 100)} %` };
 }
 function generateLinearEquationFraction() {
   const dens = [2, 3, 4, 5], d = dens[rnd(0, dens.length - 1)];
@@ -4831,7 +4893,7 @@ function generateFractionEquationBothSides() {
 }
 function factorialM3(n) { let f = 1; for (let i = 2; i <= n; i++) f *= i; return f; }
 function generateBinomialCoefficient() {
-  const n = rnd(4, 10), k = rnd(0, n);
+  const n = rnd(4, 10), k = rnd(1, n - 1); // Randfälle (n über 0) = (n über n) = 1 nicht
   return { visual: null, prompt: `Berechne den Binomialkoeffizienten: (${n} über ${k}) = ?`, answerType: "number", correct: factorialM3(n) / (factorialM3(k) * factorialM3(n - k)) };
 }
 function generateNGonDiagonals() { const n = rnd(5, 12); return { visual: null, prompt: `Wie viele Diagonalen hat ein ${n}-Eck?`, answerType: "number", correct: n * (n - 3) / 2 }; }
@@ -6515,7 +6577,7 @@ const JAHR1_CHAPTERS = [
   chapter("5", "Regelmässigkeiten des Zufalls", [
     ex("5-dice", "Wahrscheinlichkeit Würfel", generateDiceProb, "Zähle die günstigen Ergebnisse (z.B. gerade Zahlen) und teile durch die Gesamtzahl der möglichen Ergebnisse (6)."),
     ex("5-bag", "Wahrscheinlichkeit Beutel", generateBagProb, "Wahrscheinlichkeit = Anzahl der gesuchten Kugeln ÷ Gesamtzahl aller Kugeln."),
-    ex("5-relfreq-bruch", "Relative Häufigkeit als Bruch", generateRelFreqFraction, "Relative Häufigkeit = Anzahl der Treffer ÷ Anzahl aller Versuche, als Bruch (nicht kürzen)."),
+    ex("5-relfreq-bruch", "Relative Häufigkeit als Bruch", generateRelFreqFraction, "Relative Häufigkeit = Anzahl der Treffer ÷ Anzahl aller Versuche, als Bruch."),
     ex("5-relfreq-pct", "Relative Häufigkeit in Prozent", generateRelFreqPercentM1, "Teile die Anzahl der Treffer durch die Gesamtzahl der Versuche und multipliziere mit 100."),
     ex("5-relfreq-vgl", "Zwei relative Häufigkeiten vergleichen", generateCompareRelFreqMC, "Berechne für beide Personen die relative Häufigkeit (Treffer ÷ Versuche) und vergleiche die beiden Werte.")
   ]),
@@ -7417,6 +7479,12 @@ function checkAnswer(task, bufferStr) {
     // gleich 0) - nicht nur beim einen zufällig gekürzten Nenner, der als "correct"
     // hinterlegt ist. 0/0 bleibt zu Recht ungültig.
     if (task.pairStyle === "fraction" && task.correct[0] === 0) return a === 0 && b !== 0;
+    // Brüche: Jeder gleichwertige Bruch ist richtig (2/4 = 1/2), ausser die Aufgabe verlangt
+    // ausdrücklich eine Form - "gekürzt" in der Aufgabe oder fractionExact (z.B. Erweitern).
+    if (task.pairStyle === "fraction" && !task.fractionExact && !/gekürzt|vollständig/.test(String(task.prompt))) {
+      if (b === 0 || !Number.isInteger(a) || !Number.isInteger(b)) return false;
+      return Math.abs(a / b - task.correct[0] / task.correct[1]) < 1e-9;
+    }
     return numbersMatch(a, task.correct[0]) && numbersMatch(b, task.correct[1]);
   }
   if (task.answerType === "text") return String(bufferStr).trim().toLowerCase() === String(task.correct).trim().toLowerCase();

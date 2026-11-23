@@ -511,7 +511,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-22.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-23.1</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -1919,7 +1919,6 @@
         <div class="lp21-code">M.3.C.1 f <span class="lp21-zyklus">Zyklus 2</span></div>
         <p class="lp21-desc">„können Datensätze nach Kriterien auswerten und in Datensätzen Mittelwert, Maximum und Minimum bestimmen.“</p>
         <ul class="lp21-list">
-          <li><strong>Jahr 1:</strong> Daten darstellen</li>
           <li><strong>Jahr 2:</strong> Statistische Kennwerte</li>
         </ul>
       </div>
@@ -4178,6 +4177,25 @@ function generateDivisibilityRuleTruth() {
   return { visual: null, prompt: `${n} ist durch ${d} teilbar.`, answerType: "boolean", correct: makeTrue ? 1 : 0 };
 }
 
+// Säulendiagramm mit beschrifteter senkrechter Achse (Teilung 1, Beschriftung alle 2) zum Ablesen.
+function barChartAxisSVG(labels, values) {
+  const max = Math.ceil((Math.max(...values) + 1) / 2) * 2;
+  const x0 = 30, baseY = 150, top = 14, barW = 28, gap = 12;
+  const y = v => baseY - v / max * (baseY - top);
+  let s = "";
+  for (let v = 0; v <= max; v++) {
+    const major = v % 2 === 0;
+    s += `<line x1="${x0}" y1="${y(v)}" x2="235" y2="${y(v)}" stroke="${major ? "#94a3b8" : "#e2e8f0"}" stroke-width="${major ? 1 : 0.7}"/>`;
+    if (major) s += `<text x="${x0 - 5}" y="${y(v) + 3.5}" font-size="10" text-anchor="end" fill="#334155">${v}</text>`;
+  }
+  values.forEach((v, i) => {
+    const x = x0 + 8 + i * (barW + gap);
+    s += `<rect x="${x}" y="${y(v)}" width="${barW}" height="${baseY - y(v)}" fill="#2563eb" fill-opacity="0.85"/>`;
+    s += `<text x="${x + barW / 2}" y="${baseY + 14}" font-size="10" text-anchor="middle" fill="#334155">${labels[i]}</text>`;
+  });
+  s += `<line x1="${x0}" y1="${baseY}" x2="235" y2="${baseY}" stroke="#334155" stroke-width="2"/><line x1="${x0}" y1="${top - 6}" x2="${x0}" y2="${baseY}" stroke="#334155" stroke-width="2"/>`;
+  return `<svg viewBox="0 0 240 180" class="mt-shape">${s}</svg>`;
+}
 function barChartSVG(labels, values, max) {
   const barW = 32, gap = 14, baseY = 150;
   let bars = "";
@@ -4195,7 +4213,7 @@ function generateBarChartRead() {
   const values = Array.from({ length: n }, () => rnd(2, 20));
   const max = Math.max(...values) + 2;
   const idx = rnd(0, n - 1);
-  return { visual: barChartSVG(labels, values, max), prompt: `Das Balkendiagramm zeigt die Anzahl verkaufter Eis pro Tag. Welchen Wert hat "${labels[idx]}"?`, answerType: "number", correct: values[idx] };
+  return { visual: barChartAxisSVG(labels, values), prompt: `Das Säulendiagramm zeigt die Anzahl verkaufter Glacen pro Tag. Wie viele waren es am ${{ Mo: "Montag", Di: "Dienstag", Mi: "Mittwoch", Do: "Donnerstag", Fr: "Freitag" }[labels[idx]]}?`, answerType: "number", correct: values[idx] };
 }
 function generateBarChartMaxHotspot() {
   const n = rnd(4, 5);
@@ -4223,7 +4241,7 @@ function generateBarChartMaxHotspot() {
 function generateFractionOfQuantity() {
   const dens = [2, 3, 4, 5, 6, 8, 10];
   const d = dens[rnd(0, dens.length - 1)];
-  const n = rnd(1, d - 1);
+  let n; do { n = rnd(1, d - 1); } while (gcdFn(n, d) !== 1);
   const mult = rnd(1, 12);
   const total = d * mult;
   const units = ["kg", "cm", "Fr.", "Liter", "m"];
@@ -4255,6 +4273,279 @@ function generateTimeSpan() {
   endH = Math.floor((endTotal % 1440) / 60); endM = endTotal % 60;
   const endStr = formatClock(endH, endM);
   return { visual: null, prompt: `Ein Zug fährt um ${startStr} Uhr ab und kommt um ${endStr} Uhr an. Wie lange dauert die Fahrt (in Minuten)?`, answerType: "number", correct: endTotal - startTotal };
+}
+
+/* ---- Jahr 1, Kapitel 3 nach Skript M1 K3 (Daten, Grössen und Prozente) ---- */
+// Zahl für die Anzeige: höchstens 6 Nachkommastellen, Tausender mit Apostroph (70'000).
+function fmtK3(x) {
+  const s = String(Math.round(x * 1e6) / 1e6);
+  const [i, d] = s.split(".");
+  const iFmt = Math.abs(Number(i)) >= 10000 ? fmtThousands(i) : i;
+  return d ? `${iFmt}.${d}` : iFmt;
+}
+const TALLY_THEMES = [
+  { q: "nach ihrer Lieblingssportart", cats: ["Fussball", "Schwimmen", "Volleyball", "Tanzen"] },
+  { q: "nach ihrem Lieblingstier", cats: ["Hund", "Katze", "Kaninchen", "Vogel"] },
+  { q: "nach ihrem Lieblingsfach", cats: ["Mathematik", "Deutsch", "Sport", "Musik"] },
+  { q: "nach ihrem Schulweg", cats: ["zu Fuss", "Velo", "Bus", "Auto"] }
+];
+function generateTallyCount() {
+  const t = pickOne(TALLY_THEMES);
+  const counts = t.cats.map(() => rnd(1, 7));
+  const list = shuffleArr(t.cats.flatMap((c, i) => Array(counts[i]).fill(c)));
+  const idx = rnd(0, t.cats.length - 1);
+  return {
+    visual: null,
+    prompt: `${list.length} Kinder wurden ${t.q} gefragt:\n${list.join(", ")}\nZähle aus: Wie oft wurde «${t.cats[idx]}» genannt?`,
+    answerType: "number", correct: counts[idx],
+    solution: t.cats.map((c, i) => `${c}: ${"|".repeat(counts[i])} = ${counts[i]}`).join("\n") + `\nKontrolle: ${counts.join(" + ")} = ${list.length}`
+  };
+}
+function generateShareFractionK3() {
+  const totals = [12, 15, 18, 20, 24, 25, 30, 36, 40];
+  const total = pickOne(totals);
+  let k; do { k = rnd(2, total - 2); } while (gcdFn(k, total) === 1);
+  const g = gcdFn(k, total);
+  const what = pickOne(["mögen Katzen", "haben ein Haustier", "kommen mit dem Velo zur Schule", "spielen ein Instrument", "lesen gern"]);
+  return {
+    visual: null,
+    prompt: `Bei einer Umfrage mit ${total} Personen gaben ${k} an, sie ${what}. Welcher Anteil ist das? (vollständig gekürzter Bruch)`,
+    answerType: "pair", pairStyle: "fraction", correct: [k / g, total / g],
+    solution: `${k} von ${total} = ${k}/${total} = ${k / g}/${total / g} (gekürzt mit ${g})`
+  };
+}
+function lineChartSVG(labels, values, yMin, yMax, step, unit) {
+  const x0 = 34, x1 = 232, yTop = 14, yBase = 150;
+  const n = labels.length, dx = (x1 - x0) / (n - 1);
+  const y = v => yBase - (v - yMin) / (yMax - yMin) * (yBase - yTop);
+  let s = "";
+  for (let v = yMin; v <= yMax; v++) {
+    const major = (v - yMin) % step === 0;
+    s += `<line x1="${x0}" y1="${y(v)}" x2="${x1}" y2="${y(v)}" stroke="${major ? "#94a3b8" : "#e2e8f0"}" stroke-width="${major ? 1 : 0.7}"/>`;
+    if (major) s += `<text x="${x0 - 5}" y="${y(v) + 3.5}" font-size="10" text-anchor="end" fill="#334155">${v}</text>`;
+  }
+  const pts = values.map((v, i) => `${x0 + i * dx},${y(v)}`);
+  s += `<polyline points="${pts.join(" ")}" fill="none" stroke="#2563eb" stroke-width="2.5"/>`;
+  values.forEach((v, i) => {
+    s += `<circle cx="${x0 + i * dx}" cy="${y(v)}" r="3.5" fill="#2563eb"/>`;
+    s += `<text x="${x0 + i * dx}" y="${y(v) - 6}" font-size="9" font-weight="700" text-anchor="middle" fill="#1e3a8a">${v}</text>`;
+    s += `<text x="${x0 + i * dx}" y="${yBase + 15}" font-size="10" text-anchor="middle" fill="#334155">${labels[i]}</text>`;
+  });
+  s += `<line x1="${x0}" y1="${yBase}" x2="${x1}" y2="${yBase}" stroke="#334155" stroke-width="2"/>`;
+  s += `<line x1="${x0}" y1="${yTop - 6}" x2="${x0}" y2="${yBase}" stroke="#334155" stroke-width="2"/>`;
+  s += `<text x="4" y="9" font-size="9" fill="#334155">${unit}</text>`;
+  return `<svg viewBox="0 0 240 180" class="mt-shape">${s}</svg>`;
+}
+function generateLineChartChange() {
+  const labels = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+  const DAY = { Mo: "Montag", Di: "Dienstag", Mi: "Mittwoch", Do: "Donnerstag", Fr: "Freitag", Sa: "Samstag", So: "Sonntag" };
+  let values, diffs;
+  do {
+    values = [rnd(10, 18)];
+    for (let i = 1; i < 7; i++) values.push(Math.max(6, Math.min(28, values[i - 1] + rnd(-5, 5))));
+    diffs = values.slice(1).map((v, i) => v - values[i]);
+  } while (diffs.includes(0) || diffs.filter(d => d === Math.max(...diffs)).length > 1 || Math.max(...diffs) <= 0 || Math.min(...diffs) >= 0);
+  const yMin = Math.floor((Math.min(...values) - 1) / 5) * 5, yMax = Math.ceil((Math.max(...values) + 1) / 5) * 5;
+  const visual = lineChartSVG(labels, values, yMin, yMax, 5, "°C");
+  const intro = "Das Liniendiagramm zeigt die Tageshöchsttemperaturen einer Woche.";
+  if (Math.random() < 0.5) {
+    const i = rnd(0, 5), d = diffs[i];
+    return {
+      visual, answerType: "number", correct: d,
+      prompt: `${intro} Um wie viel °C ändert sich die Temperatur von ${DAY[labels[i]]} auf ${DAY[labels[i + 1]]}? (Zunahme positiv, Abnahme mit Minus)`,
+      solution: `${labels[i]}: ${values[i]} °C, ${labels[i + 1]}: ${values[i + 1]} °C\n${values[i + 1]} − ${values[i]} = ${d} → ${d > 0 ? "Zunahme" : "Abnahme"} um ${Math.abs(d)} °C`
+    };
+  }
+  const best = diffs.indexOf(Math.max(...diffs));
+  const pairs = labels.slice(0, 6).map((l, i) => `${l} → ${labels[i + 1]}`);
+  const others = shuffleArr(pairs.filter((_, i) => i !== best)).slice(0, 3);
+  return {
+    visual, answerType: "mc", options: shuffleArr([pairs[best], ...others]), correct: pairs[best],
+    prompt: `${intro} Wo ist die grösste Zunahme?`,
+    solution: `Die Linie steigt am steilsten von ${labels[best]} auf ${labels[best + 1]}: ${values[best + 1]} − ${values[best]} = ${diffs[best]} °C`
+  };
+}
+// Einheiten mit Grösse in der kleinsten Einheit der Reihe (Einheitentreppe des Skripts).
+const K3_UNITS = {
+  laenge: { mm: 1, cm: 10, dm: 100, m: 1000, km: 1e6 },
+  hohl: { ml: 1, cl: 10, dl: 100, l: 1000, hl: 1e5 },
+  gewicht: { mg: 1, g: 1e3, kg: 1e6, t: 1e9 },
+  flaeche: { "mm²": 1, "cm²": 1e2, "dm²": 1e4, "m²": 1e6, a: 1e8, ha: 1e10, "km²": 1e12 },
+  raum: { "mm³": 1, "cm³": 1e3, ml: 1e3, cl: 1e4, dl: 1e5, "dm³": 1e6, l: 1e6, hl: 1e8, "m³": 1e9 }
+};
+function generateLadderConversion(kinds, needMix) {
+  const set = K3_UNITS[pickOne(kinds)];
+  const names = Object.keys(set);
+  let a, b, R;
+  do {
+    a = pickOne(names); b = pickOne(names);
+    R = set[a] / set[b];
+  } while (a === b || R < 1 || R > 1e6 || (needMix && !(/³/.test(a) !== /³/.test(b))));
+  // a = grössere Einheit, b = kleinere. Zahl so wählen, dass höchstens 3 Nachkommastellen entstehen.
+  const e = Math.round(Math.log10(R));
+  const n = Math.random() < 0.5 ? rnd(2, 99) : rnd(101, 999);
+  let k = rnd(Math.max(0, e - 3), e + 1);
+  while (k > 0 && n * Math.pow(10, k) > 2e6) k--;
+  const small = n * Math.pow(10, k);
+  const big = Math.round(small / R * 1e6) / 1e6;
+  const down = Math.random() < 0.5;
+  const [fromV, fromU, toV, toU] = down ? [big, a, small, b] : [small, b, big, a];
+  return {
+    visual: null, answerType: "number", correct: toV,
+    prompt: `Rechne um: ${fmtK3(fromV)} ${fromU} = ? ${toU}`,
+    solution: R === 1 ? `1 ${a} = 1 ${b}, also ${fmtK3(fromV)} ${fromU} = ${fmtK3(toV)} ${toU}`
+      : `1 ${a} = ${fmtK3(R)} ${b}\n${down ? `kleinere Einheit → Zahl wird grösser: ${fmtK3(fromV)} × ${fmtK3(R)}` : `grössere Einheit → Zahl wird kleiner: ${fmtK3(fromV)} : ${fmtK3(R)}`} = ${fmtK3(toV)} ${toU}`
+  };
+}
+function generateMeasureConversionK3() { return generateLadderConversion(["laenge", "hohl", "gewicht"]); }
+function generateAreaConversionK3() { return generateLadderConversion(["flaeche"]); }
+function generateVolumeConversionK3() { return Math.random() < 0.5 ? generateLadderConversion(["raum"], true) : generateLadderConversion(["raum"]); }
+// Mehrnamige Grössen: 3 m 7 cm = 307 cm = 3.07 m
+const MULTI_UNIT_PAIRS_3B = [["m", "cm", 100], ["km", "m", 1000], ["cm", "mm", 10], ["kg", "g", 1000], ["t", "kg", 1000], ["g", "mg", 1000], ["l", "dl", 10], ["l", "cl", 100], ["hl", "l", 100]];
+const MULTI_UNIT_PAIRS_3C = [["m²", "dm²", 100], ["cm²", "mm²", 100], ["ha", "a", 100], ["a", "m²", 100], ["km²", "ha", 100], ["m³", "dm³", 1000], ["cm³", "mm³", 1000], ["dm³", "cm³", 1000]];
+function generateMultiUnit(pairs) {
+  const [A, B, f] = pickOne(pairs);
+  const a = rnd(1, 12);
+  // Oft eine kleine Zahl bei der kleinen Einheit, damit die Null-Falle (3 m 7 cm = 3.07 m) vorkommt.
+  const b = Math.random() < 0.5 ? rnd(1, Math.max(1, Math.floor(f / 10) - 1) || 1) : rnd(1, f - 1);
+  const totalB = a * f + b, totalA = Math.round(totalB / f * 1e6) / 1e6;
+  const toSmall = Math.random() < 0.5;
+  return {
+    visual: null, answerType: "number", correct: toSmall ? totalB : totalA,
+    prompt: `Schreibe mit einer Einheit: ${a} ${A} ${b} ${B} = ? ${toSmall ? B : A}`,
+    solution: `1 ${A} = ${f} ${B}\n${a} ${A} ${b} ${B} = ${a * f} ${B} + ${b} ${B} = ${totalB} ${B}` + (toSmall ? "" : ` = ${fmtK3(totalA)} ${A}`)
+  };
+}
+function generateMultiUnit3B() { return generateMultiUnit(MULTI_UNIT_PAIRS_3B); }
+function generateMultiUnit3C() { return generateMultiUnit(MULTI_UNIT_PAIRS_3C); }
+// Schätzen: [Gegenstand, Optionen, richtige Option]
+const ESTIMATES_3B = [
+  ["Höhe eines Schulzimmers", ["30 cm", "3 m", "30 m"], "3 m"],
+  ["Länge eines Fussballfeldes", ["10 m", "100 m", "1 km"], "100 m"],
+  ["Inhalt einer Kaffeetasse", ["2 ml", "2 dl", "2 l"], "2 dl"],
+  ["Inhalt einer Badewanne", ["15 l", "150 l", "1500 l"], "150 l"],
+  ["Gewicht eines Apfels", ["15 g", "150 g", "1.5 kg"], "150 g"],
+  ["Gewicht eines Velos", ["1.5 kg", "15 kg", "150 kg"], "15 kg"],
+  ["Länge eines Schulhefts", ["3 cm", "30 cm", "3 m"], "30 cm"],
+  ["Gewicht eines Elefanten", ["50 kg", "500 kg", "5 t"], "5 t"],
+  ["Höhe einer Tür", ["20 dm", "20 m", "200 mm"], "20 dm"],
+  ["Dicke einer Münze", ["2 mm", "2 cm", "2 dm"], "2 mm"],
+  ["Inhalt einer Wasserflasche", ["15 cl", "150 cl", "15 l"], "150 cl"],
+  ["Gewicht eines Autos", ["150 kg", "1.5 t", "15 t"], "1.5 t"],
+  ["Gewicht einer Maus", ["20 mg", "20 g", "2 kg"], "20 g"],
+  ["Inhalt eines Esslöffels", ["15 ml", "15 cl", "15 dl"], "15 ml"]
+];
+const ESTIMATES_3C = [
+  ["Fläche eines Fingernagels", ["1 mm²", "1 cm²", "1 dm²"], "1 cm²"],
+  ["Fläche eines A4-Blattes", ["6 cm²", "6 dm²", "6 m²"], "6 dm²"],
+  ["Fläche eines Schulzimmers", ["70 dm²", "70 m²", "70 a"], "70 m²"],
+  ["Fläche eines Fussballfeldes", ["70 m²", "70 a", "70 ha"], "70 a"],
+  ["Fläche des Kantons Zürich", ["1700 ha", "1700 km²", "170 a"], "1700 km²"],
+  ["Inhalt eines Kühlschranks", ["30 l", "300 l", "3000 l"], "300 l"],
+  ["Volumen eines Zuckerwürfels", ["1 mm³", "1 cm³", "1 dm³"], "1 cm³"],
+  ["Luft in einem Schulzimmer", ["2 m³", "20 m³", "200 m³"], "200 m³"],
+  ["Volumen einer Milchpackung (1 l)", ["1 cm³", "1 dm³", "1 m³"], "1 dm³"],
+  ["Wasser in einem Schwimmbecken", ["50 dm³", "500 m³", "50 hl"], "500 m³"]
+];
+function generateEstimate(list) {
+  const [thing, opts, ok] = pickOne(list);
+  return { visual: null, prompt: `Welche Schätzung passt? ${thing}`, answerType: "mc", options: opts.slice(), correct: ok };
+}
+function generateEstimate3B() { return generateEstimate(ESTIMATES_3B); }
+function generateEstimate3C() { return generateEstimate(ESTIMATES_3C); }
+// Zeiten umrechnen (nicht 10-teilig)
+function generateTimeConvertK3() {
+  const kind = rnd(0, 5);
+  if (kind === 0) {
+    const h = rnd(1, 6), q = pickOne([["¼", 15], ["½", 30], ["¾", 45]]);
+    return { visual: null, answerType: "number", correct: h * 60 + q[1], prompt: `Wie viele Minuten sind ${h}${q[0]} h?`, solution: `${h} h = ${h * 60} min, ${q[0]} h = ${q[1]} min\n→ ${h * 60 + q[1]} min` };
+  }
+  if (kind === 1) {
+    const h = rnd(1, 5), q = pickOne([[".5", 30], [".25", 15], [".75", 45]]);
+    return { visual: null, answerType: "number", correct: h * 60 + q[1], prompt: `Wie viele Minuten sind ${h}${q[0]} h? (Achtung: Dezimalzahl!)`, solution: `${h}${q[0]} h = ${h} h + 0${q[0]} h = ${h * 60} min + ${q[1]} min = ${h * 60 + q[1]} min\n(${h}.5 h ist nicht ${h} h 50 min!)` };
+  }
+  if (kind === 2) {
+    const h = rnd(1, 9), m = rnd(1, 59);
+    return { visual: null, answerType: "number", correct: h * 60 + m, prompt: `Rechne in Minuten um: ${h}:${String(m).padStart(2, "0")} h = ? min`, solution: `${h}:${String(m).padStart(2, "0")} h = ${h} h ${m} min = ${h * 60} min + ${m} min = ${h * 60 + m} min` };
+  }
+  if (kind === 3) {
+    const tot = rnd(61, 599);
+    return { visual: null, answerType: "pair", pairStyle: "coordinate", correct: [Math.floor(tot / 60), tot % 60], prompt: `Rechne um: ${tot} min = ? h ? min (Eingabe Stunden|Minuten)`, solution: `${tot} : 60 = ${Math.floor(tot / 60)} Rest ${tot % 60}\n→ ${Math.floor(tot / 60)} h ${tot % 60} min` };
+  }
+  if (kind === 4) {
+    const m = rnd(1, 15), s = rnd(1, 59);
+    return { visual: null, answerType: "number", correct: m * 60 + s, prompt: `Rechne in Sekunden um: ${m}:${String(s).padStart(2, "0")} min = ? s`, solution: `${m} min = ${m * 60} s\n${m * 60} s + ${s} s = ${m * 60 + s} s` };
+  }
+  const d = pickOne([1, 2, 3, 4, 5, 7]), half = Math.random() < 0.5;
+  return { visual: null, answerType: "number", correct: d * 24 + (half ? 12 : 0), prompt: `Wie viele Stunden sind ${d}${half ? "½" : ""} d (Tage)?`, solution: `1 d = 24 h\n${d} × 24 h${half ? " + 12 h" : ""} = ${d * 24 + (half ? 12 : 0)} h` };
+}
+// Mit Zeiten rechnen: 2:44 min + 7:50 min = 10:34 min
+function generateTimeCalcK3() {
+  const isH = Math.random() < 0.5;
+  const [big, small] = isH ? ["h", "min"] : ["min", "s"];
+  const fmt = t => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")} ${big}`;
+  const kind = rnd(0, 2);
+  let a, b, res, op;
+  if (kind === 0) { a = rnd(1, 9) * 60 + rnd(10, 59); b = rnd(1, 9) * 60 + rnd(10, 59); res = a + b; op = "+"; }
+  else if (kind === 1) { do { a = rnd(3, 12) * 60 + rnd(0, 59); b = rnd(1, 8) * 60 + rnd(0, 59); } while (b >= a || (b % 60) <= (a % 60)); res = a - b; op = "−"; }
+  else { a = rnd(1, 3) * 60 + pickOne([10, 15, 20, 25, 30, 40, 45]); b = rnd(2, 4); res = a * b; op = "·"; }
+  const prompt = kind === 2 ? `Berechne: ${fmt(a)} · ${b} = ? (Eingabe ${big === "h" ? "Stunden|Minuten" : "Minuten|Sekunden"})`
+    : `Berechne: ${fmt(a)} ${op} ${fmt(b)} = ? (Eingabe ${big === "h" ? "Stunden|Minuten" : "Minuten|Sekunden"})`;
+  let solution;
+  if (kind === 0) {
+    const m = Math.floor(a / 60) + Math.floor(b / 60), s = a % 60 + b % 60;
+    solution = `${m} ${big} ${s} ${small}` + (s >= 60 ? ` = ${m + 1} ${big} ${s - 60} ${small}` : "") + ` = ${fmt(res)}`;
+  } else if (kind === 1) {
+    solution = `${fmt(a)} − ${Math.floor(b / 60)} ${big} = ${fmt(a - Math.floor(b / 60) * 60)}\n${fmt(a - Math.floor(b / 60) * 60)} − ${b % 60} ${small} = ${fmt(res)}`;
+  } else {
+    solution = `${Math.floor(a / 60)} ${big} · ${b} = ${Math.floor(a / 60) * b} ${big}, ${a % 60} ${small} · ${b} = ${(a % 60) * b} ${small}\n→ ${fmt(res)}`;
+  }
+  return { visual: null, answerType: "pair", pairStyle: "coordinate", correct: [Math.floor(res / 60), res % 60], prompt, solution };
+}
+// Prozentanteil einer Grösse: 30 % von 250 cm (über 1 % oder 10 %)
+function generatePercentOfQuantityK3() {
+  const unit = pickOne(["cm", "m", "mm", "g", "kg", "l", "dl", "cl", "Fr."]);
+  let p, base, val;
+  do {
+    p = Math.random() < 0.6 ? pickOne([10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 5, 15, 35, 85]) : rnd(1, 99);
+    base = Math.random() < 0.5 ? rnd(2, 40) * 10 : rnd(1, 9) * 100;
+    val = base * p / 100;
+  } while (Math.round(val * 10) !== val * 10);
+  const via10 = p % 10 === 0;
+  return {
+    visual: null, answerType: "number", correct: val,
+    prompt: `Berechne: ${p} % von ${base} ${unit} = ? ${unit}`,
+    solution: via10 ? `10 % = ${base} : 10 = ${fmtK3(base / 10)} ${unit}\n${p} % = ${p / 10} · ${fmtK3(base / 10)} = ${fmtK3(val)} ${unit}`
+      : `1 % = ${base} : 100 = ${fmtK3(base / 100)} ${unit}\n${p} % = ${p} · ${fmtK3(base / 100)} = ${fmtK3(val)} ${unit}`
+  };
+}
+function generateFractionToPercentK3() {
+  let num, den;
+  do { den = pickOne([2, 4, 5, 10, 20, 25, 50]); num = rnd(1, den - 1); } while (gcdFn(num, den) !== 1);
+  const f = 100 / den;
+  return { visual: null, answerType: "number", correct: num * f, prompt: `Wandle ${num}/${den} in Prozent um. (nur Zahl, ohne %)`, solution: `Auf den Nenner 100 erweitern (mit ${f}):\n${num}/${den} = ${num * f}/100 = ${num * f} %` };
+}
+function generatePercentToFractionK3() {
+  const p = rnd(1, 99);
+  const g = gcdFn(p, 100);
+  return { visual: null, answerType: "pair", pairStyle: "fraction", correct: [p / g, 100 / g], prompt: `Schreibe ${p} % als vollständig gekürzten Bruch.`, solution: `${p} % = ${p}/100` + (g > 1 ? ` = ${p / g}/${100 / g} (gekürzt mit ${g})` : " (lässt sich nicht kürzen)") };
+}
+// Rechteck: Fläche in cm², Spielfeld in m² und a, fehlende Seite
+function generateRectAreaK3() {
+  const kind = rnd(0, 2);
+  if (kind === 0) { const l = rnd(3, 20), b = rnd(3, 20); return { visual: null, answerType: "number", correct: l * b, prompt: `Ein Rechteck ist ${l} cm lang und ${b} cm breit. Wie gross ist der Flächeninhalt in cm²?`, solution: `A = Länge · Breite = ${l} · ${b} = ${l * b} cm²` }; }
+  if (kind === 1) {
+    const l = rnd(2, 16) * 10, b = rnd(1, 9) * 10, A = l * b;
+    return { visual: null, answerType: "number", correct: A / 100, prompt: `Eine rechteckige Wiese ist ${l} m lang und ${b} m breit. Wie gross ist sie in Aren (a)?`, solution: `A = ${l} m · ${b} m = ${A} m²\n1 a = 100 m² → ${A} m² = ${fmtK3(A / 100)} a` };
+  }
+  const b = rnd(2, 12), l = rnd(3, 15), A = l * b;
+  return { visual: null, answerType: "number", correct: l, prompt: `Ein Rechteck ist ${b} cm breit und hat einen Flächeninhalt von ${A} cm². Wie lang ist es (in cm)?`, solution: `Länge = Fläche : Breite = ${A} : ${b} = ${l} cm` };
+}
+// Quader: Volumen in cm³ bzw. in Litern
+function generateBoxVolumeK3() {
+  const l = rnd(2, 12) * 5, b = rnd(2, 8) * 5, h = rnd(2, 8) * 5, V = l * b * h;
+  if (Math.random() < 0.5) return { visual: null, answerType: "number", correct: V, prompt: `Eine Schachtel ist ${l} cm lang, ${b} cm breit und ${h} cm hoch. Wie gross ist ihr Volumen in cm³?`, solution: `V = ${l} · ${b} · ${h} = ${V} cm³` };
+  return { visual: null, answerType: "number", correct: V / 1000, prompt: `Ein Aquarium ist ${l} cm lang, ${b} cm breit und ${h} cm hoch. Wie viele Liter Wasser fasst es?`, solution: `V = ${l} · ${b} · ${h} = ${V} cm³\n1000 cm³ = 1 dm³ = 1 l → ${fmtK3(V / 1000)} l` };
 }
 
 const SOLIDS_CLASSIFY = [
@@ -4760,15 +5051,9 @@ const EXERCISE_INFO = {
   "2c-teiler": { d: "Bestimme, wie viele Teiler eine Zahl hat.", g: "Teiler einer Zahl systematisch bestimmen." },
   "2c-kgv": { d: "Bestimme das kleinste gemeinsame Vielfache zweier Zahlen.", g: "Vielfachenbeziehungen zwischen Zahlen erkennen." },
   "2c-primfaktor": { d: "Zerlege eine Zahl in ihre Primfaktoren.", g: "Primfaktorzerlegung durchführen können." },
-  "3a-mean": { d: "Berechne den Mittelwert (arithmetisches Mittel) einer Zahlenreihe.", g: "Den Mittelwert als Kennwert einer Datenreihe berechnen." },
-  "3a-median": { d: "Bestimme den Median einer Zahlenreihe.", g: "Den Median als Kennwert einer Datenreihe bestimmen." },
-  "3a-range": { d: "Bestimme die Spannweite einer Zahlenreihe.", g: "Die Spannweite als Streuungsmass bestimmen." },
-  "3b-wert": { d: "Berechne den Prozentwert zu Grundwert und Prozentsatz.", g: "Die Grundformel der Prozentrechnung anwenden." },
-  "3b-grund": { d: "Berechne den Grundwert zu Prozentwert und Prozentsatz.", g: "Die Grundformel der Prozentrechnung umstellen können." },
-  "3b-satz": { d: "Berechne den Prozentsatz zu Grundwert und Prozentwert.", g: "Die Grundformel der Prozentrechnung umstellen können." },
-  "3c-rect": { d: "Berechne die Fläche eines Rechtecks.", g: "Flächenformel des Rechtecks anwenden." },
-  "3c-tri": { d: "Berechne die Fläche eines Dreiecks.", g: "Flächenformel des Dreiecks anwenden." },
-  "3c-box": { d: "Berechne das Volumen eines Quaders.", g: "Volumenformel des Quaders anwenden." },
+  "3b-wert": { d: "Berechne einen Prozentanteil einer Grösse, z. B. 30 % von 250 cm.", g: "Prozentanteile von Grössen berechnen." },
+  "3c-rect": { d: "Berechne Flächeninhalt oder Seite eines Rechtecks, auch in Aren.", g: "Flächenformel des Rechtecks anwenden." },
+  "3c-box": { d: "Berechne das Volumen eines Quaders in cm³ oder Litern.", g: "Volumenformel des Quaders anwenden und mit Hohlmassen verbinden." },
   "4a-faces": { d: "Zähle die Flächen eines geometrischen Körpers.", g: "Eigenschaften geometrischer Körper kennen." },
   "4a-edges": { d: "Zähle die Kanten eines geometrischen Körpers.", g: "Eigenschaften geometrischer Körper kennen." },
   "4a-vertices": { d: "Zähle die Ecken eines geometrischen Körpers.", g: "Eigenschaften geometrischer Körper kennen." },
@@ -4921,6 +5206,16 @@ const EXERCISE_INFO = {
   "2c-kette": { d: "Rechne eine Rechenkette Schritt für Schritt durch.", g: "Mehrere Rechenschritte sicher nacheinander ausführen." },
   "2c-teilbar": { d: "Entscheide mit den Teilbarkeitsregeln, ob eine Zahl durch eine andere teilbar ist.", g: "Teilbarkeitsregeln anwenden." },
   "2c-ggt": { d: "Bestimme den grössten gemeinsamen Teiler zweier Zahlen.", g: "Den ggT zweier Zahlen bestimmen." },
+  "3a-strich": { d: "Zähle Antworten einer Umfrage aus (Strichliste).", g: "Daten auszählen und in einer Tabelle darstellen." },
+  "3a-anteil": { d: "Gib einen Anteil wie «8 von 20» als gekürzten Bruch an.", g: "Anteile als Bruch angeben." },
+  "3a-linie": { d: "Lies Zunahmen und Abnahmen aus einem Liniendiagramm.", g: "Veränderungen in einem Liniendiagramm beschreiben." },
+  "3b-mass": { d: "Rechne Längen, Hohlmasse und Gewichte in andere Einheiten um.", g: "Längen, Hohlmasse und Gewichte in andere Masseinheiten umrechnen." },
+  "3b-mehrnamig": { d: "Schreibe Grössen wie «3 m 7 cm» mit einer Einheit.", g: "Mehrnamige Grössen umrechnen." },
+  "3b-schaetzen": { d: "Wähle die passende Schätzung für eine Länge, ein Hohlmass oder ein Gewicht.", g: "Längen, Hohlmasse und Gewichte abschätzen." },
+  "3b-zeitum": { d: "Rechne Zeiten um, z. B. 2¾ h in Minuten.", g: "Zeiten umrechnen." },
+  "3b-zeitrechnen": { d: "Addiere, subtrahiere und vervielfache Zeiten wie 3:35 min.", g: "Additionen und Subtraktionen mit Zeiten durchführen." },
+  "3c-mehrnamig": { d: "Schreibe Flächen und Volumen wie «6 m² 13 dm²» mit einer Einheit.", g: "Zwischen Flächen- und Raummasseinheiten umrechnen." },
+  "3c-schaetzen": { d: "Wähle die passende Schätzung für eine Fläche oder ein Volumen.", g: "Flächen- und Rauminhalte abschätzen." },
   "3a-chart": { d: "Lies einen Wert aus einem Säulendiagramm ab.", g: "Aussagen aus Diagrammen herauslesen." },
   "3a-chart-tap": { d: "Tippe im Säulendiagramm auf den grössten Balken.", g: "Diagramme lesen und Werte vergleichen." },
   "3b-bruchteil": { d: "Berechne einen Bruchteil einer Grösse, z. B. 3/4 von 20 kg.", g: "Bruchteile von Grössen berechnen." },
@@ -6183,27 +6478,31 @@ const JAHR1_CHAPTERS = [
     ex("2c-sachaufgabe", "ggT und kgV im Alltag", generateGgtKgvWord, "«Wann wieder gleichzeitig?» → kgV. «Möglichst grosse gleiche Stücke/Quadrate» → ggT.")
   ]),
   chapter("3a", "Daten darstellen", [
-    ex("3a-mean", "Mittelwert berechnen", generateMean, "Addiere alle Zahlen und teile die Summe durch die Anzahl der Zahlen.", true),
-    ex("3a-median", "Median bestimmen", generateMedian, "Sortiere die Zahlen der Grösse nach. Der Median ist die Zahl genau in der Mitte."),
-    ex("3a-range", "Spannweite bestimmen", generateRange, "Spannweite = grösste Zahl minus kleinste Zahl."),
+    ex("3a-strich", "Daten auszählen (Strichliste)", generateTallyCount, "Mache für jede Antwort einen Strich in der richtigen Zeile und zähle dann. Kontrolle: Alle Anzahlen zusammen ergeben die Anzahl Antworten."),
     ex("3a-chart", "Werte aus Diagrammen ablesen", generateBarChartRead, "Lies die Höhe des gesuchten Balkens an der senkrechten Achse ab."),
-    ex("3a-chart-tap", "Grössten Balken finden", generateBarChartMaxHotspot, "Vergleiche die Höhe aller Balken und tippe auf denjenigen, der am weitesten nach oben reicht.")
+    ex("3a-chart-tap", "Grössten Balken finden", generateBarChartMaxHotspot, "Vergleiche die Höhe aller Balken und tippe auf denjenigen, der am weitesten nach oben reicht."),
+    ex("3b-bruchteil", "Bruchteil einer Grösse", generateFractionOfQuantity, "Teile das Ganze durch den Nenner und multipliziere mit dem Zähler: 2/3 von 21 = 21 : 3 · 2 = 14."),
+    ex("3a-anteil", "Anteil als gekürzter Bruch", generateShareFractionK3, "8 von 20 sind 8/20. Kürze vollständig: 8/20 = 2/5."),
+    ex("3a-linie", "Liniendiagramm: Zunahme und Abnahme", generateLineChartChange, "Steigt die Linie, ist es eine Zunahme, fällt sie, eine Abnahme. Je steiler die Strecke, desto grösser die Veränderung.")
   ]),
   chapter("3b", "Grössen und Prozente", [
-    ex("3b-wert", "Prozentwert berechnen", generatePercentValue, "Prozentwert = Grundwert × Prozentsatz ÷ 100.", true),
-    ex("3b-grund", "Grundwert berechnen", generatePercentBase, "Grundwert = Prozentwert ÷ Prozentsatz × 100.", true),
-    ex("3b-satz", "Prozentsatz berechnen", generatePercentRate, "Prozentsatz = Prozentwert ÷ Grundwert × 100.", true),
-    ex("3b-bruchteil", "Bruchteil einer Grösse", generateFractionOfQuantity, "Teile die Grösse durch den Nenner und multipliziere das Ergebnis mit dem Zähler."),
-    ex("3b-b2p", "Bruch → Prozent", generateFractionToPercentM1, "Wandle den Bruch zuerst in eine Dezimalzahl um (Zähler ÷ Nenner), dann multipliziere mit 100."),
-    ex("3b-p2b", "Prozent → Bruch", generatePercentToFractionM1, "Schreibe die Prozentzahl als Bruch mit Nenner 100 und kürze vollständig."),
-    ex("3b-zeit", "Zeitspannen berechnen", generateTimeSpan, "Rechne in Minuten: addiere die Dauer zur Startzeit, oder bilde die Differenz zwischen Ankunfts- und Abfahrtszeit.")
+    ex("3b-mass", "Längen, Hohlmasse, Gewichte umrechnen", generateMeasureConversionK3, "Einheitentreppe: km–m ·1000, m–dm–cm–mm je ·10 · hl–l ·100, l–dl–cl–ml je ·10 · t–kg–g–mg je ·1000. Zur kleineren Einheit wird die Zahl grösser."),
+    ex("3b-mehrnamig", "Mehrnamige Grössen", generateMultiUnit3B, "Rechne zuerst alles in die kleinere Einheit um: 3 m 7 cm = 300 cm + 7 cm = 307 cm = 3.07 m."),
+    ex("3b-schaetzen", "Grössen schätzen", generateEstimate3B, "Vergleiche mit Dingen, die du kennst: Eine Tür ist etwa 2 m hoch, 1 l Milch wiegt etwa 1 kg."),
+    ex("3b-zeitum", "Zeiten umrechnen", generateTimeConvertK3, "Zeitmasse sind nicht 10-teilig: 1 d = 24 h, 1 h = 60 min, 1 min = 60 s. Achtung: 3.5 h = 3 h 30 min."),
+    ex("3b-zeitrechnen", "Mit Zeiten rechnen", generateTimeCalcK3, "Rechne Minuten und Sekunden (bzw. Stunden und Minuten) getrennt. Hat es 60 oder mehr Sekunden, gibt es 1 Minute mehr."),
+    ex("3b-zeit", "Zeitspannen berechnen", generateTimeSpan, "Rechne in Schritten: bis zur vollen Stunde, dann volle Stunden, dann die restlichen Minuten."),
+    ex("3b-wert", "Prozentanteil einer Grösse", generatePercentOfQuantityK3, "Bestimme zuerst 10 % (: 10) oder 1 % (: 100) und vervielfache dann: 30 % von 250 cm → 10 % = 25 cm → 30 % = 75 cm."),
+    ex("3b-b2p", "Bruch → Prozent", generateFractionToPercentK3, "Erweitere den Bruch auf den Nenner 100: 3/5 = 60/100 = 60 %."),
+    ex("3b-p2b", "Prozent → Bruch", generatePercentToFractionK3, "Schreibe die Prozentzahl als Bruch mit Nenner 100 und kürze vollständig: 75 % = 75/100 = 3/4.")
   ]),
   chapter("3c", "Flächen und Volumen", [
-    ex("3c-rect", "Fläche Rechteck", generateRectArea, "Fläche des Rechtecks = Länge × Breite."),
-    ex("3c-tri", "Fläche Dreieck", generateTriArea, "Fläche des Dreiecks = Grundseite × Höhe ÷ 2."),
-    ex("3c-box", "Volumen Quader", generateBoxVolume, "Volumen des Quaders = Länge × Breite × Höhe."),
-    ex("3c-area-units", "Flächenmasseinheiten umrechnen", generateAreaUnitConversion, "Die Flächenmasseinheiten sind alle 100-teilig: 1 cm² = 100 mm², 1 dm² = 100 cm², 1 m² = 100 dm², 1 a = 100 m², 1 ha = 100 a, 1 km² = 100 ha."),
-    ex("3c-vol-units", "Raum- und Hohlmasseinheiten umrechnen", generateVolumeUnitConversion, "Die Raummasseinheiten sind 1000-teilig: 1 cm³ = 1000 mm³, 1 dm³ = 1000 cm³, 1 m³ = 1000 dm³. Zudem gilt 1 dm³ = 1 l und 1 cm³ = 1 ml.")
+    ex("3c-area-units", "Flächenmasseinheiten umrechnen", generateAreaConversionK3, "Die Flächenmasseinheiten sind alle 100-teilig: 1 cm² = 100 mm², 1 dm² = 100 cm², 1 m² = 100 dm², 1 a = 100 m², 1 ha = 100 a, 1 km² = 100 ha."),
+    ex("3c-mehrnamig", "Flächen und Volumen mit einer Einheit", generateMultiUnit3C, "Rechne zuerst in die kleinere Einheit um: 6 m² 13 dm² = 600 dm² + 13 dm² = 613 dm²; 1 m³ 943 dm³ = 1943 dm³."),
+    ex("3c-rect", "Flächeninhalt Rechteck", generateRectAreaK3, "Flächeninhalt des Rechtecks = Länge · Breite. 1 a = 100 m², 1 ha = 100 a."),
+    ex("3c-vol-units", "Raum- und Hohlmasse umrechnen", generateVolumeConversionK3, "Die Raummasse sind 1000-teilig: 1 m³ = 1000 dm³, 1 dm³ = 1000 cm³, 1 cm³ = 1000 mm³. Zudem gilt 1 dm³ = 1 l und 1 cm³ = 1 ml."),
+    ex("3c-box", "Volumen Quader", generateBoxVolumeK3, "Volumen des Quaders = Länge · Breite · Höhe (alle Längen in derselben Einheit). 1000 cm³ = 1 l."),
+    ex("3c-schaetzen", "Flächen und Volumen schätzen", generateEstimate3C, "Vergleiche mit Bekanntem: Ein Zuckerwürfel hat etwa 1 cm³, ein Fussballfeld etwa 70 a.")
   ]),
   chapter("4a", "Geometrische Körper und ihre Netze", [
     ex("4a-faces", "Flächen zählen", generateSolidFaces, "Zähle alle ebenen Begrenzungsflächen des Körpers."),

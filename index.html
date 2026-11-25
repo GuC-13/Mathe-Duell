@@ -250,6 +250,8 @@
   .mt-shape { width: 230px; height: 230px; max-width: 70vw; max-height: 70vw; margin: 0 auto 10px; display: block; }
   .duell-half .mt-shape { width: 90px; height: 90px; margin: 0 auto 6px; }
   .vk-quad .mt-shape { width: 56px; height: 56px; margin: 0 auto 4px; }
+  .duell-half .mt-shape.mt-fill { width: 150px; height: 150px; }
+  .vk-quad .mt-shape.mt-fill { width: 96px; height: 96px; }
   @media (max-height: 700px) {
     .duell-half .mt-shape { width: 64px; height: 64px; }
     .vk-quad .mt-shape { width: 44px; height: 44px; }
@@ -511,7 +513,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-23.3</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-25.1</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -4757,6 +4759,75 @@ function generateProportionTypeMC() {
   return { visual: null, prompt: `Wertepaare: ${pkt(x1, y1)} und ${pkt(x2, y2)}. Wie hängen x und y zusammen?`, answerType: "mc", options, correct };
 }
 
+// ---- Füllgraphen (M2 K3a): Gefäss ↔ Graph zuordnen ----
+// Profil: Punkte [Höhe 0..1, Radius 0..1] von unten nach oben; gleiche Höhe zweimal = Absatz (Knick im Graphen)
+const FILL_VESSELS = [
+  { id: "zyl", fam: "gerade", p: [[0, 0.7], [1, 0.7]], form: "eine Gerade", why: "Das Gefäss ist überall gleich breit → der Wasserstand steigt gleichmässig: Gerade." },
+  { id: "weit", fam: "flacher", p: [[0, 0.25], [1, 1]], form: "wird immer flacher", why: "Das Gefäss wird nach oben weiter → der Wasserstand steigt immer langsamer: Der Graph wird immer flacher." },
+  { id: "eng", fam: "steiler", p: [[0, 1], [1, 0.28]], form: "wird immer steiler", why: "Das Gefäss wird nach oben enger → der Wasserstand steigt immer schneller: Der Graph wird immer steiler." },
+  { id: "stufeEng", fam: "knickSteiler", p: [[0, 1], [0.5, 1], [0.5, 0.42], [1, 0.42]], form: "Gerade, dann Knick und steiler", why: "Unten breit, oben schmal (Absatz) → zuerst eine flache Gerade, beim Absatz ein Knick, danach eine steilere Gerade." },
+  { id: "stufeWeit", fam: "knickFlacher", p: [[0, 0.42], [0.5, 0.42], [0.5, 1], [1, 1]], form: "Gerade, dann Knick und flacher", why: "Unten schmal, oben breit (Absatz) → zuerst eine steile Gerade, beim Absatz ein Knick, danach eine flachere Gerade." },
+  { id: "bauch", fam: "bauch", p: [[0, 0.38], [0.5, 1], [1, 0.38]], form: "zuerst immer flacher, dann immer steiler", why: "Das Gefäss wird bis zur Mitte weiter, dann wieder enger → der Graph wird zuerst immer flacher, danach immer steiler." },
+  { id: "taille", fam: "taille", p: [[0, 1], [0.5, 0.32], [1, 1]], form: "zuerst immer steiler, dann immer flacher", why: "Das Gefäss wird bis zur Mitte enger, dann wieder weiter → der Graph wird zuerst immer steiler, danach immer flacher." },
+  { id: "flasche", fam: "knickSteiler", p: [[0, 0.9], [0.55, 0.9], [0.8, 0.32], [1, 0.32]], form: "Gerade, dann immer steiler", why: "Unten gleich breit (Gerade), dann wird die Flasche zum Hals hin enger → der Graph wird steiler, im Hals wieder eine (steile) Gerade." },
+  { id: "schale", fam: "knickFlacher", p: [[0, 0.42], [0.5, 0.42], [1, 1]], form: "Gerade, dann immer flacher", why: "Unten gleich breit (Gerade), oben wird das Gefäss immer weiter → der Graph wird danach immer flacher." }
+];
+function fillRadius(p, h) {
+  for (let i = 0; i < p.length - 1; i++) {
+    const [h0, r0] = p[i], [h1, r1] = p[i + 1];
+    if (h1 > h0 && h >= h0 && h <= h1) return r0 + (r1 - r0) * (h - h0) / (h1 - h0);
+  }
+  return p[p.length - 1][1];
+}
+// Punkte (Volumen, Höhe), beide auf 0..1 normiert
+function fillCurve(p) {
+  const N = 120, pts = [[0, 0]]; let v = 0;
+  for (let i = 1; i <= N; i++) { const h = (i - 0.5) / N, r = fillRadius(p, h); v += r * r / N; pts.push([v, i / N]); }
+  return pts.map(([x, y]) => [x / v, y]);
+}
+function fillVesselSVG(vs, x, y, w, h) {
+  const cx = x + w / 2, half = w * 0.42, top = y + 4, bot = y + h - 4, H = bot - top;
+  const left = vs.p.map(([hh, r]) => `${(cx - r * half).toFixed(1)},${(bot - hh * H).toFixed(1)}`);
+  const right = vs.p.slice().reverse().map(([hh, r]) => `${(cx + r * half).toFixed(1)},${(bot - hh * H).toFixed(1)}`);
+  return `<polygon points="${left.join(" ")} ${right.join(" ")}" fill="#dbeafe" stroke="none"/><polyline points="${left.slice().reverse().join(" ")} ${right.slice().reverse().join(" ")}" fill="none" stroke="#334155" stroke-width="2.2" stroke-linejoin="round"/>`;
+}
+function fillGraphSVG(vs, x, y, w, h) {
+  const ox = x + 10, oy = y + h - 10, W = w - 16, Hh = h - 16;
+  let s = `<line x1="${ox}" y1="${oy}" x2="${ox + W}" y2="${oy}" stroke="#334155" stroke-width="1.5"/><line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy - Hh}" stroke="#334155" stroke-width="1.5"/>`;
+  s += `<text x="${ox + W}" y="${oy + 9}" font-size="7" text-anchor="end" fill="#64748b">Volumen</text><text x="${ox - 3}" y="${oy - Hh + 2}" font-size="7" text-anchor="end" fill="#64748b" transform="rotate(-90 ${ox - 3} ${oy - Hh + 2})">Höhe</text>`;
+  const pts = fillCurve(vs.p).map(([vx, hy]) => `${(ox + vx * (W - 4)).toFixed(1)},${(oy - hy * (Hh - 4)).toFixed(1)}`);
+  return s + `<polyline points="${pts.join(" ")}" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+}
+function fillPickDistinct(n) {
+  const pool = mcShuffle(FILL_VESSELS), out = [], fams = new Set();
+  for (const v of pool) { if (!fams.has(v.fam)) { out.push(v); fams.add(v.fam); } if (out.length === n) break; }
+  return out;
+}
+function generateFillGraphMC() {
+  const kind = rnd(0, 2), L = ["A", "B", "C"];
+  const cell = (i) => [(i % 2) * 100 + 4, Math.floor(i / 2) * 100 + 4, 92, 92];
+  const frame = (i, label) => { const [x, y] = cell(i); return `<rect x="${x - 2}" y="${y - 2}" width="96" height="96" rx="8" fill="none" stroke="${label ? "#cbd5e1" : "#94a3b8"}" stroke-width="${label ? 1 : 2}"/>` + (label ? `<text x="${x + 84}" y="${y + 13}" text-anchor="end" font-size="12" font-weight="700" fill="#0f172a">${label}</text>` : ""); };
+  if (kind === 2) {
+    // Gefäss gegeben → Verlauf in Worten
+    const vs = FILL_VESSELS.filter(v => ["zyl", "weit", "eng", "stufeEng", "stufeWeit"].includes(v.id))[rnd(0, 4)];
+    const wrongs = mcShuffle(["eine Gerade", "wird immer flacher", "wird immer steiler", "Gerade, dann Knick und steiler", "Gerade, dann Knick und flacher"].filter(f => f !== vs.form)).slice(0, 3);
+    const svg = `<svg viewBox="0 0 200 200" class="mt-shape mt-fill">${fillVesselSVG(vs, 40, 20, 120, 160)}</svg>`;
+    return { visual: svg, prompt: "Das Gefäss wird gleichmässig mit Wasser gefüllt. Wie verläuft der Füllgraph (Füllhöhe in Abhängigkeit vom Volumen)?", answerType: "mc", options: mcShuffle([vs.form, ...wrongs]), correct: vs.form, solution: vs.why };
+  }
+  const set = fillPickDistinct(3), target = set[rnd(0, 2)], correct = L[set.indexOf(target)];
+  let s = "";
+  if (kind === 0) {
+    // Gefäss gegeben → passender Graph
+    s += frame(0) + fillVesselSVG(target, ...cell(0));
+    set.forEach((v, i) => { s += frame(i + 1, L[i]) + fillGraphSVG(v, ...cell(i + 1)); });
+    return { visual: `<svg viewBox="0 0 200 200" class="mt-shape mt-fill">${s}</svg>`, prompt: "Das Gefäss (oben links) wird gleichmässig gefüllt. Welcher Füllgraph passt?", answerType: "mc", options: L.slice(), correct, solution: `Graph ${correct}: ${target.why}` };
+  }
+  // Graph gegeben → passendes Gefäss
+  s += frame(0) + fillGraphSVG(target, ...cell(0));
+  set.forEach((v, i) => { const [x, y, w, h] = cell(i + 1); s += frame(i + 1, L[i]) + fillVesselSVG(v, x + 8, y + 10, w - 16, h - 14); });
+  return { visual: `<svg viewBox="0 0 200 200" class="mt-shape mt-fill">${s}</svg>`, prompt: "Oben links siehst du einen Füllgraphen. Zu welchem Gefäss gehört er?", answerType: "mc", options: L.slice(), correct, solution: `Gefäss ${correct}: ${target.why}` };
+}
+
 function generatePrismMissing() {
   const askHeight = Math.random() < 0.5, g = rnd(10, 80), h = rnd(3, 20), v = g * h;
   if (askHeight) return { visual: null, prompt: `Ein Prisma hat das Volumen ${v} cm³ und die Grundfläche ${g} cm². Wie gross ist die Höhe (in cm)?`, answerType: "number", correct: h };
@@ -5316,6 +5387,7 @@ const EXERCISE_INFO = {
   "m2-2a-thales-tf": { d: "Beurteile Aussagen über Winkel am Thaleskreis.", g: "Den Satz des Thales erklären." },
   "m2-2b-check": { d: "Prüfe mit der Umkehrung des Pythagoras, ob ein Dreieck rechtwinklig ist.", g: "Mit der Umkehrung des Satzes von Pythagoras Rechtwinkligkeit prüfen." },
   "m2-2d-raum": { d: "Berechne die Körperdiagonale eines Quaders.", g: "Mit Pythagoras Streckenlängen im Raum berechnen." },
+  "m2-3a-fuell": { d: "Ordne einem Gefäss den passenden Füllgraphen zu (oder umgekehrt).", g: "Einem Füllgraphen die passende Gefässform zuordnen und die Zuordnung begründen." },
   "m2-3a-typ": { d: "Entscheide, ob eine Zuordnung proportional, umgekehrt proportional oder weder noch ist.", g: "Proportionale und umgekehrt proportionale Zuordnungen unterscheiden." },
   "m2-4a-fehlend": { d: "Berechne aus dem Volumen die Höhe oder die Grundfläche eines Prismas.", g: "Die Volumenformel des Prismas umstellen." },
   "m2-4c-fehlend": { d: "Berechne aus dem Volumen die Höhe oder die Grundfläche einer Pyramide.", g: "Die Volumenformel der Pyramide umstellen." },
@@ -6709,7 +6781,8 @@ const JAHR2_CHAPTERS = [
   ]),
   chapter("3a", "Zuordnungen und Abhängigkeiten", [
     ex("m2-3a-1", "Proportional oder nicht?", generateProportionalCheck, "Bei direkter Proportionalität ist der Quotient y : x bei allen Wertepaaren immer gleich gross."),
-    ex("m2-3a-typ", "Art der Zuordnung bestimmen", generateProportionTypeMC, "Proportional: y : x ist bei beiden Wertepaaren gleich. Umgekehrt proportional: x · y ist bei beiden Wertepaaren gleich. Sonst: weder noch.")
+    ex("m2-3a-typ", "Art der Zuordnung bestimmen", generateProportionTypeMC, "Proportional: y : x ist bei beiden Wertepaaren gleich. Umgekehrt proportional: x · y ist bei beiden Wertepaaren gleich. Sonst: weder noch."),
+    ex("m2-3a-fuell", "Füllgraphen und Gefässe", generateFillGraphMC, "Gleich breit → Gerade. Nach oben enger → immer steiler. Nach oben weiter → immer flacher. Absatz im Gefäss → Knick im Graphen.")
   ]),
   chapter("3b", "Proportionalität", [
     ex("m2-3b-1", "Dreisatz (direkt)", generateDirectProportion, "Berechne zuerst den Preis für 1 Stück (durch die Menge teilen), dann multipliziere mit der gesuchten Menge.", true),
@@ -7641,6 +7714,7 @@ function renderMcOptions(prefix, task) {
   for (let i = 0; i < 4; i++) {
     const btn = document.getElementById(`${prefix}_mcWrap`).children[i];
     btn.textContent = typoMinus(superscriptExponents(task.options[i] || ""));
+    btn.style.visibility = task.options[i] == null ? "hidden" : "";
   }
 }
 

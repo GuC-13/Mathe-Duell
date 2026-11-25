@@ -250,8 +250,6 @@
   .mt-shape { width: 230px; height: 230px; max-width: 70vw; max-height: 70vw; margin: 0 auto 10px; display: block; }
   .duell-half .mt-shape { width: 90px; height: 90px; margin: 0 auto 6px; }
   .vk-quad .mt-shape { width: 56px; height: 56px; margin: 0 auto 4px; }
-  .duell-half .mt-shape.mt-fill { width: 150px; height: 150px; }
-  .vk-quad .mt-shape.mt-fill { width: 96px; height: 96px; }
   @media (max-height: 700px) {
     .duell-half .mt-shape { width: 64px; height: 64px; }
     .vk-quad .mt-shape { width: 44px; height: 44px; }
@@ -414,6 +412,14 @@
   .vk-quad .duell-text-wrap button { padding: 0 10px; }
   .vk-quad .mc-wrap { gap: 4px; margin-bottom: 4px; }
   .vk-quad .mc-btn { padding: 6px 4px; min-height: 40px; font-size: 0.8rem; border-width: 1px; }
+  .mc-wrap.mc-img .mc-btn { padding: 4px; display: flex; align-items: center; justify-content: center; }
+  .mc-wrap.mc-img .mc-btn svg { width: 100%; max-width: 130px; height: auto; aspect-ratio: 1; display: block; }
+  .duell-half .mc-wrap.mc-img .mc-btn svg { max-width: 92px; }
+  .vk-quad .mc-wrap.mc-img .mc-btn svg { max-width: 68px; }
+  .duell-half .mt-shape.mt-fill { width: 130px; height: 130px; }
+  .vk-quad .mt-shape.mt-fill { width: 100px; height: 100px; }
+  .mc-sol-img { display: inline-block; vertical-align: middle; margin-left: 8px; }
+  .mc-sol-img svg { width: 80px; height: 80px; background: #fff; border-radius: 8px; }
   .vk-divider { height: 52px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; gap: 20px; font-weight: 700; font-size: 1rem; }
   .vk-divider button { background: #dc2626; color: white; border: none; border-radius: 12px; padding: 6px 12px; min-height: 44px; font-weight: 700; }
   .vk-name-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
@@ -513,7 +519,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-25.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-25.2</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -4804,30 +4810,24 @@ function fillPickDistinct(n) {
   return out;
 }
 function generateFillGraphMC() {
-  const kind = rnd(0, 2), L = ["A", "B", "C"];
-  const cell = (i) => [(i % 2) * 100 + 4, Math.floor(i / 2) * 100 + 4, 92, 92];
-  const frame = (i, label) => { const [x, y] = cell(i); return `<rect x="${x - 2}" y="${y - 2}" width="96" height="96" rx="8" fill="none" stroke="${label ? "#cbd5e1" : "#94a3b8"}" stroke-width="${label ? 1 : 2}"/>` + (label ? `<text x="${x + 84}" y="${y + 13}" text-anchor="end" font-size="12" font-weight="700" fill="#0f172a">${label}</text>` : ""); };
+  const kind = [0, 0, 1, 1, 2][rnd(0, 4)], L = ["A", "B", "C", "D"];
   if (kind === 2) {
     // Gefäss gegeben → Verlauf in Worten
     const vs = FILL_VESSELS.filter(v => ["zyl", "weit", "eng", "stufeEng", "stufeWeit"].includes(v.id))[rnd(0, 4)];
     const wrongs = mcShuffle(["eine Gerade", "wird immer flacher", "wird immer steiler", "Gerade, dann Knick und steiler", "Gerade, dann Knick und flacher"].filter(f => f !== vs.form)).slice(0, 3);
-    const svg = `<svg viewBox="0 0 200 200" class="mt-shape mt-fill">${fillVesselSVG(vs, 40, 20, 120, 160)}</svg>`;
+    const svg = `<svg viewBox="0 0 200 200" class="mt-shape">${fillVesselSVG(vs, 40, 20, 120, 160)}</svg>`;
     return { visual: svg, prompt: "Das Gefäss wird gleichmässig mit Wasser gefüllt. Wie verläuft der Füllgraph (Füllhöhe in Abhängigkeit vom Volumen)?", answerType: "mc", options: mcShuffle([vs.form, ...wrongs]), correct: vs.form, solution: vs.why };
   }
-  const set = fillPickDistinct(3), target = set[rnd(0, 2)], correct = L[set.indexOf(target)];
-  let s = "";
+  // 4 Gefässe mit verschiedenem Graphverlauf; Antwort = Buchstabe, Knopf zeigt das Bild
+  const set = fillPickDistinct(4), target = set[rnd(0, 3)], correct = L[set.indexOf(target)];
+  const tag = (l, x) => `<text x="${x}" y="14" font-size="13" font-weight="700" fill="#64748b">${l}</text>`;
   if (kind === 0) {
-    // Gefäss gegeben → passender Graph
-    s += frame(0) + fillVesselSVG(target, ...cell(0));
-    set.forEach((v, i) => { s += frame(i + 1, L[i]) + fillGraphSVG(v, ...cell(i + 1)); });
-    return { visual: `<svg viewBox="0 0 200 200" class="mt-shape mt-fill">${s}</svg>`, prompt: "Das Gefäss (oben links) wird gleichmässig gefüllt. Welcher Füllgraph passt?", answerType: "mc", options: L.slice(), correct, solution: `Graph ${correct}: ${target.why}` };
+    // Gefäss gegeben → Graph antippen
+    return { visual: `<svg viewBox="0 0 200 200" class="mt-shape mt-fill">${fillVesselSVG(target, 40, 20, 120, 160)}</svg>`, prompt: "Das Gefäss wird gleichmässig gefüllt. Tippe den passenden Füllgraphen an.", answerType: "mc", options: L.slice(), optionSvgs: set.map((v, i) => `<svg viewBox="0 0 100 100">${fillGraphSVG(v, 2, 2, 96, 96)}${tag(L[i], 18)}</svg>`), correct, solution: target.why };
   }
-  // Graph gegeben → passendes Gefäss
-  s += frame(0) + fillGraphSVG(target, ...cell(0));
-  set.forEach((v, i) => { const [x, y, w, h] = cell(i + 1); s += frame(i + 1, L[i]) + fillVesselSVG(v, x + 8, y + 10, w - 16, h - 14); });
-  return { visual: `<svg viewBox="0 0 200 200" class="mt-shape mt-fill">${s}</svg>`, prompt: "Oben links siehst du einen Füllgraphen. Zu welchem Gefäss gehört er?", answerType: "mc", options: L.slice(), correct, solution: `Gefäss ${correct}: ${target.why}` };
+  // Graph gegeben → Gefäss antippen
+  return { visual: `<svg viewBox="0 0 200 200" class="mt-shape mt-fill">${fillGraphSVG(target, 10, 10, 180, 180)}</svg>`, prompt: "Zu welchem Gefäss gehört dieser Füllgraph? Tippe es an.", answerType: "mc", options: L.slice(), optionSvgs: set.map((v, i) => `<svg viewBox="0 0 100 100">${fillVesselSVG(v, 10, 12, 80, 82)}${tag(L[i], 3)}</svg>`), correct, solution: target.why };
 }
-
 function generatePrismMissing() {
   const askHeight = Math.random() < 0.5, g = rnd(10, 80), h = rnd(3, 20), v = g * h;
   if (askHeight) return { visual: null, prompt: `Ein Prisma hat das Volumen ${v} cm³ und die Grundfläche ${g} cm². Wie gross ist die Höhe (in cm)?`, answerType: "number", correct: h };
@@ -7713,9 +7713,11 @@ function renderMcOptions(prefix, task) {
   if (!task || task.answerType !== "mc") return;
   for (let i = 0; i < 4; i++) {
     const btn = document.getElementById(`${prefix}_mcWrap`).children[i];
-    btn.textContent = typoMinus(superscriptExponents(task.options[i] || ""));
+    if (task.optionSvgs && task.optionSvgs[i]) btn.innerHTML = task.optionSvgs[i];
+    else btn.textContent = typoMinus(superscriptExponents(task.options[i] || ""));
     btn.style.visibility = task.options[i] == null ? "hidden" : "";
   }
+  document.getElementById(`${prefix}_mcWrap`).classList.toggle("mc-img", !!task.optionSvgs);
 }
 
 /* =========================================================================
@@ -8697,6 +8699,7 @@ function typoMinusHtml(html) { return String(html).split(/(<[^>]*>)/).map(part =
 function formatCorrectAnswerHtml(task) {
   if (!task) return "";
   if (task.answerType === "pair" && task.pairStyle === "fraction") return task.correct[0] === 0 ? "0" : stackedFractionHtml(task.correct[0], task.correct[1]);
+  if (task.answerType === "mc" && task.optionSvgs) { const k = task.options.indexOf(task.correct); if (k >= 0 && task.optionSvgs[k]) return `${escapeHtml(task.correct)}<span class="mc-sol-img">${task.optionSvgs[k]}</span>`; }
   return superscriptExponents(escapeHtml(formatCorrectAnswer(task)));
 }
 function startStallTimeoutCountdown(sides, task, onDone) {
@@ -9223,6 +9226,7 @@ function formatMyAnswerForDisplay(task, bufferStr) {
 }
 function formatMyAnswerForDisplayHtml(task, bufferStr) {
   if (bufferStr === "" || bufferStr == null) return "(keine Antwort)";
+  if (task.answerType === "mc" && task.optionSvgs) { const k = task.options.indexOf(bufferStr); if (k >= 0 && task.optionSvgs[k]) return `${escapeHtml(bufferStr)}<span class="mc-sol-img">${task.optionSvgs[k]}</span>`; }
   if (task.answerType === "pair" && task.pairStyle === "fraction") {
     const parts = String(bufferStr).split(",");
     return stackedFractionHtml(parts[0], parts[1]);

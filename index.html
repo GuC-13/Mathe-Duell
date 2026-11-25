@@ -418,6 +418,9 @@
   .vk-quad .mc-wrap.mc-img .mc-btn svg { max-width: 68px; }
   .duell-half .mt-shape.mt-fill { width: 130px; height: 130px; }
   .vk-quad .mt-shape.mt-fill { width: 100px; height: 100px; }
+  .mt-shape.mt-wide { width: 360px; height: 240px; max-width: 90vw; max-height: 60vw; }
+  .duell-half .mt-shape.mt-wide { width: 285px; height: 190px; }
+  .vk-quad .mt-shape.mt-wide { width: 180px; height: 120px; }
   .mc-sol-img { display: inline-block; vertical-align: middle; margin-left: 8px; }
   .mc-sol-img svg { width: 80px; height: 80px; background: #fff; border-radius: 8px; }
   .vk-divider { height: 52px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; gap: 20px; font-weight: 700; font-size: 1rem; }
@@ -519,7 +522,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-25.2</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-25.3</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -4828,6 +4831,161 @@ function generateFillGraphMC() {
   // Graph gegeben → Gefäss antippen
   return { visual: `<svg viewBox="0 0 200 200" class="mt-shape mt-fill">${fillGraphSVG(target, 10, 10, 180, 180)}</svg>`, prompt: "Zu welchem Gefäss gehört dieser Füllgraph? Tippe es an.", answerType: "mc", options: L.slice(), optionSvgs: set.map((v, i) => `<svg viewBox="0 0 100 100">${fillVesselSVG(v, 10, 12, 80, 82)}${tag(L[i], 3)}</svg>`), correct, solution: target.why };
 }
+// ---- Weg-Zeit-Graphen (M2 K3a) ----
+const WZ_NAMES = ["Fabienne", "Luca", "Mia", "Noah", "Lea", "Elias", "Sara", "Timo", "Alina", "Jonas"];
+const WZ_NUM = ["①", "②", "③", "④"];
+// Velofahrt mit 4 Abschnitten auf dem Raster (2 min / 0.5 km), genau ein Halt
+function wzMakeTrip() {
+  for (;;) {
+    const stopIdx = rnd(1, 3), segs = [];
+    for (let i = 0; i < 4; i++) {
+      if (i === stopIdx) { segs.push({ dt: [2, 4][rnd(0, 1)], d: 0, v: 0 }); continue; }
+      const dt = [2, 4, 6, 8][rnd(0, 3)], d = rnd(1, 6) * 0.5, v = d * 60 / dt;
+      segs.push({ dt, d, v });
+    }
+    const moving = segs.filter(s => s.v > 0), vs = moving.map(s => s.v);
+    if (vs.some(v => v < 6 || v > 36 || Math.round(v * 10) !== v * 10)) continue;
+    if (new Set(vs).size !== vs.length) continue;
+    const T = segs.reduce((a, s) => a + s.dt, 0), D = segs.reduce((a, s) => a + s.d, 0);
+    if (T > 26 || D > 7) continue;
+    let t = 0, x = 0; const pts = [[0, 0]];
+    segs.forEach(s => { t += s.dt; x += s.d; s.t1 = t; s.x1 = x; pts.push([t, x]); });
+    return { segs, pts, T, D, stopIdx };
+  }
+}
+function wzLabelPos(x0, y0, x1, y1, off) {
+  const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1;
+  let nx = dy / len, ny = -dx / len;
+  if (ny > 0 || (ny === 0 && nx > 0)) { nx = -nx; ny = -ny; }
+  return [(x0 + x1) / 2 + nx * off, (y0 + y1) / 2 + ny * off + 4];
+}
+function wzGraphSVG(trip, marked) {
+  const L = 30, B = 176, W = 255, H = 156;
+  const Tmax = Math.max(12, Math.ceil(trip.T / 4) * 4), Dmax = Math.max(3, Math.ceil(trip.D));
+  const X = t => L + t / Tmax * W, Y = d => B - d / Dmax * H;
+  let s = "";
+  for (let t = 0; t <= Tmax; t += 2) s += `<line x1="${X(t)}" y1="${Y(0)}" x2="${X(t)}" y2="${Y(Dmax)}" stroke="#e2e8f0"/>`;
+  for (let d = 0; d <= Dmax + 1e-9; d += 0.5) s += `<line x1="${X(0)}" y1="${Y(d)}" x2="${X(Tmax)}" y2="${Y(d)}" stroke="#e2e8f0"/>`;
+  for (let t = 0; t <= Tmax; t += 4) s += `<text x="${X(t)}" y="${B + 10}" font-size="9" text-anchor="middle" fill="#334155">${t}</text>`;
+  for (let d = 0; d <= Dmax; d += 1) s += `<text x="${L - 4}" y="${Y(d) + 3}" font-size="9" text-anchor="end" fill="#334155">${d}</text>`;
+  s += `<line x1="${X(0)}" y1="${Y(0)}" x2="${X(Tmax)}" y2="${Y(0)}" stroke="#334155" stroke-width="1.5"/><line x1="${X(0)}" y1="${Y(0)}" x2="${X(0)}" y2="${Y(Dmax)}" stroke="#334155" stroke-width="1.5"/>`;
+  s += `<text x="${X(Tmax)}" y="${B + 20}" font-size="8" text-anchor="end" fill="#64748b">Zeit [min]</text><text x="${L - 4}" y="${Y(Dmax) - 6}" font-size="8" text-anchor="start" fill="#64748b">Weg [km]</text>`;
+  s += `<polyline points="${trip.pts.map(([t, d]) => `${X(t).toFixed(1)},${Y(d).toFixed(1)}`).join(" ")}" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round"/>`;
+  trip.segs.forEach((sg, i) => {
+    const t0 = sg.t1 - sg.dt, x0 = sg.x1 - sg.d, [mx, my] = wzLabelPos(X(t0), Y(x0), X(sg.t1), Y(sg.x1), 12);
+    s += `<text x="${mx}" y="${my}" font-size="15" font-weight="700" text-anchor="middle" fill="${marked === i ? "#dc2626" : "#0f172a"}">${WZ_NUM[i]}</text>`;
+  });
+  trip.pts.forEach(([t, d]) => { s += `<circle cx="${X(t)}" cy="${Y(d)}" r="2.2" fill="#2563eb"/>`; });
+  return `<svg viewBox="0 0 300 200" class="mt-shape mt-wide">${s}</svg>`;
+}
+function generateDistanceTimeRead() {
+  const trip = wzMakeTrip(), { segs } = trip, name = WZ_NAMES[rnd(0, WZ_NAMES.length - 1)];
+  const intro = `${name} fährt mit dem Velo ins Training (Weg-Zeit-Graph). `;
+  const opts = WZ_NUM.map(n => "Abschnitt " + n);
+  const kmh = sg => `${nm(sg.d)} km in ${sg.dt} min → ${nm(sg.d)} : ${sg.dt} · 60 = ${nm(sg.v)} km/h`;
+  const visual = wzGraphSVG(trip);
+  const q = rnd(0, 6);
+  if (q === 0) return { visual, prompt: intro + `In welchem Abschnitt bleibt ${name} stehen?`, answerType: "mc", options: opts, correct: opts[trip.stopIdx], solution: `Stillstand = waagrechte Linie (der Weg ändert sich nicht) → Abschnitt ${WZ_NUM[trip.stopIdx]}.` };
+  if (q === 1) { const sg = segs[trip.stopIdx]; return { visual, prompt: intro + `Wie viele Minuten bleibt ${name} stehen?`, answerType: "number", correct: sg.dt, solution: `Waagrechter Abschnitt ${WZ_NUM[trip.stopIdx]} von Minute ${sg.t1 - sg.dt} bis ${sg.t1} → ${sg.dt} min.` }; }
+  if (q === 2) {
+    const i = segs.reduce((b, s, k) => s.v > segs[b].v ? k : b, 0);
+    return { visual, prompt: intro + `In welchem Abschnitt fährt ${name} am schnellsten?`, answerType: "mc", options: opts, correct: opts[i], solution: `Je steiler die Linie, desto schneller. Am steilsten ist Abschnitt ${WZ_NUM[i]}: ${kmh(segs[i])}.` };
+  }
+  if (q === 3) { const k = rnd(0, 2), sg = segs[k]; return { visual, prompt: intro + `Wie viele km ist ${name} nach ${sg.t1} Minuten gefahren?`, answerType: "number", correct: sg.x1, solution: `Bei ${sg.t1} min auf der Zeitachse senkrecht hoch bis zum Graphen, dann waagrecht zur Wegachse: ${nm(sg.x1)} km.` }; }
+  if (q === 5) {
+    const ds = segs.map(s => s.d), mx = Math.max(...ds);
+    if (ds.filter(d => d === mx).length === 1) { const i = ds.indexOf(mx); return { visual, prompt: intro + `In welchem Abschnitt legt ${name} die längste Teilstrecke zurück?`, answerType: "mc", options: opts, correct: opts[i], solution: `Teilstrecken (Höhenunterschied der Abschnitte): ${segs.map((s, k) => WZ_NUM[k] + " " + nm(s.d) + " km").join(", ")} → längste: ${WZ_NUM[i]}.` }; }
+  }
+  if (q === 6) {
+    const avg = trip.D * 60 / trip.T;
+    if (Math.round(avg * 10) === avg * 10) return { visual, prompt: intro + "Wie gross ist die Durchschnittsgeschwindigkeit für die ganze Fahrt (in km/h)?", answerType: "number", correct: avg, solution: `Ganze Strecke ${nm(trip.D)} km in ${trip.T} min (Halt mitgezählt): ${nm(trip.D)} : ${trip.T} · 60 = ${nm(avg)} km/h.` };
+  }
+  const movers = segs.map((s, k) => k).filter(k => segs[k].v > 0), k = movers[rnd(0, movers.length - 1)];
+  return { visual, prompt: intro + `Wie schnell fährt ${name} in Abschnitt ${WZ_NUM[k]} (in km/h)?`, answerType: "number", correct: segs[k].v, solution: `Geschwindigkeit = Strecke : Zeit. ${kmh(segs[k])}.` };
+}
+
+// Geschichte ↔ Graph (Distanz von zu Hause, darf wieder fallen)
+const WZ_KINDS = {
+  slow: { v: 0.7, txt: "geht N gemütlich los", txt2: "geht N gemütlich weiter", short: "geht langsam von zu Hause weg" },
+  fast: { v: 2, txt: "fährt N mit dem Trottinett zügig los", txt2: "fährt N mit dem Trottinett zügig weiter", short: "fährt schnell von zu Hause weg" },
+  stop: { v: 0, txt: "bleibt N stehen", txt2: "bleibt N eine Weile stehen", short: "bleibt stehen" },
+  backSlow: { v: -0.7, txt: "geht N langsam nach Hause zurück", txt2: "geht N langsam nach Hause zurück", short: "geht langsam Richtung zu Hause" },
+  backFast: { v: -2, txt: "rennt N nach Hause zurück", txt2: "rennt N nach Hause zurück", short: "rennt Richtung zu Hause" }
+};
+// Abschnitte → Punkte; Vorwärts: Strecke 2, Halt: Dauer 2, Rückwärts: bis nach Hause
+function wzStoryPts(seq) {
+  let t = 0, x = 0; const pts = [[0, 0]];
+  for (const k of seq) {
+    const v = WZ_KINDS[k].v;
+    if (v === 0) t += 2.5;
+    else if (v > 0) { t += 2 / v; x += 2; }
+    else { if (x <= 0) return null; t += x / -v; x = 0; }
+    pts.push([t, x]);
+  }
+  return pts;
+}
+function wzStoryValid(seq) {
+  const pts = wzStoryPts(seq);
+  if (!pts) return false;
+  for (let i = 1; i < seq.length; i++) if (seq[i] === seq[i - 1] || (seq[i] === "stop" && seq[i - 1] === "stop")) return false;
+  return seq[0] !== "stop" && !(seq[0].startsWith("back"));
+}
+function wzRandomStory(n) {
+  const keys = Object.keys(WZ_KINDS);
+  for (;;) {
+    const seq = Array.from({ length: n }, () => keys[rnd(0, keys.length - 1)]);
+    if (wzStoryValid(seq) && (seq.some(k => k.startsWith("back")) || Math.random() < 0.25)) return seq;
+  }
+}
+function wzStoryText(name, seq) {
+  const conn = ["Zuerst", "Dann", "Danach", "Zum Schluss"];
+  const parts = seq.map((k, i) => {
+    const c = i === 0 ? conn[0] : i === seq.length - 1 ? conn[3] : conn[Math.min(i, 2)];
+    const atHome = k === "stop" && wzStoryPts(seq.slice(0, i)).slice(-1)[0][1] === 0;
+    return `${c} ${(atHome ? "sucht N zu Hause etwas" : (i === 0 ? WZ_KINDS[k].txt : WZ_KINDS[k].txt2)).replace("N", name)}.`;
+  });
+  return parts.join(" ");
+}
+function wzSmallGraphSVG(pts, Tmax, Xmax, label, marked) {
+  const L = 14, B = 86, W = 80, H = 70, X = t => L + t / Tmax * W, Y = d => B - d / Xmax * H;
+  let s = `<line x1="${L}" y1="${B}" x2="${L + W + 2}" y2="${B}" stroke="#334155" stroke-width="1.5"/><line x1="${L}" y1="${B}" x2="${L}" y2="${B - H - 4}" stroke="#334155" stroke-width="1.5"/>`;
+  s += `<text x="${L + W}" y="${B + 9}" font-size="7" text-anchor="end" fill="#64748b">Zeit</text><text x="${L - 3}" y="${B - H + 18}" font-size="7" text-anchor="end" fill="#64748b" transform="rotate(-90 ${L - 3} ${B - H + 18})">Distanz</text>`;
+  s += `<polyline points="${pts.map(([t, d]) => `${X(t).toFixed(1)},${Y(d).toFixed(1)}`).join(" ")}" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  if (marked != null) {
+    const [t0, x0] = pts[marked], [t1, x1] = pts[marked + 1];
+    s += `<line x1="${X(t0).toFixed(1)}" y1="${Y(x0).toFixed(1)}" x2="${X(t1).toFixed(1)}" y2="${Y(x1).toFixed(1)}" stroke="#dc2626" stroke-width="4.5" stroke-linecap="round"/>`;
+  }
+  if (label) s += `<text x="${L + 6}" y="12" font-size="13" font-weight="700" fill="#64748b">${label}</text>`;
+  return s;
+}
+function generateDistanceTimeStory() {
+  const name = WZ_NAMES[rnd(0, WZ_NAMES.length - 1)];
+  if (Math.random() < 0.6) {
+    // Geschichte → 4 Graphen antippen
+    const seq = wzRandomStory(rnd(3, 4)), keys = Object.keys(WZ_KINDS), sets = [seq], sig = s => s.join(",");
+    let guard = 0;
+    while (sets.length < 4 && guard++ < 500) {
+      const m = seq.slice();
+      if (Math.random() < 0.3 && m.length > 2) { const i = rnd(0, m.length - 2); [m[i], m[i + 1]] = [m[i + 1], m[i]]; }
+      else m[rnd(0, m.length - 1)] = keys[rnd(0, keys.length - 1)];
+      if (!wzStoryValid(m) || sets.some(s => sig(s) === sig(m))) continue;
+      sets.push(m);
+    }
+    const all = mcShuffle(sets), L4 = ["A", "B", "C", "D"], correct = L4[all.findIndex(s => sig(s) === sig(seq))];
+    const ptsAll = all.map(wzStoryPts), Tmax = Math.max(...ptsAll.map(p => p[p.length - 1][0])), Xmax = Math.max(...ptsAll.flat().map(p => p[1]));
+    return { visual: null, prompt: wzStoryText(name, seq) + "\nTippe den passenden Graphen an (Distanz von zu Hause).", answerType: "mc", options: L4.slice(), optionSvgs: ptsAll.map((p, i) => `<svg viewBox="0 0 100 100">${wzSmallGraphSVG(p, Tmax, Xmax, L4[i])}</svg>`), correct, solution: "Steigend = weg von zu Hause, fallend = zurück nach Hause, waagrecht = Stillstand. Je steiler, desto schneller.\nGraph " + correct + " zeigt: " + seq.map(k => WZ_KINDS[k].short).join(" → ") + "." };
+  }
+  // Graph mit markiertem Abschnitt → Beschreibung wählen
+  const seq = wzRandomStory(4), pts = wzStoryPts(seq), k = rnd(0, seq.length - 1);
+  const Tmax = pts[pts.length - 1][0], Xmax = Math.max(...pts.map(p => p[1]));
+  // «langsam» vs. «schnell» nur als Falschantwort, wenn der Graph beide Tempi derselben Richtung zeigt (sonst nicht entscheidbar)
+  const twin = { slow: "fast", fast: "slow", backSlow: "backFast", backFast: "backSlow" }[seq[k]];
+  const pool = Object.keys(WZ_KINDS).filter(o => o !== seq[k] && (o !== twin || seq.includes(twin)));
+  const correct = WZ_KINDS[seq[k]].short, wrongs = mcShuffle(pool).slice(0, 3).map(o => WZ_KINDS[o].short);
+  const visual = `<svg viewBox="0 0 100 100" class="mt-shape mt-fill">${wzSmallGraphSVG(pts, Tmax, Xmax, null, k)}</svg>`;
+  return { visual, prompt: `Der Graph zeigt die Distanz von ${name} zu Hause. Was passiert im rot markierten Abschnitt?`, answerType: "mc", options: mcShuffle([correct, ...wrongs]), correct, solution: "Steigend = weg von zu Hause, fallend = Richtung zu Hause, waagrecht = Stillstand. Steil = schnell, flach = langsam.\n→ " + correct + "." };
+}
+
 function generatePrismMissing() {
   const askHeight = Math.random() < 0.5, g = rnd(10, 80), h = rnd(3, 20), v = g * h;
   if (askHeight) return { visual: null, prompt: `Ein Prisma hat das Volumen ${v} cm³ und die Grundfläche ${g} cm². Wie gross ist die Höhe (in cm)?`, answerType: "number", correct: h };
@@ -5388,6 +5546,8 @@ const EXERCISE_INFO = {
   "m2-2b-check": { d: "Prüfe mit der Umkehrung des Pythagoras, ob ein Dreieck rechtwinklig ist.", g: "Mit der Umkehrung des Satzes von Pythagoras Rechtwinkligkeit prüfen." },
   "m2-2d-raum": { d: "Berechne die Körperdiagonale eines Quaders.", g: "Mit Pythagoras Streckenlängen im Raum berechnen." },
   "m2-3a-fuell": { d: "Ordne einem Gefäss den passenden Füllgraphen zu (oder umgekehrt).", g: "Einem Füllgraphen die passende Gefässform zuordnen und die Zuordnung begründen." },
+  "m2-3a-wegzeit": { d: "Lies aus einem Weg-Zeit-Graphen ab: Halt, Tempo, Strecke, Geschwindigkeit.", g: "Einen Weg-Zeit-Graphen interpretieren und einzelne Bewegungsabschnitte beschreiben." },
+  "m2-3a-weggeschichte": { d: "Ordne eine Wegbeschreibung dem passenden Graphen zu.", g: "Eine Wegbeschreibung den passenden Abschnitten eines Graphen zuordnen." },
   "m2-3a-typ": { d: "Entscheide, ob eine Zuordnung proportional, umgekehrt proportional oder weder noch ist.", g: "Proportionale und umgekehrt proportionale Zuordnungen unterscheiden." },
   "m2-4a-fehlend": { d: "Berechne aus dem Volumen die Höhe oder die Grundfläche eines Prismas.", g: "Die Volumenformel des Prismas umstellen." },
   "m2-4c-fehlend": { d: "Berechne aus dem Volumen die Höhe oder die Grundfläche einer Pyramide.", g: "Die Volumenformel der Pyramide umstellen." },
@@ -6782,7 +6942,9 @@ const JAHR2_CHAPTERS = [
   chapter("3a", "Zuordnungen und Abhängigkeiten", [
     ex("m2-3a-1", "Proportional oder nicht?", generateProportionalCheck, "Bei direkter Proportionalität ist der Quotient y : x bei allen Wertepaaren immer gleich gross."),
     ex("m2-3a-typ", "Art der Zuordnung bestimmen", generateProportionTypeMC, "Proportional: y : x ist bei beiden Wertepaaren gleich. Umgekehrt proportional: x · y ist bei beiden Wertepaaren gleich. Sonst: weder noch."),
-    ex("m2-3a-fuell", "Füllgraphen und Gefässe", generateFillGraphMC, "Gleich breit → Gerade. Nach oben enger → immer steiler. Nach oben weiter → immer flacher. Absatz im Gefäss → Knick im Graphen.")
+    ex("m2-3a-fuell", "Füllgraphen und Gefässe", generateFillGraphMC, "Gleich breit → Gerade. Nach oben enger → immer steiler. Nach oben weiter → immer flacher. Absatz im Gefäss → Knick im Graphen."),
+    ex("m2-3a-wegzeit", "Weg-Zeit-Graphen lesen", generateDistanceTimeRead, "Waagrecht = Stillstand. Je steiler, desto schneller. Geschwindigkeit = Strecke : Zeit; km pro Minute · 60 = km/h.", true),
+    ex("m2-3a-weggeschichte", "Geschichte und Graph", generateDistanceTimeStory, "Distanz von zu Hause: steigend = weg, fallend = zurück, waagrecht = Stillstand. Steil = schnell, flach = langsam.")
   ]),
   chapter("3b", "Proportionalität", [
     ex("m2-3b-1", "Dreisatz (direkt)", generateDirectProportion, "Berechne zuerst den Preis für 1 Stück (durch die Menge teilen), dann multipliziere mit der gesuchten Menge.", true),

@@ -522,7 +522,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-25.3</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-25.4</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -794,6 +794,7 @@
       <button class="hotspot-confirm-btn" data-side="klassen" data-hotspotsubmit="1">✓ Bestätigen</button>
     </div>
     <div id="klassenAnsweredNote" class="hidden" style="text-align:center; font-weight:700; margin-top:14px;">✓ Antwort gesendet – warte auf die nächste Aufgabe …</div>
+    <p class="klassen-sync-warn hidden" style="text-align:center; color:#b45309; font-weight:700; margin-top:12px;"></p>
   </div>
 
   <!-- KLASSENMODUS: Rangliste (Schüler) -->
@@ -812,6 +813,7 @@
       <div class="result-winner" id="klassenPlayerRankPlace"></div>
       <div class="result-scores" id="klassenPlayerRankScore"></div>
     </div>
+    <p class="klassen-sync-warn hidden" style="text-align:center; color:#b45309; font-weight:700;"></p>
     <div class="setup-card">
       <label class="field-label">Top 5</label>
       <div id="klassenPlayerRankTop5" style="display:flex; flex-direction:column; gap:6px;"></div>
@@ -10676,6 +10678,12 @@ async function klassenSubmitAnswer() {
   points *= klassenTaskMultiplier(task);
   klassenLockAnswerUI(true);
   klassenRecordMyAnswer({ answered: true, prompt: task.prompt, myAnswer: formatMyAnswerForDisplayHtml(task, inputBuffers.klassen), myAnswerText: formatMyAnswerForDisplay(task, inputBuffers.klassen), correctAnswer: formatCorrectAnswerHtml(task), correctAnswerText: formatCorrectAnswer(task), correct: ok, points });
+  const token = {};
+  klassenUnsentAnswers.add(token);
+  klassenRenderSyncWarn(); // Anzahl nachführen, falls die Warnung schon steht
+  // Firestore zeigt eigene Schreibvorgänge sofort lokal an (auch Punkte/Rang), meldet aber keinen
+  // Fehler, wenn das Senden hängt - die Promise wartet einfach. Deshalb nach kurzer Zeit warnen.
+  const warnTimer = setTimeout(() => klassenRenderSyncWarn(true), KLASSEN_UNSENT_WARN_MS);
   try {
     await firebaseDb.collection("rooms").doc(klassenRoomPin).collection("questions").doc(String(qIndex)).collection("answers").doc(klassenPlayerId).set({
       name: klassenPlayerName, correct: ok, points, submittedAt: Date.now()
@@ -10686,7 +10694,37 @@ async function klassenSubmitAnswer() {
   } catch (e) {
     console.error("Klassenmodus: Antwort konnte nicht gesendet werden.", e);
     klassenSetAnsweredNote("⚠️ Antwort konnte nicht gesendet werden – prüfe das WLAN. Warte auf die nächste Aufgabe …");
+  } finally {
+    clearTimeout(warnTimer);
+    klassenUnsentAnswers.delete(token);
+    klassenRenderSyncWarn();
   }
+}
+// Antworten, die der Server noch nicht bestätigt hat (siehe klassenSubmitAnswer)
+const KLASSEN_UNSENT_WARN_MS = 4000;
+let klassenUnsentAnswers = new Set(), klassenSyncWarnShown = false, klassenSyncOkTimeout = null;
+// fromTimer = Wartezeit einer Antwort ist abgelaufen -> Warnung jetzt zeigen
+function klassenRenderSyncWarn(fromTimer) {
+  const n = klassenUnsentAnswers.size;
+  if (n > 0 && fromTimer === true) klassenSyncWarnShown = true;
+  if (n > 0 && !klassenSyncWarnShown) return; // noch innerhalb der Wartezeit
+  let text = "";
+  clearTimeout(klassenSyncOkTimeout);
+  if (n > 0) {
+    text = `⚠️ ${n === 1 ? "1 Antwort ist" : n + " Antworten sind"} noch nicht bei der Lehrperson angekommen – prüfe das WLAN. Deine Punkte und dein Platz hier sind darum vielleicht zu hoch.`;
+  } else if (klassenSyncWarnShown) {
+    klassenSyncWarnShown = false;
+    text = "✓ Alle Antworten sind jetzt bei der Lehrperson angekommen.";
+    klassenSyncOkTimeout = setTimeout(() => klassenSetSyncWarnText(""), 4000);
+  }
+  klassenSetSyncWarnText(text);
+}
+function klassenSetSyncWarnText(text) {
+  document.querySelectorAll(".klassen-sync-warn").forEach(el => {
+    el.textContent = text;
+    el.classList.toggle("hidden", !text);
+    el.style.color = text.startsWith("✓") ? "var(--success)" : "#b45309";
+  });
 }
 async function klassenRenderStudentRanking(isFinal, room) {
   clearInterval(klassenCountdownIv);

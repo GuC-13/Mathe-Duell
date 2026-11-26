@@ -522,7 +522,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-25.4</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-26.1</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -9586,7 +9586,7 @@ document.getElementById("goKlassenBtn").addEventListener("click", async () => {
   joinBtn.disabled = !ok;
 });
 /* ---- Klassenduell: weitere Themen dazunehmen. Das gewählte Thema bleibt das Hauptthema;
-   per Suche können beliebige weitere Übungen (oder ganze Kapitel) aus allen Kategorien
+   per Suche oder Kapitel-Browser können beliebige weitere Übungen (einzeln oder ganze Kapitel)
    dazugemischt werden. Daraus entsteht beim "Raum erstellen" eine gemischte Übung - alles
    Weitere (Vorschau, "Anderes Thema", Übungsmodus) läuft wie bei gemischten Aufgaben. ---- */
 let klassenBaseExercise = null, klassenExtraExercises = [];
@@ -9636,37 +9636,101 @@ document.getElementById("klassenAddTopicBtn").addEventListener("click", () => {
 });
 document.getElementById("klassenTopicSearchInput").addEventListener("input", (e) => klassenTopicSearchRun(e.target.value));
 let klassenTopicSearchItems = [];
+// Aufgeklappte Kategorien/Kapitel im Themen-Browser (Schlüssel "cat" bzw. "cat/ch")
+const klassenTopicOpen = new Set();
 function klassenTopicSearchRun(query) {
   const q = query.trim().toLowerCase();
   const resultsEl = document.getElementById("klassenTopicSearchResults");
-  if (!q) { klassenTopicSearchItems = []; resultsEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:12px;">Suchbegriff eingeben, z.B. "Runden".</p>'; return; }
-  const inPool = new Set(klassenPoolOf(klassenBuildExercise()).map(e => e.id));
-  // Ganze Kapitel, deren Titel passt, zuerst - danach die einzelnen Übungen
-  const chapters = CATEGORIES.flatMap(cat => cat.chapters.filter(ch => ch.exercises.length > 1 && ch.title.toLowerCase().includes(q)).map(ch => ({ kind: "chapter", ch, cat, exercises: ch.exercises })));
-  const singles = searchExercises(q).map(m => ({ kind: "ex", ...m, exercises: [m.ex] }));
-  klassenTopicSearchItems = [...chapters, ...singles];
-  if (!klassenTopicSearchItems.length) { resultsEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:12px;">Keine Übungen gefunden.</p>'; return; }
-  resultsEl.innerHTML = klassenTopicSearchItems.map((it, i) => {
-    const done = it.exercises.every(e => inPool.has(e.id));
-    const title = it.kind === "chapter" ? `Ganzes Kapitel: ${escapeHtml(it.ch.title)} (${it.exercises.length} Aufgabentypen)` : titleWithCalc(escapeHtml(it.ex.title), it.ex.calc);
-    const sub = it.kind === "chapter" ? escapeHtml(it.cat.title) : `${escapeHtml(it.cat.title)} · ${escapeHtml(it.ch.title)}`;
-    return `<div class="chapter-row" data-kt-idx="${i}" tabindex="0" role="button"${done ? ' aria-disabled="true" style="opacity:0.55;"' : ""}>
+  const scrollTop = resultsEl.scrollTop;
+  const basePool = new Set(klassenPoolOf(klassenBaseExercise).map(e => e.id));
+  const extras = new Set(klassenExtraExercises.map(e => e.id));
+  const items = [];
+  const rows = [];
+  const row = (it, inner, opts = {}) => {
+    items.push(it);
+    const i = items.length - 1;
+    rows.push(`<div class="chapter-row${opts.cls ? " " + opts.cls : ""}" data-kt-idx="${i}" tabindex="0" role="button"${opts.expanded !== undefined ? ` aria-expanded="${opts.expanded}"` : ""}${opts.disabled ? ' aria-disabled="true" style="opacity:0.55;' + (opts.style || "") + '"' : (opts.style ? ` style="${opts.style}"` : "")}>${inner}</div>`);
+  };
+  const exState = (ex) => basePool.has(ex.id) ? "base" : extras.has(ex.id) ? "on" : "off";
+  // Kapitel-Zeile (aufklappbar) + bei offenem Kapitel: "ganzes Kapitel" und die einzelnen Übungen
+  const chapterBlock = (cat, ch, indent) => {
+    const key = cat.id + "/" + ch.id;
+    const open = klassenTopicOpen.has(key);
+    const nOn = ch.exercises.filter(e => exState(e) !== "off").length;
+    const showNum = cat.id !== "basiswissen";
+    row({ kind: "ch", key }, `
+      <span class="chapter-id" aria-hidden="true">${open ? "▾" : "▸"}</span>
       <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
-        <span class="chapter-title">${title}</span>
-        <span style="font-size:0.75rem; color:var(--muted);">${sub}</span>
+        <span class="chapter-title">${showNum ? `Kapitel ${escapeHtml(String(ch.id))}: ` : ""}${escapeHtml(ch.title)}</span>
+        <span style="font-size:0.75rem; color:var(--muted);">${q ? escapeHtml(cat.title) + " · " : ""}${ch.exercises.length} Aufgabentyp${ch.exercises.length === 1 ? "" : "en"}</span>
       </div>
-      <span class="chapter-status">${done ? "✓ dabei" : "➕"}</span>
-    </div>`;
-  }).join("");
+      <span class="chapter-status">${nOn ? `${nOn}/${ch.exercises.length} dabei` : ""}</span>`, { expanded: open, style: indent ? "padding-left:26px;" : "" });
+    if (!open) return;
+    const pad = indent ? "padding-left:52px;" : "padding-left:40px;";
+    const allIn = ch.exercises.every(e => exState(e) !== "off");
+    if (ch.exercises.length > 1) {
+      row({ kind: "chall", exercises: ch.exercises }, `
+        <span class="chapter-title" style="font-weight:700;">Ganzes Kapitel</span>
+        <span class="chapter-status">${allIn ? "✓ alle dabei" : "➕ alle"}</span>`, { cls: "mixed", style: pad, disabled: allIn });
+    }
+    ch.exercises.forEach(ex => {
+      const st = exState(ex);
+      row({ kind: "ex", ex }, `
+        <span class="chapter-title">${titleWithCalc(escapeHtml(ex.title), ex.calc)}</span>
+        <span class="chapter-status">${st === "base" ? "Hauptthema" : st === "on" ? "✓ dabei" : "➕"}</span>`, { style: pad, disabled: st === "base" });
+    });
+  };
+  if (!q) {
+    // Ohne Suchbegriff: alle Kategorien und Kapitel zum Durchstöbern
+    rows.push('<p style="color:var(--muted); font-size:0.85rem; padding:10px 14px; margin:0;">Suchbegriff eingeben oder ein Kapitel aufklappen und einzelne Übungen wählen.</p>');
+    CATEGORIES.forEach(cat => {
+      const chs = cat.chapters.filter(ch => ch.exercises.length);
+      if (!chs.length) return;
+      const open = klassenTopicOpen.has(cat.id);
+      row({ kind: "cat", key: cat.id }, `
+        <span class="chapter-id" aria-hidden="true">${open ? "▾" : "▸"}</span>
+        <span class="chapter-title" style="font-weight:800;">${escapeHtml(cat.title)}</span>
+        <span class="chapter-status" style="color:var(--muted);">${chs.length} Kapitel</span>`, { expanded: open, style: "background:var(--soft);" });
+      if (open) chs.forEach(ch => chapterBlock(cat, ch, true));
+    });
+  } else {
+    // Mit Suchbegriff: passende Kapitel (aufklappbar) zuerst, danach die einzelnen Übungen
+    CATEGORIES.forEach(cat => cat.chapters.filter(ch => ch.exercises.length && ch.title.toLowerCase().includes(q)).forEach(ch => chapterBlock(cat, ch, false)));
+    searchExercises(q).forEach(m => {
+      const st = exState(m.ex);
+      row({ kind: "ex", ex: m.ex }, `
+        <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+          <span class="chapter-title">${titleWithCalc(escapeHtml(m.ex.title), m.ex.calc)}</span>
+          <span style="font-size:0.75rem; color:var(--muted);">${escapeHtml(m.cat.title)} · ${escapeHtml(m.ch.title)}</span>
+        </div>
+        <span class="chapter-status">${st === "base" ? "Hauptthema" : st === "on" ? "✓ dabei" : "➕"}</span>`, { disabled: st === "base" });
+    });
+    if (!items.length) rows.push('<p style="color:var(--muted); text-align:center; padding:12px;">Keine Übungen gefunden.</p>');
+  }
+  klassenTopicSearchItems = items;
+  resultsEl.innerHTML = rows.join("");
+  resultsEl.scrollTop = scrollTop;
 }
 function klassenTopicSearchPick(row) {
   const it = klassenTopicSearchItems[Number(row.dataset.ktIdx)];
-  if (!it) return;
-  const inPool = new Set(klassenPoolOf(klassenBuildExercise()).map(e => e.id));
-  const add = it.exercises.filter(e => !inPool.has(e.id));
-  if (!add.length) return;
-  klassenExtraExercises.push(...add);
-  klassenRenderTopics();
+  if (!it || row.getAttribute("aria-disabled") === "true") return;
+  const idx = Number(row.dataset.ktIdx);
+  if (it.kind === "cat" || it.kind === "ch") {
+    if (klassenTopicOpen.has(it.key)) klassenTopicOpen.delete(it.key); else klassenTopicOpen.add(it.key);
+    klassenTopicSearchRun(document.getElementById("klassenTopicSearchInput").value);
+  } else if (it.kind === "chall") {
+    const inPool = new Set(klassenPoolOf(klassenBuildExercise()).map(e => e.id));
+    klassenExtraExercises.push(...it.exercises.filter(e => !inPool.has(e.id)));
+    klassenRenderTopics();
+  } else {
+    // Einzelne Übung an- bzw. wieder abwählen
+    const i = klassenExtraExercises.findIndex(e => e.id === it.ex.id);
+    if (i >= 0) klassenExtraExercises.splice(i, 1); else klassenExtraExercises.push(it.ex);
+    klassenRenderTopics();
+  }
+  // Fokus nach dem Neuzeichnen auf derselben Zeile halten (Tastaturbedienung)
+  const again = document.querySelector(`#klassenTopicSearchResults [data-kt-idx="${idx}"]`);
+  if (again && document.activeElement === document.body) again.focus({ preventScroll: true });
 }
 document.getElementById("klassenTopicSearchResults").addEventListener("click", (e) => {
   const row = e.target.closest("[data-kt-idx]");

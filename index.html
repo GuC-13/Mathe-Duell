@@ -522,7 +522,7 @@
       <button class="home-mode-btn" id="goKlassenBtn"><span class="hm-ico">🏫</span>Klassenduell</button>
     </div>
     <button id="lp21LinkBtn" class="lp21-link">Lehrplan 21</button>
-    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-26.1</div>
+    <div id="appVersionLabel" style="text-align:center; margin-top:14px; font-size:0.72rem; color:var(--muted);">v2026-11-27.1</div>
     <button id="appShareQrBtn" aria-label="QR-Code zum Teilen der App vergrössern" style="position:fixed; right:16px; bottom:16px; z-index:150; width:60px; height:60px; padding:4px; border-radius:14px; border:none; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,0.25); cursor:pointer;">
       <canvas id="appShareQrCanvas" style="width:100%; height:100%; image-rendering:pixelated; display:block;"></canvas>
     </button>
@@ -634,6 +634,11 @@
         <button class="choice-btn" data-klassen-rankint="3">Nach 3 Aufgaben</button>
         <button class="choice-btn" data-klassen-rankint="5">Nach 5 Aufgaben</button>
         <button class="choice-btn active" data-klassen-rankint="0">Nur am Schluss</button>
+      </div>
+      <label class="field-label">Punkte</label>
+      <div class="choice-row">
+        <button class="choice-btn active" data-klassen-scoring="speed">Nach Zeit (500–1000)</button>
+        <button class="choice-btn" data-klassen-scoring="fixed">Nur richtig: 1000 oder 0</button>
       </div>
       <div class="sqrt-opts hidden">
         <label class="field-label">Wurzel-Zahlen (mehrere wählbar)</label>
@@ -9371,7 +9376,7 @@ async function ensureFirebase() {
 let klassenRoomPin = null;
 let klassenPlayersUnsub = null, klassenAnswersUnsub = null, klassenRoomUnsub = null, klassenRankUnsub = null;
 let klassenCountdownIv = null;
-let klassenSettings = { numQuestions: 10, timerSec: 30, rankInterval: 0 };
+let klassenSettings = { numQuestions: 10, timerSec: 30, rankInterval: 0, scoring: "speed" };
 let klassenIsHost = false;
 let klassenPlayerId = null, klassenPlayerName = null;
 let klassenLastSeenQIndex = -1, klassenHasAnsweredCurrent = false, klassenStudentTask = null, klassenMyAnswers = [];
@@ -9780,6 +9785,11 @@ document.querySelectorAll('.choice-btn[data-klassen-rankint]').forEach(btn => bt
   klassenSettings.rankInterval = Number(btn.dataset.klassenRankint);
   document.querySelectorAll('.choice-btn[data-klassen-rankint]').forEach(b => b.classList.toggle("active", b === btn));
 }));
+// Punktemodus: "speed" = Kahoot-Punkte nach Antwortzeit (Standard), "fixed" = richtig 1000, falsch 0
+document.querySelectorAll('.choice-btn[data-klassen-scoring]').forEach(btn => btn.addEventListener("click", () => {
+  klassenSettings.scoring = btn.dataset.klassenScoring === "fixed" ? "fixed" : "speed";
+  document.querySelectorAll('.choice-btn[data-klassen-scoring]').forEach(b => b.classList.toggle("active", b === btn));
+}));
 /* Kleiner synthetisierter Jingle beim Öffnen des PIN-Bildschirms (Web Audio API,
    keine Audio-Datei nötig - passt zum "kein Build-Schritt"-Ansatz der App). */
 let klassenAudioCtx = null;
@@ -9823,7 +9833,7 @@ document.getElementById("klassenCreateRoomBtn").addEventListener("click", async 
     await firebaseDb.collection("rooms").doc(pin).set({
       createdAt: Date.now(), phase: "lobby", topic: currentExercise.title, exerciseId: currentExercise.id,
       numQuestions: klassenSettings.numQuestions, timerSec: klassenSettings.timerSec, baseTimerSec: klassenSettings.timerSec,
-      rankInterval: klassenSettings.rankInterval, currentQuestionIndex: -1, answerRevealed: false, playerCount: 0
+      rankInterval: klassenSettings.rankInterval, scoring: klassenSettings.scoring, currentQuestionIndex: -1, answerRevealed: false, playerCount: 0
     });
     klassenLastWrittenPlayerCount = 0;
   } catch (e) {
@@ -10520,7 +10530,7 @@ document.getElementById("klassenPlayerRankHomeBtn").addEventListener("click", ()
 /* ---- Klassenmodus: Schüler-seitiger Spielablauf ---- */
 let klassenLastSeenPhase = null, klassenMode = "quiz", klassenExerciseId = null, klassenAnswerRevealed = false, klassenLastAnswerCorrect = null;
 let klassenStudentCurrentTimerSec = 30, klassenPracticePoolIds = null, klassenStudentQStartedAt = 0, klassenRoomTopic = "";
-let klassenPracticeCorrect = 0, klassenPracticeWrong = 0;
+let klassenPracticeCorrect = 0, klassenPracticeWrong = 0, klassenFixedScoring = false;
 let klassenLastRoomKey = null;
 function klassenStudentHandleRoomUpdate(room) {
   if (typeof room.hostSeen === "number" && room.hostSeen !== klassenLastHostSeen) {
@@ -10545,6 +10555,7 @@ function klassenStudentHandleRoomUpdate(room) {
     return;
   }
   klassenExerciseId = room.exerciseId;
+  klassenFixedScoring = room.scoring === "fixed";
   klassenRoomTopic = room.topic || "";
   // Übungsmodus gilt nur in der Phase "practice" - egal über welchen Weg die Lehrperson die Übung
   // beendet (direkt zum Zwischenstand, Doppelte-Punkte-Ankündigung, Abbruch). Sonst blieben die
@@ -10738,7 +10749,7 @@ async function klassenSubmitAnswer() {
   // (samt Punkten) bei der nächsten Frage. Ausserdem sperrt die Eingabe so sofort.
   const qIndex = klassenLastSeenQIndex;
   const elapsedSec = (klassenHostNow() - klassenStudentQStartedAt) / 1000;
-  let points = ok ? klassenSpeedPoints(elapsedSec, klassenStudentCurrentTimerSec) : 0;
+  let points = ok ? (klassenFixedScoring ? 1000 : klassenSpeedPoints(elapsedSec, klassenStudentCurrentTimerSec)) : 0;
   points *= klassenTaskMultiplier(task);
   klassenLockAnswerUI(true);
   klassenRecordMyAnswer({ answered: true, prompt: task.prompt, myAnswer: formatMyAnswerForDisplayHtml(task, inputBuffers.klassen), myAnswerText: formatMyAnswerForDisplay(task, inputBuffers.klassen), correctAnswer: formatCorrectAnswerHtml(task), correctAnswerText: formatCorrectAnswer(task), correct: ok, points });
